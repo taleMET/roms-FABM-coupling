@@ -1,5 +1,6 @@
 #include "cppdefs.h"
-#if defined NONLINEAR && defined SOLVE3D
+!!!Modified condition PWA 09/08/2025
+#if defined NONLINEAR && defined SOLVE3D && (!defined OFFLINE)
       SUBROUTINE main3d (RunInterval)
 !
 !git $Id$
