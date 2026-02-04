@@ -90,7 +90,7 @@
 !
 !  Module dimension parameters.
 !
-      integer, parameter :: nCval = 200  ! size of Cval character vector
+      integer, parameter :: nCval = 500  ! size of Cval character vector  !!!Modified PWA 20/01/2022, from 200 to 500
       integer, parameter :: nRval = 100  ! size of Rval real vector
 !
       CONTAINS
