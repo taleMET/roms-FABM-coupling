@@ -125,12 +125,12 @@ MY_CPP_FLAGS ?=
 
 #  If applicable, activate 64-bit compilation:
 
-   USE_LARGE ?= on
+   USE_LARGE ?= ### Modified PWA 01/08/2019 for fram, removed "on"
 
 #  If applicable, link with NetCDF-4 library. Notice that the NetCDF-4
 #  library needs both the HDF5 and MPI libraries.
 
- USE_NETCDF4 ?=
+ USE_NETCDF4 ?= on ### Modified PWA 01/08/2019 for fram, added "on"
 
 #--------------------------------------------------------------------------
 #  We are going to include a file with all the settings that depend on
@@ -233,10 +233,14 @@ ifdef ROMS_APPLICATION
  ROMS_CPPFLAGS := -D$(ROMS_APPLICATION)
  ROMS_CPPFLAGS += -D'HEADER="$(HEADER)"'
  ifdef MY_HEADER_DIR
-  ROMS_CPPFLAGS += -D'ROMS_HEADER="$(MY_HEADER_DIR)/$(HEADER)"'
- else
-  ROMS_CPPFLAGS += -D'ROMS_HEADER="$(HEADER)"'
+### Modified PWA 01/08/2019 for fram
+#  ROMS_CPPFLAGS += -D'ROMS_HEADER="$(MY_HEADER_DIR)/$(HEADER)"'
+  ROMS_CPPFLAGS += -I$(MY_HEADER_DIR)
  endif
+# else
+  ROMS_CPPFLAGS += -D'ROMS_HEADER="$(HEADER)"'
+# endif
+### End modified PWA 01/08/2019
  ifdef MY_CPP_FLAGS
   ROMS_CPPFLAGS += $(MY_CPP_FLAGS)
  endif
@@ -504,6 +508,16 @@ ifdef USE_WRF
  endif
 endif
 
+###PWA Inserted 04/03/2015
+ifdef USE_FABM
+ includes +=  $(FABM_INCDIR)
+# This allows access to fabm.h and fabm_driver.h via vpath statement below.
+# Note that a new RFABM-dependent macro definition had to be added to
+# Compilers/make_macros.h; we cannot simply use the cppflag RFABM.
+# $(error Reached FABM-dependent insert -PWA.)
+endif
+###PWA Inserted 04/03/2015
+
 modules  +=	Master
 includes +=	Master Compilers
 
@@ -563,6 +577,13 @@ $(BUILD_DIR)/$(NETCDF_MODFILE): | $(BUILD_DIR)
 
 $(BUILD_DIR)/$(TYPESIZES_MODFILE): | $(BUILD_DIR)
 	cp -f $(NETCDF_INCDIR)/$(TYPESIZES_MODFILE) $(BUILD_DIR)
+
+###PWA Inserted 04/03/2015
+ifdef USE_FABM
+	cp -f $(FABM_INCDIR)/*.mod $(SCRATCH_DIR)
+#	cp -f $(FABM_LIBDIR)/*.a $(SCRATCH_DIR)
+endif
+###PWA Inserted 04/03/2015
 
 $(BUILD_DIR)/MakeDepend: makefile \
                            $(BUILD_DIR)/$(NETCDF_MODFILE) \
