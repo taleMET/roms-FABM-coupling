@@ -1510,6 +1510,70 @@
         END DO
 # endif
 #endif
+
+!!!PWA Inserted 24/04/2017
+#if defined RFABM
+!------------------------------------------
+!  Define surface/bottom attached FABM variables.
+!------------------------------------------
+        DO itrc=1,NSAT
+          Vinfo( 1)=Vname(1,idSAvar(itrc))
+          Vinfo( 2)=Vname(2,idSAvar(itrc))
+          Vinfo( 3)=Vname(3,idSAvar(itrc))
+          Vinfo(14)=Vname(4,idSAvar(itrc))
+          Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+#  if defined PERFECT_RESTART
+          Vinfo(24)='_FillValue'
+          Aval(6)=spval
+#  else
+          Vinfo(20)='mask_rho'
+#  endif
+# endif
+          Vinfo(21)=Vname(6,idSAvar(itrc))
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(r2dvar,r8)
+# ifdef PERFECT_RESTART
+          status=def_var(ng, model, RST(ng)%ncid,                       &
+     &                   RST(ng)%Vid(idSAvar(itrc)),                    &
+     &                   NF_FRST, nvd4, t2dgrd, Aval, Vinfo, ncname)
+# else
+          status=def_var(ng, model, RST(ng)%ncid,                       &
+     &                   RST(ng)%Vid(idSAvar(itrc)),                    &
+     &                   NF_FRST, nvd3, t2dgrd, Aval, Vinfo, ncname)
+# endif
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END DO
+        DO itrc=1,NBAT
+          Vinfo( 1)=Vname(1,idBAvar(itrc))
+          Vinfo( 2)=Vname(2,idBAvar(itrc))
+          Vinfo( 3)=Vname(3,idBAvar(itrc))
+          Vinfo(14)=Vname(4,idBAvar(itrc))
+          Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+#  if defined PERFECT_RESTART
+          Vinfo(24)='_FillValue'
+          Aval(6)=spval
+#  else
+          Vinfo(20)='mask_rho'
+#  endif
+# endif
+          Vinfo(21)=Vname(6,idBAvar(itrc))
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(r2dvar,r8)
+# ifdef PERFECT_RESTART
+          status=def_var(ng, model, RST(ng)%ncid,                       &
+     &                   RST(ng)%Vid(idBAvar(itrc)),                    &
+     &                   NF_FRST, nvd4, t2dgrd, Aval, Vinfo, ncname)
+# else
+          status=def_var(ng, model, RST(ng)%ncid,                       &
+     &                   RST(ng)%Vid(idBAvar(itrc)),                    &
+     &                   NF_FRST, nvd3, t2dgrd, Aval, Vinfo, ncname)
+# endif
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END DO
+#endif
+!!!End PWA insert 24/04/2017
 #ifdef WEC
 !
 !  Define 2D Stokes U-velocity.
