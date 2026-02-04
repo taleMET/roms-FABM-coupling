@@ -99,7 +99,15 @@
       character (len=   8) :: B(4)
       character (len=  40) :: BryVar1, BryVar2
       character (len=  70) :: Bstring, line
+
+!!!Modified PWA 18/09/2018
+!      character (len=2816) :: lbc_att
+#if defined RFABM
+      character (len=11264) :: lbc_att ! Need more length to allow for ERSEM-type models
+#else
       character (len=2816) :: lbc_att
+#endif
+!!!End modified PWA 18/09/2018
 
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", lbc_getatt_nf90"
@@ -724,7 +732,15 @@
       character (len=   7) :: string(4)
       character (len=  21) :: frmt
       character (len= 100) :: line
+
+!!!Modified PWA 18/09/2018
+!      character (len=2816) :: lbc_att
+#if defined RFABM
+      character (len=11264) :: lbc_att ! Need more length to allow for ERSEM-type models
+#else
       character (len=2816) :: lbc_att
+#endif
+!!!End modified PWA 18/09/2018
 
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", lbc_putatt_nf90"
