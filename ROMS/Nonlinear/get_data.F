@@ -105,11 +105,13 @@
 !  Point Source/Sink vertically integrated mass transport.
 !
       IF (LuvSrc(ng).or.LwSrc(ng)) THEN
-        CALL get_ngfld (ng, iNLM, idRtra, SSF(ng)%ncid,                 &
+!!!Modified PWA 21/01/2026 to allow multifile SSF input
+        CALL get_2dfld (ng, iNLM, idRtra, SSFncid(idRtra,ng),           &
 # if defined PIO_LIB && defined DISTRIBUTE
-     &                  SSF(ng)%pioFile,                                &
+     &                  SSFpioFile(idRtra,ng),                          &
 # endif
-     &                  1, SSF(ng), recordless, update(1),              &
+     &                  nSSFfiles(ng), SSF(1,ng), recordless, update(1),&
+!!!End modified PWA 21/01/2026
      &                  1, Nsrc(ng), 1, 2, 1, Nsrc(ng), 1,              &
      &                  SOURCES(ng) % QbarG)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -121,11 +123,14 @@
 !
       DO i=1,NT(ng)
         IF (LtracerSrc(i,ng)) THEN
-          CALL get_ngfld (ng, iNLM, idRtrc(i), SSF(ng)%ncid,            &
+!!!Modified PWA 21/01/2026 to allow multifile SSF input
+          CALL get_ngfld (ng, iNLM, idRtrc(i), SSFncid(idRtrc(i),ng),   &
 #  if defined PIO_LIB && defined DISTRIBUTE
-     &                    SSF(ng)%pioFile,                              &
+     &                    SSFpioFile(idRtrc(i),ng),                     &
 #  endif
-     &                    1, SSF(ng), recordless, update(1),            &
+     &                    nSSFfiles(ng), SSF(1,ng),                     &
+     &                    recordless, update(1),                        &
+!!!End modified PWA 21/01/2026
      &                    1, Nsrc(ng), N(ng), 2, 1, Nsrc(ng), N(ng),    &
      &                    SOURCES(ng) % TsrcG(:,:,:,i))
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -133,6 +138,28 @@
       END DO
 # endif
 #endif
+
+!!!Inserted PWA 26/10/2026
+#ifdef TS_ISOURCE
+!
+!  Tracer Internal Sources/Sinks
+!
+      DO i=1,NT(ng)
+        IF (LtracerISrc(i,ng)) THEN
+          CALL get_ngfld (ng, iNLM, idItrc(i), ISSFncid(idItrc(i),ng),  &
+#  if defined PIO_LIB && defined DISTRIBUTE
+     &                    ISSFpioFile(idItrc(i),ng),                    &
+#  endif
+     &                    nISSFfiles(ng), ISSF(1,ng),                   &
+     &                    recordless, update(1),                        &
+     &                    1, Nisrc(ng), N(ng), 2, 1, Nisrc(ng), N(ng),  &
+     &                    SOURCES(ng) % TisrcG(:,:,:,i))
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+      END DO
+#endif
+!!!End insert PWA 21/01/2026
+
 !
 !=======================================================================
 !  Read in forcing data from FORCING NetCDF file(s).
@@ -900,6 +927,88 @@
 # endif
       END IF
 #endif
+
+!!!PWA Inserted 21/01/2026: Get extra forcings for use in FABM models
+!We put it here as the end of the FORCES data getting
+#if defined RFABM
+# ifdef FABM_TSS
+!
+!-----------------------------------------------------------------------
+!  Total Suspended Sediments
+!-----------------------------------------------------------------------
+!
+      CALL get_3dfld (ng, iNLM, idtss, FRCncid(idtss,ng),               &
+# if defined PIO_LIB && defined DISTRIBUTE
+     &                FRCpioFile(idtss,ng),                             &
+# endif
+     &                nFfiles(ng), FRC(1,ng), update(1),                &
+     &                LBi, UBi, LBj, UBj, 1, N(ng), 2, 1,               &
+#  ifdef MASKING
+     &                GRID(ng) % rmask,                                 &
+#  endif
+     &                FORCES(ng) % tssG)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
+
+# ifdef FABM_PCO2ATM
+!
+!-----------------------------------------------------------------------
+!  Surface dry molar fraction atmospheric xCO2
+!-----------------------------------------------------------------------
+!
+      CALL get_2dfld (ng, iNLM, idxCO2atm, FRCncid(idxCO2atm,ng),       &
+# if defined PIO_LIB && defined DISTRIBUTE
+     &                FRCpioFile(idxCO2atm,ng),                         &
+# endif
+     &                nFfiles(ng), FRC(1,ng), update(1),                &
+     &                LBi, UBi, LBj, UBj, 2, 1,                         &
+#  ifdef MASKING
+     &                GRID(ng) % rmask,                                 &
+#  endif
+     &                FORCES(ng) % xCO2atmG)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
+
+# ifdef FABM_N3ATMDEPO
+!
+!-----------------------------------------------------------------------
+!  Atmospheric deposition of oxidized nitrogen
+!-----------------------------------------------------------------------
+!
+      CALL get_2dfld (ng, iNLM, idN3atmd, FRCncid(idN3atmd,ng),         &
+# if defined PIO_LIB && defined DISTRIBUTE
+     &                FRCpioFile(idN3atmd,ng),                          &
+# endif
+     &                nFfiles(ng), FRC(1,ng), update(1),                &
+     &                LBi, UBi, LBj, UBj, 2, 1,                         &
+#  ifdef MASKING
+     &                GRID(ng) % rmask,                                 &
+#  endif
+     &                FORCES(ng) % N3atmdG)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
+
+# ifdef FABM_N4ATMDEPO
+!
+!-----------------------------------------------------------------------
+!  Atmospheric deposition of reduced nitrogen
+!-----------------------------------------------------------------------
+!
+      CALL get_2dfld (ng, iNLM, idN4atmd, FRCncid(idN4atmd,ng),         &
+# if defined PIO_LIB && defined DISTRIBUTE
+     &                FRCpioFile(idN4atmd,ng),                          &
+# endif
+     &                nFfiles(ng), FRC(1,ng), update(1),                &
+     &                LBi, UBi, LBj, UBj, 2, 1,                         &
+#  ifdef MASKING
+     &                GRID(ng) % rmask,                                 &
+#  endif
+     &                FORCES(ng) % N4atmdG)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
+#endif
+!!!End PWA insertion 21/01/2026
+
 !
 !=======================================================================
 !  Read in open boundary conditions from BOUNDARY NetCDF file.
@@ -1434,6 +1543,95 @@
         END IF
       END DO
 # endif
+!!!Inserted PWA 21/01/2026
+! Added by DJ ------------------------------------
+
+# if !defined ANA_AKTCLIMA || !defined ANA_VMIX
+#  if defined AKTCLIMATOLOGY || defined AKXCLIMATOLOGY
+      !write(*,*) 'reading AKt in climatology file'
+      CALL get_3dfld (ng, iNLM, idAKtclm, CLMncid(idAKtclm,ng),         &
+#   if defined PIO_LIB && defined DISTRIBUTE
+     &                CLMpioFile(idAKtclm,ng),                          &
+#   endif
+     &                nCLMfiles(ng), CLM(1,ng), update(1),              &
+     &                LBi, UBi, LBj, UBj, 0, N(ng), 2, 1,               &
+#   ifdef MASKING
+     &                GRID(ng) % rmask,                                 &
+#   endif
+     &                CLIMA(ng) % AKtclmG)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
+#  if defined AKSCLIMATOLOGY || defined AKXCLIMATOLOGY
+      !write(*,*) 'reading AKs in climatology file'
+      CALL get_3dfld (ng, iNLM, idAKsclm, CLMncid(idAKsclm,ng),         &
+#   if defined PIO_LIB && defined DISTRIBUTE
+     &                CLMpioFile(idAKsclm,ng),                          &
+#   endif
+     &                nCLMfiles(ng), CLM(1,ng), update(1),              &
+     &                LBi, UBi, LBj, UBj, 0, N(ng), 2, 1,               &
+#   ifdef MASKING
+     &                GRID(ng) % rmask,                                 &
+#   endif
+     &                CLIMA(ng) % AKsclmG)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
+#  if defined AKVCLIMATOLOGY || defined AKXCLIMATOLOGY
+      !write(*,*) 'reading AKv in climatology file'
+      CALL get_3dfld (ng, iNLM, idAKvclm, CLMncid(idAKvclm,ng),         &
+#   if defined PIO_LIB && defined DISTRIBUTE
+     &                CLMpioFile(idAKvclm,ng),                          &
+#   endif
+     &                nCLMfiles(ng), CLM(1,ng), update(1),              &
+     &                LBi, UBi, LBj, UBj, 0, N(ng), 2, 1,               &
+#   ifdef MASKING
+     &                GRID(ng) % rmask,                                 &
+#   endif
+     &                CLIMA(ng) % AKvclmG)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
+#  if defined TKECLIMATOLOGY || defined MIXCLIMATOLOGY
+      !write(*,*) 'reading TKE in climatology file'
+      CALL get_3dfld (ng, iNLM, idtkeclm, CLMncid(idtkeclm,ng),         &
+#   if defined PIO_LIB && defined DISTRIBUTE
+     &                CLMpioFile(idtkeclm,ng),                          &
+#   endif
+     &                nCLMfiles(ng), CLM(1,ng), update(1),              &
+     &                LBi, UBi, LBj, UBj, 0, N(ng), 2, 1,               &
+#   ifdef MASKING
+     &                GRID(ng) % rmask,                                 &
+#   endif
+     &                CLIMA(ng) % tkeclmG)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
+#  if defined GLSCLIMATOLOGY || defined MIXCLIMATOLOGY
+      !write(*,*) 'reading GLS in climatology file'
+      CALL get_3dfld (ng, iNLM, idglsclm, CLMncid(idglsclm,ng),         &
+#   if defined PIO_LIB && defined DISTRIBUTE
+     &                CLMpioFile(idglsclm,ng),                          &
+#   endif
+     &                nCLMfiles(ng), CLM(1,ng), update(1),              &
+     &                LBi, UBi, LBj, UBj, 0, N(ng), 2, 1,               &
+#   ifdef MASKING
+     &                GRID(ng) % rmask,                                 &
+#   endif
+     &                CLIMA(ng) % glsclmG)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
+# endif
+# if !defined ANA_OCLIMA && defined OCLIMATOLOGY
+      CALL get_3dfld (ng, iNLM, idOclm, CLMncid(idOclm,ng),             &
+#   if defined PIO_LIB && defined DISTRIBUTE
+     &                CLMpioFile(idOclm,ng),                            &
+#   endif
+     &                nCLMfiles(ng), CLM(1,ng), update(1),              &
+     &                LBi, UBi, LBj, UBj, 0, N(ng), 2, 1,               &
+#   ifdef MASKING
+     &                GRID(ng) % rmask,                                 &
+#   endif
+     &                CLIMA(ng) % oclmG)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
+!!!End insert PWA 21/01/2026
 #endif
 
 #ifdef TLM_CHECK
