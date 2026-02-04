@@ -107,7 +107,10 @@
 !
       IF (ObcData(ng)) THEN
         file_type='Lateral Boundary'
-        max_files=nBCfiles(ng)
+!!!Modified PWA 20/01/2020 to allow multiple BRY files, following FRC template
+!        max_files=nBCfiles(ng)
+        max_files=MAXVAL(nBCfiles)
+!!!End modified PWA 20/01/2020
         CALL multifile_info_s2d (ng, model, file_type, nBCfiles,        &
      &                           max_files, BRY)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -119,7 +122,10 @@
 !
       IF (CLM_FILE(ng)) THEN
         file_type='Climatology'
-        max_files=nCLMfiles(ng)
+!!!Modified PWA 20/01/2020 to allow multiple CLM files, following FRC template
+!        max_files=nCLMfiles(ng)
+        max_files=MAXVAL(nCLMfiles)
+!!!End modified PWA 20/01/2020
         CALL multifile_info_s2d (ng, model, file_type, nCLMfiles,       &
      &                           max_files, CLM)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -169,11 +175,31 @@
 !
       IF (LuvSrc(ng).or.LwSrc(ng)) THEN
         file_type='Sources/Sinks Data'
-        CALL multifile_info_s1d (ng, model, file_type, SSF)
+!!!Modified PWA 20/01/2020 to allow multiple SSF files, following FRC template
+        max_files=MAXVAL(nSSFfiles)
+        CALL multifile_info_s2d (ng, model, file_type, nSSFfiles,       &
+     &                           max_files, SSF)
+!!!End modified 20/01/2020
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END IF
 #endif
 
+!!!Modified PWA 19/10/2021
+#ifdef TS_ISOURCE
+!
+!-----------------------------------------------------------------------
+!  Input Internal Source/Sink data (e.g. fish farm input).
+!-----------------------------------------------------------------------
+!
+      IF (ANY(LtracerISrc(:,ng))) THEN
+        file_type='Internal Sources/Sinks Data'
+        max_files=MAXVAL(nISSFfiles)
+        CALL multifile_info_s2d (ng, model, file_type, nISSFfiles,      &
+     &                           max_files, ISSF)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
+#endif
+!!!End modified PWA 19/10/2021
 #ifdef FRC_FILE
 !
 !-----------------------------------------------------------------------
