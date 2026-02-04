@@ -696,6 +696,128 @@
       Coptions(is:is+12)=' BIO_FENNEL,'
       ibiology=ibiology+1
 #endif
+!!!Inserted PWA 23/11/2018
+#ifdef BIOLOGY
+      IF (Master) WRITE (stdout,20) 'BIOLOGY',                          &
+     &   'Activate coupling to biological model.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+9)=' BIOLOGY,'
+#endif
+#ifdef RFABM
+      IF (Master) WRITE (stdout,20) 'RFABM',                            &
+     &   'FABM interface.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+7)=' RFABM,'
+      ibiology=ibiology+1
+# ifdef CAP_WSINK_CFL
+      IF (Master) WRITE (stdout,20) 'CAP_WSINK_CFL',                    &
+     &   'Cap sinking velocity using maximum allowed CFL number'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+15)=' CAP_WSINK_CFL,'
+# endif
+# ifdef DEBUGFABM
+      IF (Master) WRITE (stdout,20) 'DEBUGFABM',                        &
+     &   'RFABM debugging switch activated'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+11)=' DEBUGFABM,'
+# endif
+# ifdef FABM_ADYTRACER
+      IF (Master) WRITE (stdout,20) 'FABM_ADYTRACER',                   &
+     &   'Use ROMS to advect and diffusive an attenuation tracer.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+16)=' FABM_ADYTRACER,'
+# endif
+# ifdef FABM_ASILT
+      IF (Master) WRITE (stdout,20) 'FABM_ASILT',                       &
+     &   'Use ROMS to provide silt aborption for FABM model.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+12)=' FABM_ASILT,'
+# endif
+# ifdef FABM_CHECK_STATE
+      IF (Master) WRITE (stdout,20) 'FABM_CHECK_STATE',                 &
+     &   'Use FABM to check (and repair) biological state.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+18)=' FABM_CHECK_STATE,'
+# endif
+# if defined FABM_INITIAL
+      IF (Master) WRITE (stdout,20) 'FABM_INITIAL',                     &
+     &   'FABM default values as initial conditions.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+14)=' FABM_INITIAL,'
+# elif defined FABM_INITIAL_SB
+      IF (Master) WRITE (stdout,20) 'FABM_INITIAL_SB',                  &
+     &   'FABM default values as surface/bottom attached ICs.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+17)=' FABM_INITIAL_SB,'
+# endif
+# ifdef FABM_ISOURCES
+      IF (Master) WRITE (stdout,20) 'FABM_ISOURCES',                    &
+     &   'Use ROMS to provide internal sources data.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+15)=' FABM_ISOURCES,'
+# endif
+# ifdef FABM_MU
+      IF (Master) WRITE (stdout,20) 'FABM_MU',                          &
+     &   'Use ROMS to provide dynamic viscosity (online).'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+9)=' FABM_MU,'
+# endif
+# ifdef FABM_NONNEG_S
+      IF (Master) WRITE (stdout,20) 'FABM_NONNEG_S',                    &
+     &   'Cap salinity input to FABM at zero PSU.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+15)=' FABM_NONNEG_S,'
+# endif
+# ifdef FABM_N3ATMDEPO
+      IF (Master) WRITE (stdout,20) 'FABM_N3ATMDEPO',                   &
+     &   'Use ROMS to provide atmospheric oxidized nitrogen deposition.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+16)=' FABM_N3ATMDEPO,'
+# endif
+# ifdef FABM_N4ATMDEPO
+      IF (Master) WRITE (stdout,20) 'FABM_N4ATMDEPO',                   &
+     &   'Use ROMS to provide atmospheric reduced nitrogen deposition.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+16)=' FABM_N4ATMDEPO,'
+# endif
+# ifdef FABM_NU
+      IF (Master) WRITE (stdout,20) 'FABM_NU',                          &
+     &   'Use ROMS to provide kinematic viscosity (online).'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+9)=' FABM_NU,'
+# endif
+# ifdef FABM_PCO2ATM
+      IF (Master) WRITE (stdout,20) 'FABM_PCO2ATM',                     &
+     &   'Use ROMS to provide atmospheric pCO2 for FABM model.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+14)=' FABM_PCO2ATM,'
+# endif
+# ifdef FABM_TDR
+      IF (Master) WRITE (stdout,20) 'FABM_TDR',                         &
+     & 'Use ROMS to provide turbulent energy dissipation rate (online).'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+10)=' FABM_TDR,'
+# endif
+# ifdef FABM_TSS
+      IF (Master) WRITE (stdout,20) 'FABM_TSS',                         &
+     &   'Use ROMS to provide Total Suspended Sediment (offline).'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+11)=' FABM_TSS,'
+# endif
+# ifdef FABM_TSS_ONLINE
+      IF (Master) WRITE (stdout,20) 'FABM_TSS_ONLINE',                  &
+     &   'Use ROMS to provide Total Suspended Sediment (online).'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+18)=' FABM_TSS_ONLINE,'
+# endif
+# ifdef FABM_TSR
+      IF (Master) WRITE (stdout,20) 'FABM_TSR',                         &
+     &   'Use ROMS to provide turbulent shear rate (online).'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+10)=' FABM_TSR,'
+# endif
+#endif
+!!!End insertion PWA 23/11/2018
 #if defined BNORM && defined HESSIAN_SV
 !
       IF (Master) WRITE (stdout,20) 'BNORM',                            &
@@ -768,6 +890,22 @@
       Coptions(is:is+12)=' BVF_MIXING,'
       ivmix=ivmix+1
 #endif
+!!!Inserted PWA 03/06/2022
+#ifdef CALC_TDR
+!
+      IF (Master) WRITE (stdout,20) 'CALC_TDR',                         &
+     &   'Calculate turbulent energy dissipation rate'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+10)=' CALC_TDR,'
+#endif
+#ifdef CALC_TSR
+!
+      IF (Master) WRITE (stdout,20) 'CALC_TSR',                         &
+     &   'Calculate turbulent shear rate'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+10)=' CALC_TSR,'
+#endif
+!!!End insert PWA 03/06/2022
 #if defined CANUTO_A && defined GLS_MIXING
 !
       IF (Master) WRITE (stdout,20) 'CANUTO_A',                         &
@@ -2031,6 +2169,88 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+11)=' OBS_SPACE,'
 #endif
+!!!Inserted PWA 09/08/2025
+#ifdef OCLIMATOLOGY
+      IF (Master) WRITE (stdout,20) 'OCLIMATOLOGY',                     &
+     &   'Processing omega climatology data.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+14)=' OCLIMATOLOGY,'
+#endif
+
+! KMT
+#if defined OFFLINE
+      IF (Master) WRITE (stdout,20) 'OFFLINE',                   &
+     &   'Offline run (use model fields from history files).'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+9)=' OFFLINE,'
+#endif
+! KMT: CLIMATOLOGY appears to be unused outside of this file
+!#if defined OFFLINE_FLOATS && defined CLIMATOLOGY
+!#if defined OFFLINE_BIOLOGY && defined CLIMATOLOGY
+#if defined OFFLINE_BIOLOGY && defined OFFLINE
+      IF (Master) WRITE (stdout,20) 'OFFLINE_BIOLOGY',                  &
+     &   'Offline run (use model fields from history files).'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+17)=' OFFLINE_BIOLOGY,'
+#endif
+!#if defined OFFLINE_TPASSIVE && defined CLIMATOLOGY
+#if defined OFFLINE_TPASSIVE && defined OFFLINE
+      IF (Master) WRITE (stdout,20) 'OFFLINE_TPASSIVE',                  &
+     &   'Offline run (use model fields from history files).'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+18)=' OFFLINE_TPASSIVE,'
+#endif
+! OFFLINE CLIMATOLOGY (Added by DJ)
+# if defined AKTCLIMATOLOGY  && defined OFFLINE
+      IF (Master) WRITE (stdout,20) 'AKTCLIMATOLOGY',                        &
+     &   'AKt climatology for OFFLINE model'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+16)=' AKTCLIMATOLOGY,'
+#endif
+# if defined AKSCLIMATOLOGY  && defined OFFLINE
+      IF (Master) WRITE (stdout,20) 'AKSCLIMATOLOGY',    &
+     &   'AKs climatology for OFFLINE model'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+16)=' AKSCLIMATOLOGY,'
+#endif
+# if defined AKVCLIMATOLOGY  && defined OFFLINE
+      IF (Master) WRITE (stdout,20) 'AKVCLIMATOLOGY',    &
+     &   'AKv climatology for OFFLINE model'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+16)=' AKVCLIMATOLOGY,'
+#endif
+# if defined AKXCLIMATOLOGY  && defined OFFLINE
+      IF (Master) WRITE (stdout,20) 'AKXCLIMATOLOGY',    &
+     &   'AK* climatology for OFFLINE model (Aks, Akt, Akv)'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+16)=' AKXCLIMATOLOGY,'
+#endif
+# if defined TKECLIMATOLOGY  && defined OFFLINE
+      IF (Master) WRITE (stdout,20) 'TKECLIMATOLOGY',               &
+     &   'TKE climatology for OFFLINE model'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+16)=' TKECLIMATOLOGY,'
+#endif
+# if defined GLSCLIMATOLOGY  && defined OFFLINE
+      IF (Master) WRITE (stdout,20) 'GLSCLIMATOLOGY',                 &
+     &   'GLS climatology for OFFLINE model'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+16)=' GLSCLIMATOLOGY,'
+#endif
+# if defined MIXCLIMATOLOGY  && defined OFFLINE
+      IF (Master) WRITE (stdout,20) 'MIXCLIMATOLOGY',    &
+     &   'TKE and GLS climatology for OFFLINE model'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+16)=' MIXCLIMATOLOGY,'
+#endif
+# if defined ATCLIMATOLOGY  && defined OFFLINE
+      IF (Master) WRITE (stdout,20) 'ATCLIMATOLOGY',                        &
+     &   'Temperature and salinity climatology for OFFLINE model'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+15)=' ATCLIMATOLOGY,'
+#endif
+! DJ END
+!!!End insert PWA 09/08/2025
 #if defined OMEGA_IMPLICIT && defined SOLVE3D
 !
       IF (Master) WRITE (stdout,20) 'OMEGA_IMPLICIT',                   &
@@ -2824,6 +3044,16 @@
       Coptions(is:is+16)=' !SO_SEMI_WHITE,'
 # endif
 #endif
+!!!Inserted PWA 18/02/2020
+!!!SPECIFIC_HUMIDITY is used in e.g. bulk_flux.F
+#if defined SPECIFIC_HUMIDITY
+      IF (Master) WRITE (stdout,20) 'SPECIFIC_HUMIDITY',                &
+     &   'Specific humidity input in units kg/kg.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+19)=' SPECIFIC_HUMIDITY,'
+#endif
+!!!End insertion PWA 18/02/2020
+
 #ifdef SPLIT_I4DVAR
 !
       IF (Master) WRITE (stdout,20) 'SPLIT_I4DVAR',                     &
@@ -3900,6 +4130,22 @@
         exit_flag=5
       END IF
 #endif
+!!!PWA Inserted 23/11/2018
+#if defined ANA_SRFLUX && defined DIURNAL_SRFLUX
+!
+!  Stop if activated both ANA_SRFLUX and DIURNAL_SRFLUX
+!  These cpps are logically inconsistent because DIURNAL_SRFLUX assumes
+!  that a >=24-hr average SRFLUX is being read from input files.
+!
+      IF (Master) THEN
+        WRITE (stdout,295) uppercase('ana_srflux'),                     &
+     &                     uppercase('diurnal_srflux')
+ 295    FORMAT (/,' CHECKDEFS - cannot activate ',a,                    &
+     &            ' and',a,/,13x,'at the same time. Choose one!')
+        exit_flag=5
+      END IF
+#endif
+!!!End insert PWA 23/11/2018
 #if defined TIDE_GENERATING_FORCES && \
    (defined ANA_GRID               && !defined SPHERICAL)
 !
