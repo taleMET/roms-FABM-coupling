@@ -160,3 +160,13 @@
 #else
   USE_ESMF :=
 #endif
+
+/*
+** Determine if Framework for Biogeochemical Models (FABM) is needed (PWA Inserted 04/03/2015)
+*/
+
+#if defined RFABM
+  USE_FABM := on
+#else
+  USE_FABM :=
+#endif
