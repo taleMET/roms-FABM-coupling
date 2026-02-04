@@ -66,6 +66,11 @@
      &                OCEAN(ng) % u,                                    &
      &                OCEAN(ng) % v,                                    &
      &                OCEAN(ng) % wvel,                                 &
+!!!Inserted PWA 31/07/2019
+# ifdef BIOLOGY
+     &                OCEAN(ng) % t,                                    &
+# endif
+!!!End insert PWA 31/07/2019
 #endif
      &                OCEAN(ng) % ubar,                                 &
      &                OCEAN(ng) % vbar,                                 &
@@ -89,6 +94,11 @@
 #ifdef SOLVE3D
      &                      Hz, z_r, z_w,                               &
      &                      rho, u, v, wvel,                            &
+!!!Inserted PWA 31/07/2019
+# ifdef BIOLOGY
+     &                      t,                                          &
+# endif
+!!!End insert PWA 31/07/2019
 #endif
      &                      ubar, vbar, zeta)
 !***********************************************************************
@@ -97,6 +107,11 @@
       USE mod_parallel
       USE mod_iounits
       USE mod_scalars
+!!!Inserted PWA 21/07/2019 (from Hedstrom code)
+#ifdef BIOLOGY
+      USE mod_biology, ONLY : idbio
+#endif
+!!!End insert PWA 21/07/2019
 
 #ifdef DISTRIBUTE
 !
@@ -126,6 +141,11 @@
       real(r8), intent(in) :: u(LBi:,LBj:,:,:)
       real(r8), intent(in) :: v(LBi:,LBj:,:,:)
       real(r8), intent(in) :: wvel(LBi:,LBj:,0:)
+!!!Inserted PWA 31/07/2019
+#  ifdef BIOLOGY
+      real(r8), intent(in) :: t(LBi:,LBj:,:,:,:)
+#  endif
+!!!End insert PWA 31/07/2019
 # endif
       real(r8), intent(in) :: ubar(LBi:,LBj:,:)
       real(r8), intent(in) :: vbar(LBi:,LBj:,:)
@@ -143,6 +163,11 @@
       real(r8), intent(in) :: u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: v(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: wvel(LBi:UBi,LBj:UBj,0:N(ng))
+!!!Inserted PWA 31/07/2019
+#  ifdef BIOLOGY
+      real(r8), intent(in) :: t(LBi:UBi,LBj:UBj,N(ng),NT(ng),2)
+#  endif
+!!!End insert PWA 31/07/2019
 # endif
       real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,:)
       real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,:)
@@ -151,21 +176,39 @@
 !
 !  Local variable declarations.
 !
+!!!Inserted PWA 21/07/2019 (from Hedstrom code)
+#ifdef BIOLOGY
+      integer :: ibt, itrc
+#endif
+!!!End insert PWA 21/07/2019
       integer :: NSUB, i, ispace, j, k, trd
       integer :: idia, istep
       integer :: my_max_Ci, my_max_Cj, my_max_Ck
 #ifdef DISTRIBUTE
 # ifdef SOLVE3D
+!!!Modified PWA 19/06/2014
+!      integer, parameter :: Nreduce = 5
+#  ifdef BIOLOGY
+      integer :: Nreduce
+#  else
       integer, parameter :: Nreduce = 5
+#  endif
+!!!End modified PWA 19/06/2014
       integer, parameter :: Ncourant = 7
 # else
       integer, parameter :: Nreduce = 4
       integer, parameter :: Ncourant = 5
 # endif
-      real(r8), dimension(Nreduce) :: rbuffer
-      real(r8), dimension(Ncourant) :: Courant
-      character (len=3), dimension(Nreduce) :: op_handle
-      character (len=6), dimension(Nreduce) :: C_handle
+!!!Modified PWA 21/07/2019 following Hedstrom code
+!      real(r8), dimension(Nreduce) :: rbuffer
+!      real(r8), dimension(Ncourant) :: Courant
+!      character (len=3), dimension(Nreduce) :: op_handle
+!      character (len=6), dimension(Nreduce) :: C_handle
+      real(r8), allocatable           :: rbuffer(:)
+      real(r8), dimension(Ncourant)   :: Courant
+      character (len=3), allocatable  :: op_handle(:)
+      character (len=6), allocatable  :: C_handle(:)
+!!!End modified PWA 21/07/2019
 #else
       integer :: my_threadnum
 #endif
@@ -180,10 +223,20 @@
       real(r8) :: my_maxspeed, u2v2
 #ifdef SOLVE3D
       real(r8) :: my_maxrho
+!!!Inserted PWA 19/06/2014
+# ifdef BIOLOGY
+      real(r8) :: my_maxbio(NBT)
+      real(r8) :: my_minbio(NBT)
+# endif
+!!!Inserted PWA 19/06/2014
 #endif
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ke2d
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: pe2d
 !
+!!!Inserted PWA 30/07/2019 from Hedstrom code
+      integer :: ii_max, jj_max, kk_max
+      real(r8) :: uv_max
+!!!End insert PWA 30/07/2019
       character (len=8 ) :: kechar, pechar, maxvalchar
       character (len=22) :: DateTime
       character (len=60) :: frmt
@@ -195,6 +248,16 @@
 !  total energy, volume, Courant numbers.
 !-----------------------------------------------------------------------
 !
+!!!Inserted PWA 21/07/2019 following Hedstrom code
+#ifdef DISTRIBUTE
+# if defined SOLVE3D && defined BIOLOGY
+      Nreduce = 5 + 2*NBT
+# endif
+      IF (.not. allocated(rbuffer))    allocate (rbuffer(Nreduce))
+      IF (.not. allocated(op_handle)) allocate (op_handle(Nreduce))
+      IF (.not. allocated(C_handle))  allocate (C_handle(Nreduce))
+#endif
+!!!End inserted PWA 21/07/2019
 !  Set time timestep counter and time level indices to process. Restart
 !  counter after 10 billion steps.
 !
@@ -221,6 +284,14 @@
         my_maxspeed=0.0_r8
 #ifdef SOLVE3D
         my_maxrho=-spval
+!!!Inserted PWA 19/06/2014
+# ifdef BIOLOGY
+        DO ibt=1,NBT
+          my_maxbio(ibt)=-1.0E+20_r8
+          my_minbio(ibt)=1.0E+20_r8
+        END DO
+# endif
+!!!Inserted PWA 19/06/2014
 #endif
         DO j=Jstr,Jend
 #ifdef SOLVE3D
@@ -260,6 +331,21 @@
               my_maxrho=MAX(my_maxrho,rho(i,j,k))
             END DO
           END DO
+!!!Inserted PWA 19/06/2014
+# ifdef BIOLOGY
+          DO k=N(ng),1,-1
+            DO ibt=1,NBT
+              itrc=idbio(ibt)
+              DO i=Istr,Iend
+                my_maxbio(ibt)=MAX(my_maxbio(ibt),t(i,j,k,nstp,itrc))
+                IF (t(i,j,k,nstp,itrc).gt.0.0_r8) THEN !This filters out masking values
+                  my_minbio(ibt)=MIN(my_minbio(ibt),t(i,j,k,nstp,itrc))
+                END IF
+              END DO
+            END DO
+          END DO
+# endif
+!!!Inserted PWA 19/06/2014
 #else
           cff=0.5_r8*g
           DO i=Istr,Iend
@@ -364,6 +450,14 @@
         maxspeed(ng)=MAX(maxspeed(ng),my_maxspeed)
 #ifdef SOLVE3D
         maxrho(ng)=MAX(maxrho(ng),my_maxrho)
+!!!Inserted PWA 19/06/2014
+# ifdef BIOLOGY
+        DO ibt=1,NBT
+          maxbio(ibt,ng)=MAX(maxbio(ibt,ng),my_maxbio(ibt))
+          minbio(ibt,ng)=MIN(minbio(ibt,ng),my_minbio(ibt))
+        END DO
+# endif
+!!!End insert PWA 19/06/2014
 #endif
         IF (my_max_C.eq.max_C) THEN
           max_Ci=MIN(max_Ci,my_max_Ci)
@@ -394,6 +488,14 @@
           rbuffer(4)=maxspeed(ng)
 # ifdef SOLVE3D
           rbuffer(5)=maxrho(ng)
+!!!Inserted PWA 23/07/2014
+#  ifdef BIOLOGY
+          DO ibt=1,NBT
+            rbuffer(5+ibt)=maxbio(ibt,ng)
+            rbuffer(5+NBT+ibt)=minbio(ibt,ng)
+          END DO
+#  endif
+!!!End insert PWA 23/07/2014
 # endif
           op_handle(1)='SUM'
           op_handle(2)='SUM'
@@ -409,6 +511,14 @@
           maxspeed(ng)=rbuffer(4)
 # ifdef SOLVE3D
           maxrho(ng)=rbuffer(5)
+!!!Inserted PWA 19/06/2014
+#  ifdef BIOLOGY
+          DO ibt=1,NBT
+            maxbio(ibt,ng)=rbuffer(5+ibt)
+            minbio(ibt,ng)=rbuffer(5+NBT+ibt)
+          END DO
+#  endif
+!!!End insert PWA 19/06/2014
 # endif
 !
           Courant(1)=max_C
@@ -459,12 +569,26 @@
               WRITE (stdout,20) '  C => (i,j)', 'Cu', 'Cv',             &
      &                          ' C Max', 'Max Speed'
 #endif
+
+!!!Inserted PWA 19/06/2014
+#  ifdef RFABM
+              WRITE (stdout,25) 'maxT1', 'maxT2', 'maxT3',              &
+     &                          'maxT4', 'maxTn'
+              WRITE (stdout,26) 'minT1', 'minT2', 'minT3',              &
+     &                          'minT4', 'minTn'
+#  endif
 #ifdef NESTING
  10           FORMAT (/,1x,a,1x,a,2x,a,3x,a,4x,a,4x,a,2x,a)
 #else
  10           FORMAT (/,1x,a,1x,a,2x,a,3x,a,4x,a,4x,a)
 #endif
  20           FORMAT (21x,a,7x,a,12x,a,10x,a,7x,a,/)
+!!!Inserted PWA 21/01/2026
+#ifdef RFABM
+ 25           FORMAT (22x,a,8x,a,9x,a,9x,a,9x,a)
+ 26           FORMAT (22x,a,8x,a,9x,a,9x,a,9x,a,/)
+#endif
+!!!End insert PWA 21/01/2026
             END IF
           END IF
 !
@@ -484,6 +608,12 @@
             WRITE (stdout,frmt) max_Ci, max_Cj,                         &
      &                          max_Ck, max_Cu, max_Cv, max_Cw,         &
      &                          maxspeed(ng)
+!!!Inserted PWA 19/06/2014
+# ifdef BIOLOGY
+            WRITE (stdout,50) maxbio(1:4,ng), MAXVAL(maxbio(1:NBT,ng))
+            WRITE (stdout,50) minbio(1:4,ng), MINVAL(minbio(1:NBT,ng))
+# endif
+!!!Inserted PWA 19/06/2014
 #else
             ispace=35-(5+Idigits(ng)+Jdigits(ng))
             WRITE (frmt,40) ispace,                                     &
@@ -505,6 +635,11 @@
      &                            a,',i',i1,'.',i1,',',                 &
 #endif
      &                            a,',t35,4(1pe13.6,1x))')
+!!!Inserted PWA 21/01/2026
+#ifdef RFABM
+ 50         FORMAT (t21,5(1pe13.6,1x))
+#endif
+!!!End insert PWA 21/01/2026
           END IF
 !
 !  If blowing-up, set exit_flag to stop computations.
@@ -523,11 +658,53 @@
 !  Stop computations if exceeding maximum speed allowed.  This will be
 !  useful during debugging to avoid NaNs in output NetCDF files.
 !
+!!!Modified PWA 22/07/2019 (imported from Hedstrom code)
+!          IF (maxspeed(ng).gt.max_speed) THEN
+!            exit_flag=1
+!            WRITE (maxvalchar,'(1pe8.1)') maxspeed(ng)
+!            blowup_string='MaxSpeed = '//maxvalchar
+!          END IF
           IF (maxspeed(ng).gt.max_speed) THEN
             exit_flag=1
-            WRITE (maxvalchar,'(1pe8.1)') maxspeed(ng)
-            blowup_string='MaxSpeed = '//maxvalchar
+            IF (Master) print *, 'DIAG speed trouble ', maxspeed(ng)
+            ii_max = Istr
+            jj_max = Jstr
+#ifdef SOLVE3D
+            kk_max = 1
+            uv_max = max(u(Istr,Jstr,1,nstp),v(Istr,Jstr,1,nstp))
+            DO j=Jstr,Jend
+              DO k=1,N(ng)
+                DO i=Istr,Iend
+                  IF (max(u(i,j,k,nstp),v(i,j,k,nstp)) > uv_max) THEN
+                    ii_max = i
+                    jj_max = j
+                    kk_max = k
+                    uv_max = max(u(i,j,k,nstp),v(i,j,k,nstp))
+                  END IF
+                END DO
+              END DO
+            END DO
+            IF (uv_max.gt.max_speed) THEN
+              print *, 'DIAG speed ijk ', uv_max, ii_max, jj_max, kk_max, ng
+            END IF
+#else
+            uv_max = max(ubar(Istr,Jstr,krhs),vbar(Istr,Jstr,krhs))
+            DO j=Jstr,Jend
+              DO i=Istr,Iend
+                IF (max(ubar(i,j,krhs),vbar(i,j,krhs)) > uv_max) THEN
+                  ii_max = i
+                  jj_max = j
+                  uv_max = max(ubar(i,j,krhs),vbar(i,j,krhs))
+                END IF
+              END DO
+            END DO
+            IF (uv_max.gt.max_speed) THEN
+              print *, 'DIAG speed ij ', uv_max, ii_max, jj_max, ng
+            END IF
+#endif
           END IF
+!!!End modified PWA 22/07/2019
+
 #ifdef SOLVE3D
 !
 !  Stop computation if exceeding maximum density anomaly allowed.
@@ -535,11 +712,25 @@
 !  salinity.  This is a good way to screen for very bad values which
 !  indicates that the model is blowing-up.
 !
+!!!Modified PWA 22/07/2019
+!          IF (maxrho(ng).gt.max_rho) THEN
+!            exit_flag=1
+!            WRITE (maxvalchar,'(1pe8.1)') maxrho(ng)
+!            blowup_string='MaxDensity = '//maxvalchar
+!          END IF
           IF (maxrho(ng).gt.max_rho) THEN
             exit_flag=1
-            WRITE (maxvalchar,'(1pe8.1)') maxrho(ng)
-            blowup_string='MaxDensity = '//maxvalchar
+            IF (Master) print *, 'DIAG rho trouble ', maxrho(ng), ng
           END IF
+# ifdef BIOLOGY
+          DO ibt=1,NBT
+            IF (maxbio(ibt,ng).gt.max_bio(ibt)) THEN
+              IF (Master) print *, 'BIO trouble in DIAG ', maxbio(:,ng)
+              exit_flag=1
+            END IF
+          END DO
+# endif
+!!!End modified PWA 22/07/2019
 #endif
 !
 !  Reset global reduction variables for the next call.
@@ -550,6 +741,14 @@
           maxspeed(ng)=-Large
 #ifdef SOLVE3D
           maxrho(ng)=-Large
+!!!Inserted PWA 22/07/2019
+# ifdef BIOLOGY
+          DO ibt=1,NBT
+            maxbio(ibt,ng)=-Large
+            minbio(ibt,ng)=Large
+          END DO
+# endif
+!!!End insert PWA 22/07/2019
 #endif
           max_C =0.0_r8
           max_Cu=0.0_r8
