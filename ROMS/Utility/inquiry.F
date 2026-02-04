@@ -152,22 +152,32 @@
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
             END IF
+!!!Inserted PWA 20/11/2019 following Hedstrom code 14092019
+            S(ifile)%ncid = -1 !!!And deleted below under 'FRC' etc.
+!!!End insert PWA 20/11/2019
             S(ifile)%Fcount=Fcount
             S(ifile)%name=TRIM(S(ifile)%files(Fcount))
             CALL netcdf_close (ng, model, ncid, Pname, .FALSE.)
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
             IF (label(1:3).eq.'FRC') THEN
               FRCids(ifile,ng)=-1
-              S(ifile)%ncid=-1
             END IF
             IF (label(1:3).eq.'BRY') THEN
               BRYids(ifile,ng)=-1
-              S(ifile)%ncid=-1
             END IF
             IF (label(1:3).eq.'CLM') THEN
               CLMids(ifile,ng)=-1
-              S(ifile)%ncid=-1
             END IF
+!!!Inserted PWA 19/10/2021 following Hedstrom code 14092019
+            IF (label(1:3).eq.'SSF') THEN
+              SSFids(ifile,ng)=-1
+            END IF
+#ifdef TS_ISOURCE
+            IF (label(1:3).eq.'ISS') THEN
+              ISSFids(ifile,ng)=-1
+            END IF
+#endif
+!!!End insert PWA 19/10/2021
             EXIT
           ELSE                       ! S(ifile)%name and Fcount already
             Fcount=S(ifile)%Fcount   ! updated in first field processed
@@ -189,6 +199,9 @@
 !
       foundit=.FALSE.
       QUERY: DO ifile=1,nfiles
+!!!Inserted PWA 20/11/2019 following Hedstrom code 14092019  
+        Fcount=S(ifile)%Fcount
+!!!End insert PWA 20/11/2019
         Fname=S(ifile)%name
 !
 !  Open NetCDF file for reading.
@@ -388,21 +401,10 @@
 !  Terminate execution requested variables are not found.
 !
       IF (.not.got_var) THEN
-        IF ((nfiles.gt.1).and.(label(1:3).eq.'FRC')) THEN
-          IF (Master) THEN
-            WRITE (stdout,50) TRIM(Vname(1,ifield)), 'files:'
-            DO i=1,nfiles
-              WRITE (stdout,'(15x,a)') TRIM(S(i)%name)
-            END DO
-          END IF
-        ELSE IF ((nfiles.gt.1).and.(label(1:3).eq.'BRY')) THEN
-          IF (Master) THEN
-            WRITE (stdout,50) TRIM(Vname(1,ifield)), 'files:'
-            DO i=1,nfiles
-              WRITE (stdout,'(15x,a)') TRIM(S(i)%name)
-            END DO
-          END IF
-        ELSE IF ((nfiles.gt.1).and.(label(1:3).eq.'CLM')) THEN
+!!!Modified PWA 05/08/2019
+        IF (nfiles.gt.1) THEN
+!        IF ((nfiles.gt.1).and.(label(1:3).eq.'FRC')) THEN
+!!!End modified PWA 05/08/2019
           IF (Master) THEN
             WRITE (stdout,50) TRIM(Vname(1,ifield)), 'files:'
             DO i=1,nfiles
@@ -425,21 +427,10 @@
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END IF
       IF (.not.got_time) THEN
-        IF ((nfiles.gt.1).and.(label(1:3).eq.'FRC')) THEN
-          IF (Master) THEN
-            WRITE (stdout,50) TRIM(Tname(ifield)), 'files:'
-            DO i=1,nfiles
-              WRITE (stdout,'(15x,a)') TRIM(S(i)%name)
-            END DO
-          END IF
-        ELSE IF ((nfiles.gt.1).and.(label(1:3).eq.'BRY')) THEN
-          IF (Master) THEN
-            WRITE (stdout,50) TRIM(Tname(ifield)), 'files:'
-            DO i=1,nfiles
-              WRITE (stdout,'(15x,a)') TRIM(S(i)%name)
-            END DO
-          END IF
-        ELSE IF ((nfiles.gt.1).and.(label(1:3).eq.'CLM')) THEN
+!!!Modified PWA 05/08/2019
+        IF (nfiles.gt.1) THEN
+!        IF ((nfiles.gt.1).and.(label(1:3).eq.'FRC')) THEN
+!!!End modified PWA 05/08/2019
           IF (Master) THEN
             WRITE (stdout,50) TRIM(Tname(ifield)), 'files:'
             DO i=1,nfiles
@@ -496,6 +487,30 @@
           END IF
         END DO
       END IF
+!!!Inserted PWA 21/01/2026
+      IF (label(1:3).eq.'SSF') THEN
+        DO ifile=1,nfiles
+          IF ((TRIM(ncfile).eq.TRIM(S(ifile)%name)).and.                &
+     &        (SSFids(ifile,ng).ne.-1).and.                             &
+     &        (ncid.ne.SSFids(ifile,ng))) THEN
+            ncid=SSFids(ifile,ng)
+            EXIT
+          END IF
+        END DO
+      END IF
+#ifdef TS_ISOURCE
+      IF (label(1:3).eq.'ISS') THEN
+        DO ifile=1,nfiles
+          IF ((TRIM(ncfile).eq.TRIM(S(ifile)%name)).and.                &
+     &        (ISSFids(ifile,ng).ne.-1).and.                            &
+     &        (ncid.ne.ISSFids(ifile,ng))) THEN
+            ncid=ISSFids(ifile,ng)
+            EXIT
+          END IF
+        END DO
+      END IF
+#endif
+!!!End insert PWA 21/01/2026
 !
 !  If appropriate, open input NetCDF file for reading.
 !  (HGA: it is not needed since file was already open and
@@ -535,6 +550,24 @@
             EXIT
           END IF
         END DO
+      ELSE IF (label(1:3).eq.'SSF') THEN
+        DO ifile=1,nfiles
+          IF (TRIM(ncfile).eq.TRIM(S(ifile)%name)) THEN
+            SSFids(ifile,ng)=ncid
+            S(ifile)%ncid=ncid
+            EXIT
+          END IF
+        END DO
+#ifdef TS_ISOURCE
+      ELSE IF (label(1:3).eq.'ISS') THEN
+        DO ifile=1,nfiles
+          IF (TRIM(ncfile).eq.TRIM(S(ifile)%name)) THEN
+            ISSFids(ifile,ng)=ncid
+            S(ifile)%ncid=ncid
+            EXIT
+          END IF
+        END DO
+#endif
       ELSE
         S(1)%ncid=ncid
       END IF
@@ -758,6 +791,16 @@
               CLMdesc(ifile,ng)%fh=-1
               S(ifile)%pioFile%fh=-1
             END IF
+            IF (label(1:3).eq.'SSF') THEN
+              SSFdesc(ifile,ng)%fh=-1
+              S(ifile)%pioFile%fh=-1
+            END IF
+#ifdef TS_ISOURCE
+            IF (label(1:3).eq.'ISS') THEN
+              ISSFdesc(ifile,ng)%fh=-1
+              S(ifile)%pioFile%fh=-1
+            END IF
+#endif
             EXIT
           ELSE                       ! S(ifile)%name and Fcount already
             Fcount=S(ifile)%Fcount   ! updated in first field processed
@@ -981,21 +1024,7 @@
 !  Terminate execution requested variables are not found.
 !
       IF (.not.got_var) THEN
-        IF ((nfiles.gt.1).and.(label(1:3).eq.'FRC')) THEN
-          IF (Master) THEN
-            WRITE (stdout,50) TRIM(Vname(1,ifield)), 'files:'
-            DO i=1,nfiles
-              WRITE (stdout,'(15x,a)') TRIM(S(i)%name)
-            END DO
-          END IF
-        ELSE IF ((nfiles.gt.1).and.(label(1:3).eq.'BRY')) THEN
-          IF (Master) THEN
-            WRITE (stdout,50) TRIM(Vname(1,ifield)), 'files:'
-            DO i=1,nfiles
-              WRITE (stdout,'(15x,a)') TRIM(S(i)%name)
-            END DO
-          END IF
-        ELSE IF ((nfiles.gt.1).and.(label(1:3).eq.'CLM')) THEN
+        IF (nfiles.gt.1) THEN !!!Modified PWA 21/01/2026 removing conditions on 'FRC' etc.
           IF (Master) THEN
             WRITE (stdout,50) TRIM(Vname(1,ifield)), 'files:'
             DO i=1,nfiles
@@ -1018,21 +1047,7 @@
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END IF
       IF (.not.got_time) THEN
-        IF ((nfiles.gt.1).and.(label(1:3).eq.'FRC')) THEN
-          IF (Master) THEN
-            WRITE (stdout,50) TRIM(Tname(ifield)), 'files:'
-            DO i=1,nfiles
-              WRITE (stdout,'(15x,a)') TRIM(S(i)%name)
-            END DO
-          END IF
-        ELSE IF ((nfiles.gt.1).and.(label(1:3).eq.'BRY')) THEN
-          IF (Master) THEN
-            WRITE (stdout,50) TRIM(Tname(ifield)), 'files:'
-            DO i=1,nfiles
-              WRITE (stdout,'(15x,a)') TRIM(S(i)%name)
-            END DO
-          END IF
-        ELSE IF ((nfiles.gt.1).and.(label(1:3).eq.'CLM')) THEN
+        IF (nfiles.gt.1) THEN !!!Modified PWA 21/01/2026 removing conditions on 'FRC' etc.
           IF (Master) THEN
             WRITE (stdout,50) TRIM(Tname(ifield)), 'files:'
             DO i=1,nfiles
@@ -1089,6 +1104,31 @@
           END IF
         END DO
       END IF
+!!!Inserted PWA 21/01/2026
+      IF (label(1:3).eq.'SSF') THEN
+        DO ifile=1,nfiles
+          IF ((TRIM(ncfile).eq.TRIM(S(ifile)%name)).and.                &
+     &        (SSFdesc(ifile,ng)%fh.ne.-1).and.                         &
+     &        (pioFile%fh.ne.SSFdesc(ifile,ng)%fh)) THEN
+            pioFile=SSFdesc(ifile,ng)
+            EXIT
+          END IF
+        END DO
+      END IF
+#ifdef TS_ISOURCE
+      IF (label(1:3).eq.'ISS') THEN
+        DO ifile=1,nfiles
+          IF ((TRIM(ncfile).eq.TRIM(S(ifile)%name)).and.                &
+     &        (ISSFdesc(ifile,ng)%fh.ne.-1).and.                        &
+     &        (pioFile%fh.ne.ISSFdesc(ifile,ng)%fh)) THEN
+            pioFile=ISSFdesc(ifile,ng)
+            EXIT
+          END IF
+        END DO
+      END IF
+#endif
+!!!End insert 21/01/2026
+
 !
 !  If appropriate, open input NetCDF file for reading.
 !  (HGA: it is not needed since file was already open and
@@ -1128,6 +1168,26 @@
             EXIT
           END IF
         END DO
+!!!Inserted PWA 21/01/2026
+      ELSE IF (label(1:3).eq.'SSF') THEN
+        DO ifile=1,nfiles
+          IF (TRIM(ncfile).eq.TRIM(S(ifile)%name)) THEN
+            SSFdesc(ifile,ng)=pioFile
+            S(ifile)%pioFile=pioFile
+            EXIT
+          END IF
+        END DO
+#ifdef TS_ISOURCE
+      ELSE IF (label(1:3).eq.'ISS') THEN
+        DO ifile=1,nfiles
+          IF (TRIM(ncfile).eq.TRIM(S(ifile)%name)) THEN
+            ISSFdesc(ifile,ng)=pioFile
+            S(ifile)%pioFile=pioFile
+            EXIT
+          END IF
+        END DO
+#endif
+!!!End insert PWA 21/01/2026
       ELSE
         S(1)%pioFile=piofile
       END IF
