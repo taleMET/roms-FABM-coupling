@@ -108,6 +108,10 @@
 
 # if defined BIO_FENNEL
 #  include <fennel.h>
+!!!Inserted PWA 17/11/2014
+# elif defined RFABM
+#  include <rfabm.h>
+!!!Inserted PWA 17/11/2014
 # elif defined ECB
 #  include <ecb.h>
 # elif defined ECOSIM
