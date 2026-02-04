@@ -743,39 +743,41 @@
 !
       IF ((iic(ng).eq.0).and.                                           &
      &    (LuvSrc(ng).or.LwSrc(ng).or.ANY(LtracerSrc(:,ng)))) THEN
-        CALL get_ngfld (ng, iNLM, idRxpo, SSF(ng)%ncid,                 &
+!!!Modified PWA 21/01/2026 to enable multifile for SSF
+        CALL get_ngfld (ng, iNLM, idRxpo, SSFncid(idRxpo,ng),           &
 # if defined PIO_LIB && defined DISTRIBUTE
-     &                  SSF(ng)%pioFile,                                &
+     &                  SSFpioFile(idRxpo,ng)                           &
 # endif
-     &                  1, SSF(ng), recordless, update(1),              &
+     &                  1, SSF(1,ng), recordless, update(1),            &
      &                  1, Nsrc(ng), 1, 1, 1, Nsrc(ng), 1,              &
      &                  SOURCES(ng) % Xsrc)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-        CALL get_ngfld (ng, iNLM, idRepo, SSF(ng)%ncid,                 &
+        CALL get_ngfld (ng, iNLM, idRepo, SSFncid(idRepo,ng),           &
 # if defined PIO_LIB && defined DISTRIBUTE
-     &                  SSF(ng)%pioFile,                                &
+     &                  SSFpioFile(idRepo,ng)                           &
 # endif
-     &                  1, SSF(ng), recordless, update(1),              &
+     &                  1, SSF(1,ng), recordless, update(1),            &
      &                  1, Nsrc(ng), 1, 1, 1, Nsrc(ng), 1,              &
      &                  SOURCES(ng) % Ysrc)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-        CALL get_ngfld (ng, iNLM, idRdir, SSF(ng)%ncid,                 &
+        CALL get_ngfld (ng, iNLM, idRdir, SSFncid(idRdir,ng),           &
 # if defined PIO_LIB && defined DISTRIBUTE
-     &                  SSF(ng)%pioFile,                                &
+     &                  SSFpioFile(idRdir,ng)                           &
 # endif
-     &                  1, SSF(ng), recordless, update(1),              &
+     &                  1, SSF(1,ng), recordless, update(1),            &
      &                  1, Nsrc(ng), 1, 1, 1, Nsrc(ng), 1,              &
      &                  SOURCES(ng) % Dsrc)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 # ifdef SOLVE3D
-        CALL get_ngfld (ng, iNLM, idRvsh, SSF(ng)%ncid,                 &
-#  if defined PIO_LIB && defined DISTRIBUTE
-     &                  SSF(ng)%pioFile,                                &
-#  endif
-     &                  1, SSF(ng), recordless, update(1),              &
+        CALL get_ngfld (ng, iNLM, idRvsh, SSFncid(idRvsh,ng),           &
+# if defined PIO_LIB && defined DISTRIBUTE
+     &                  SSFpioFile(idRvsh,ng)                           &
+# endif
+     &                  1, SSF(1,ng), recordless, update(1),            &
+!!!Modified PWA 21/01/2026 to enable multifile for SSF
      &                  1, Nsrc(ng), N(ng), 1, 1, Nsrc(ng), N(ng),      &
      &                  SOURCES(ng) % Qshape)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
