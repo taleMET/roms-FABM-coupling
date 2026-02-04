@@ -37,8 +37,11 @@
 # First the defaults
 #
                FC := ifx
-           FFLAGS := -fp-model precise
-           FFLAGS += -heap-arrays
+### Modified PWA 01/08/2019 for fram (following JA)
+#           FFLAGS := -fp-model precise
+#           FFLAGS += -heap-arrays
+           FFLAGS := -mcmodel=large -xHOST
+### End modified PWA 01/08/2019
        FIXEDFLAGS := -nofree
         FREEFLAGS := -free
               CPP := /usr/bin/cpp
@@ -183,7 +186,11 @@ ifdef USE_NETCDF4
   endif
         NF_CONFIG ?= nf-config
     NETCDF_INCDIR ?= $(shell $(NF_CONFIG) --prefix)/include
-             LIBS += $(shell $(NF_CONFIG) --flibs)
+    NETCDF_LIBDIR ?= $(shell $(NC_CONFIG) --prefix)/lib ### Inserted PWA 01/08/2019, extra line from JA
+### Modified PWA 01/08/2019, following extra line from JA
+#             LIBS += $(shell $(NF_CONFIG) --flibs)
+             LIBS += -L$(NETCDF_LIBDIR) -lnetcdff -lnetcdf 
+### End modified PWA 01/08/2019
            INCDIR += $(NETCDF_INCDIR) $(INCDIR)
 else
     NETCDF_INCDIR ?= /opt/intelsoft/serial/netcdf3/include
@@ -248,6 +255,13 @@ ifdef USE_ESMF
              LIBS += $(ESMF_F90LINKPATHS) $(ESMF_F90ESMFLINKLIBS)
              LIBS += -liomp5 -lstdc++
 endif
+
+###PWA Inserted 03/12/2018
+ifdef USE_FABM
+             LIBS += -L$(FABM_LIBDIR) -lfabm
+# Remember that this means the compiler will look for 'libfabm.a'
+endif
+###PWA Inserted 03/12/2018
 
 # Use full path of compiler.
 
