@@ -152,9 +152,14 @@
 # ifdef SOLVE3D
           get_var(idUvel)=.TRUE.
           get_var(idVvel)=.TRUE.
+!!!Modified PWA 09/08/2025
+#  if !defined OFFLINE || (defined OFFLINE && defined ATCLIMATOLOGY)
+! KMT don't look for salt/temp if running offline, unless ATCLIMATOLOGY
           DO itrc=1,NAT
             get_var(idTvar(itrc))=.TRUE.
           END DO
+#  endif
+!!!End modified PWA 09/08/2025
 # endif
         END IF
 #else
@@ -166,9 +171,14 @@
 # ifdef SOLVE3D
         get_var(idUvel)=.TRUE.
         get_var(idVvel)=.TRUE.
+!!!Modified PWA 09/08/2025
+#  if !defined OFFLINE || (defined OFFLINE && defined ATCLIMATOLOGY)
+! KMT don't look for salt/temp if running offline, unless ATCLIMATOLOGY
         DO itrc=1,NAT
           get_var(idTvar(itrc))=.TRUE.
         END DO
+#  endif
+!!!End modified PWA 09/08/2025
 # endif
 #endif
 #ifdef SOLVE3D
@@ -180,9 +190,28 @@
           END DO
         END IF
 #  else
+!!!Modified PWA 23/11/2018
+!Note that get_var is initialized to .FALSE. for all variables
+#   if defined RFABM
+#    if !defined FABM_INITIAL
         DO itrc=1,NBT
           get_var(idTvar(idbio(itrc)))=.TRUE.
         END DO
+#     if !defined FABM_INITIAL_SB
+        DO i=1,NSAT
+          get_var(idSAvar(i))=.TRUE.
+        END DO
+        DO i=1,NBAT
+          get_var(idBAvar(i))=.TRUE.
+        END DO
+#     endif 
+#    endif
+#   else
+        DO itrc=1,NBT
+          get_var(idTvar(idbio(itrc)))=.TRUE.
+        END DO
+#   endif
+!!!End modification PWA 23/11/2018
 #  endif
 # endif
 # if defined T_PASSIVE
