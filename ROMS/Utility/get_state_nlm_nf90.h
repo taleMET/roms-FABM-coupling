@@ -819,6 +819,162 @@
             END IF
           END IF
         END DO
+!!!Inserted PWA 21/01/2026
+#  ifdef RFABM
+!
+!  Read in 2D surface-attached FABM variables.
+!
+        DO itrc=1,NSAT
+          IF (get_var(idSAvar(itrc))) THEN
+            foundit=find_string(var_name, n_var,                        &
+     &                          TRIM(Vname(1,idSAvar(itrc))), varid)
+            IF (foundit) THEN
+              IF (Perfect2D) THEN
+                gtype=var_flag(varid)*r3dvar
+              ELSE
+                gtype=var_flag(varid)*r2dvar
+              END IF
+              IF (Perfect2D) THEN
+                status=nf_fread3d(ng, IDmod, ncname, ncINPid,           &
+     &                            Vname(1,idSAvar(itrc)), varid,        &
+     &                            InpRec, gtype, Vsize,                 &
+     &                            LBi, UBi, LBj, UBj, 1, 3,             &
+     &                            Fscl, Fmin, Fmax,                     &
+#   ifdef MASKING
+     &                            GRID(ng) % rmask,                     &
+#   endif
+#   ifdef CHECKSUM
+     &                            OCEAN(ng) % state_sf(:,:,:,itrc),     &
+     &                            checksum = Fhash)
+#   else
+     &                            OCEAN(ng) % state_sf(:,:,:,itrc))
+#   endif
+              ELSE
+                status=nf_fread2d(ng, IDmod, ncname, ncINPid,           &
+     &                            Vname(1,idSAvar(itrc)), varid,        &
+     &                            InpRec, gtype, Vsize,                 &
+     &                            LBi, UBi, LBj, UBj,                   &
+     &                            Fscl, Fmin, Fmax,                     &
+#   ifdef MASKING
+     &                            GRID(ng) % rmask,                     &
+#   endif
+#   ifdef CHECKSUM
+     &                            OCEAN(ng) % state_sf(:,:,Tindex,itrc),&
+     &                            checksum = Fhash)
+#   else
+     &                            OCEAN(ng) % state_sf(:,:,Tindex,itrc))
+#   endif
+              END IF
+              IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+                IF (Master) THEN
+                  WRITE (stdout,60) string,TRIM(Vname(1,idSAvar(itrc))),&
+     &                              InpRec, TRIM(ncname)
+                END IF
+                exit_flag=2
+                ioerror=status
+                RETURN
+              ELSE
+                IF (Master) THEN
+# ifdef CHECKSUM
+                  WRITE (stdout,70) TRIM(Vname(2,idSAvar(itrc))),       &
+     &                              Fmin,Fmax,Fhash
+# else
+                  WRITE (stdout,70) TRIM(Vname(2,idSAvar(itrc))),       &
+     &                              Fmin,Fmax
+# endif
+                END IF
+              END IF
+            ELSE
+              IF (Master) THEN
+                WRITE (stdout,80) string, TRIM(Vname(1,idSAvar(itrc))), &
+     &                            TRIM(ncname)
+              END IF
+              exit_flag=4
+              IF (FoundError(exit_flag, nf90_noerr,                     &
+     &                       __LINE__, MyFile)) THEN
+                RETURN
+              END IF
+            END IF
+          END IF
+        END DO
+!
+!  Read in 2D bottom-attached FABM variables.
+!
+        DO itrc=1,NBAT
+          IF (get_var(idBAvar(itrc))) THEN
+            foundit=find_string(var_name, n_var,                        &
+     &                          TRIM(Vname(1,idBAvar(itrc))), varid)
+            IF (foundit) THEN
+              IF (Perfect2D) THEN
+                gtype=var_flag(varid)*r3dvar
+              ELSE
+                gtype=var_flag(varid)*r2dvar
+              END IF
+              IF (Perfect2D) THEN
+                status=nf_fread3d(ng, IDmod, ncname, ncINPid,           &
+     &                            Vname(1,idBAvar(itrc)), varid,        &
+     &                            InpRec, gtype, Vsize,                 &
+     &                            LBi, UBi, LBj, UBj, 1, 3,             &
+     &                            Fscl, Fmin, Fmax,                     &
+#   ifdef MASKING
+     &                            GRID(ng) % rmask,                     &
+#   endif
+#   ifdef CHECKSUM
+     &                            OCEAN(ng) % state_bt(:,:,:,itrc),     &
+     &                            checksum = Fhash)
+#   else
+     &                            OCEAN(ng) % state_bt(:,:,:,itrc))
+#   endif
+              ELSE
+                status=nf_fread2d(ng, IDmod, ncname, ncINPid,           &
+     &                            Vname(1,idBAvar(itrc)), varid,        &
+     &                            InpRec, gtype, Vsize,                 &
+     &                            LBi, UBi, LBj, UBj,                   &
+     &                            Fscl, Fmin, Fmax,                     &
+#   ifdef MASKING
+     &                            GRID(ng) % rmask,                     &
+#   endif
+#   ifdef CHECKSUM
+     &                            OCEAN(ng) % state_bt(:,:,Tindex,itrc),&
+     &                            checksum = Fhash)
+#   else
+     &                            OCEAN(ng) % state_bt(:,:,Tindex,itrc))
+#   endif
+              END IF
+              IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+                IF (Master) THEN
+                  WRITE (stdout,60) string,TRIM(Vname(1,idBAvar(itrc))),&
+     &                              InpRec, TRIM(ncname)
+                END IF
+                exit_flag=2
+                ioerror=status
+                RETURN
+              ELSE
+                IF (Master) THEN
+# ifdef CHECKSUM
+                  WRITE (stdout,70) TRIM(Vname(2,idBAvar(itrc))),       &
+     &                              Fmin,Fmax,Fhash
+# else
+                  WRITE (stdout,70) TRIM(Vname(2,idBAvar(itrc))),       &
+     &                              Fmin,Fmax
+# endif
+                END IF
+              END IF
+            ELSE
+              IF (Master) THEN
+                WRITE (stdout,80) string, TRIM(Vname(1,idBAvar(itrc))), &
+     &                            TRIM(ncname)
+              END IF
+              exit_flag=4
+              IF (FoundError(exit_flag, nf90_noerr,                     &
+     &                       __LINE__, MyFile)) THEN
+                RETURN
+              END IF
+            END IF
+          END IF
+        END DO
+#  endif
+!!!End insert PWA 21/01/2026
 
 # if defined GLS_MIXING || defined MY25_MIXING || defined LMD_MIXING
 !
