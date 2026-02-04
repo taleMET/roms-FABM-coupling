@@ -1750,6 +1750,89 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
         END IF
+
+!!!Inserted PWA 03/06/2022
+#  if defined CALC_TDR || defined CALC_TSR
+!
+!  Define turbulent energy dissipation rate (espilon).
+!
+        IF (Hout(idMtdr,ng)) THEN
+          Vinfo( 1)=Vname(1,idMtdr)
+          Vinfo( 2)=Vname(2,idMtdr)
+          Vinfo( 3)=Vname(3,idMtdr)
+          Vinfo(14)=Vname(4,idMtdr)
+          Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#   endif
+          Vinfo(21)=Vname(6,idMtdr)
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idMtdr,ng),r8)
+          status=def_var(ng, iNLM, HIS(ng)%ncid, HIS(ng)%Vid(idMtdr),   &
+     &                   NF_FOUT, nvd4, t3dgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+#  endif
+#  ifdef CALC_TSR
+!
+!  Define dynamic viscosity.
+!
+        IF (Hout(idMmu,ng)) THEN
+          Vinfo( 1)=Vname(1,idMmu)
+          Vinfo( 2)=Vname(2,idMmu)
+          Vinfo( 3)=Vname(3,idMmu)
+          Vinfo(14)=Vname(4,idMmu)
+          Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#   endif
+          Vinfo(21)=Vname(6,idMmu)
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idMmu,ng),r8)
+          status=def_var(ng, iNLM, HIS(ng)%ncid, HIS(ng)%Vid(idMmu),    &
+     &                   NF_FOUT, nvd4, t3dgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+!
+!  Define kinematic viscosity.
+!
+        IF (Hout(idMnu,ng)) THEN
+          Vinfo( 1)=Vname(1,idMnu)
+          Vinfo( 2)=Vname(2,idMnu)
+          Vinfo( 3)=Vname(3,idMnu)
+          Vinfo(14)=Vname(4,idMnu)
+          Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#   endif
+          Vinfo(21)=Vname(6,idMnu)
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idMnu,ng),r8)
+          status=def_var(ng, iNLM, HIS(ng)%ncid, HIS(ng)%Vid(idMnu),    &
+     &                   NF_FOUT, nvd4, t3dgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+!
+!  Define turbulent shear rate.
+!
+        IF (Hout(idMtsr,ng)) THEN
+          Vinfo( 1)=Vname(1,idMtsr)
+          Vinfo( 2)=Vname(2,idMtsr)
+          Vinfo( 3)=Vname(3,idMtsr)
+          Vinfo(14)=Vname(4,idMtsr)
+          Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#   endif
+          Vinfo(21)=Vname(6,idMtsr)
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idMtsr,ng),r8)
+          status=def_var(ng, iNLM, HIS(ng)%ncid, HIS(ng)%Vid(idMtsr),   &
+     &                   NF_FOUT, nvd4, t3dgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+#  endif
+!!!End insert PWA 03/06/2022
 # endif
 # if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
 !
@@ -2131,6 +2214,178 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 
+!!!PWA Inserted 22/01/2026
+#if defined RFABM
+# ifdef SHORTWAVE
+!
+!  Define shortwave radiation flux in [W/m2].
+!
+        IF (Hout(idSradWm2,ng)) THEN
+          Vinfo( 1)=Vname(1,idSradWm2)
+          Vinfo( 2)=Vname(2,idSradWm2)
+          Vinfo( 3)=Vname(3,idSradWm2)
+          Vinfo(11)='upward flux, cooling'
+          Vinfo(12)='downward flux, heating'
+          Vinfo(14)=Vname(4,idSradWm2)
+          Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#  endif
+          Vinfo(21)=Vname(6,idSradWm2)
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idSradWm2,ng),r8)
+          status=def_var(ng, iNLM, HIS(ng)%ncid, HIS(ng)%Vid(idSradWm2),&
+     &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+# endif
+# ifdef FABM_PCO2ATM
+!
+!  Define dry air molar fraction atmospheric CO2.
+!
+        IF (Hout(idxCO2atm,ng)) THEN
+          Vinfo( 1)=Vname(1,idxCO2atm)
+          Vinfo( 2)=Vname(2,idxCO2atm)
+          Vinfo( 3)=Vname(3,idxCO2atm)
+          Vinfo(14)=Vname(4,idxCO2atm)
+          Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#  endif
+          Vinfo(21)=Vname(6,idxCO2atm)
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idxCO2atm,ng),r8)
+          status=def_var(ng, iNLM, HIS(ng)%ncid, HIS(ng)%Vid(idxCO2atm),&
+     &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+!
+!  Define partial pressure atmospheric CO2.
+!
+        IF (Hout(idpCO2atm,ng)) THEN
+          Vinfo( 1)=Vname(1,idpCO2atm)
+          Vinfo( 2)=Vname(2,idpCO2atm)
+          Vinfo( 3)=Vname(3,idpCO2atm)
+          Vinfo(14)=Vname(4,idpCO2atm)
+          Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#  endif
+          Vinfo(21)=Vname(6,idpCO2atm)
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idpCO2atm,ng),r8)
+          status=def_var(ng, iNLM, HIS(ng)%ncid, HIS(ng)%Vid(idpCO2atm),&
+     &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+# endif
+# ifdef FABM_N3ATMDEPO
+!
+!  Define atmospheric deposition fluxes for oxidized nitrogen [mmol/m2/s].
+!
+        IF (Hout(idN3atmd,ng)) THEN
+          Vinfo( 1)=Vname(1,idN3atmd)
+          Vinfo( 2)=Vname(2,idN3atmd)
+          Vinfo( 3)=Vname(3,idN3atmd)
+          Vinfo(14)=Vname(4,idN3atmd)
+          Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#  endif
+          Vinfo(21)=Vname(6,idN3atmd)
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idN3atmd,ng),r8)
+          status=def_var(ng, iNLM, HIS(ng)%ncid, HIS(ng)%Vid(idN3atmd), &
+     &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+# endif
+# ifdef FABM_N4ATMDEPO
+!
+!  Define atmospheric deposition fluxes for reduced nitrogen [mmol/m2/s].
+!
+        IF (Hout(idN4atmd,ng)) THEN
+          Vinfo( 1)=Vname(1,idN4atmd)
+          Vinfo( 2)=Vname(2,idN4atmd)
+          Vinfo( 3)=Vname(3,idN4atmd)
+          Vinfo(14)=Vname(4,idN4atmd)
+          Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#  endif
+          Vinfo(21)=Vname(6,idN4atmd)
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idN4atmd,ng),r8)
+          status=def_var(ng, iNLM, HIS(ng)%ncid, HIS(ng)%Vid(idN4atmd), &
+     &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+# endif
+!------------------------------------------------
+!  Define surface/bottom attached FABM variables.
+!------------------------------------------------
+        DO itrc=1,NSAT
+          IF (Hout(idSAvar(itrc),ng)) THEN
+
+            Vinfo( 1)=Vname(1,idSAvar(itrc))
+            Vinfo( 2)=Vname(2,idSAvar(itrc))
+            Vinfo( 3)=Vname(3,idSAvar(itrc))
+            Vinfo(14)=Vname(4,idSAvar(itrc))
+            Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+            Vinfo(20)='mask_rho'
+# endif
+            Vinfo(21)=Vname(6,idSAvar(itrc))
+            Vinfo(22)='coordinates'
+            Aval(5)=REAL(r2dvar,r8)
+            status=def_var(ng,iNLM,HIS(ng)%ncid,                        &
+     &                     HIS(ng)%Vid(idSAvar(itrc)),                  &
+     &                     NF_FOUT, nvd3,t2dgrd,Aval,Vinfo,ncname)
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          END IF
+        END DO
+        DO itrc=1,NBAT
+          IF (Hout(idBAvar(itrc),ng)) THEN
+
+            Vinfo( 1)=Vname(1,idBAvar(itrc))
+            Vinfo( 2)=Vname(2,idBAvar(itrc))
+            Vinfo( 3)=Vname(3,idBAvar(itrc))
+            Vinfo(14)=Vname(4,idBAvar(itrc))
+            Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+            Vinfo(20)='mask_rho'
+# endif
+            Vinfo(21)=Vname(6,idBAvar(itrc))
+            Vinfo(22)='coordinates'
+            Aval(5)=REAL(r2dvar,r8)
+            status=def_var(ng,iNLM,HIS(ng)%ncid,                        &
+     &                     HIS(ng)%Vid(idBAvar(itrc)),                  &
+     &                     NF_FOUT, nvd3,t2dgrd,Aval,Vinfo,ncname)
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          END IF
+        END DO
+#endif
+!
+!  Define total suspended sediment.
+!
+        IF (Hout(idtss,ng)) THEN
+          Vinfo( 1)=Vname(1,idtss)
+          Vinfo( 2)=Vname(2,idtss)
+          Vinfo( 3)=Vname(3,idtss)
+          Vinfo(14)=Vname(4,idtss)
+          Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+# endif
+          Vinfo(21)=Vname(6,idtss)
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idtss,ng),r8)
+          status=def_var(ng, iNLM, HIS(ng)%ncid, HIS(ng)%Vid(idtss),    &
+     &                   NF_FOUT, nvd4, t3dgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+!!!End insert PWA 22/01/2026
+
 #if (defined BBL_MODEL || defined WAVES_OUTPUT) && defined SOLVE3D
 !
 !-----------------------------------------------------------------------
@@ -2432,6 +2687,24 @@
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idMtls))) THEN
             got_var(idMtls)=.TRUE.
             HIS(ng)%Vid(idMtls)=var_id(i)
+!!!Inserted PWA 03/06/2022
+#  if defined CALC_TDR || defined CALC_TSR
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idMtdr))) THEN
+            got_var(idMtdr)=.TRUE.
+            HIS(ng)%Vid(idMtdr)=var_id(i)
+#  endif
+#  ifdef CALC_TSR
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idMmu))) THEN
+            got_var(idMmu)=.TRUE.
+            HIS(ng)%Vid(idMmu)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idMnu))) THEN
+            got_var(idMnu)=.TRUE.
+            HIS(ng)%Vid(idMnu)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idMtsr))) THEN
+            got_var(idMtsr)=.TRUE.
+            HIS(ng)%Vid(idMtsr)=var_id(i)
+#  endif
+!!!End insert PWA 03/06/2022
 # endif
 # if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idPair))) THEN
@@ -2530,6 +2803,55 @@
             END IF
           END DO
 #endif
+
+!!!PWA Inserted 22/01/2026
+#if defined RFABM
+# ifdef SHORTWAVE
+          IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idSradWm2))) THEN
+            got_var(idSradWm2)=.TRUE.
+            HIS(ng)%Vid(idSradWm2)=var_id(i)
+          END IF
+# endif
+# ifdef FABM_PCO2ATM
+          IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idxCO2atm))) THEN
+            got_var(idxCO2atm)=.TRUE.
+            HIS(ng)%Vid(idxCO2atm)=var_id(i)
+          END IF
+          IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idpCO2atm))) THEN
+            got_var(idpCO2atm)=.TRUE.
+            HIS(ng)%Vid(idpCO2atm)=var_id(i)
+          END IF
+# endif
+# ifdef FABM_N3ATMDEPO
+          IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idN3atmd))) THEN
+            got_var(idN3atmd)=.TRUE.
+            HIS(ng)%Vid(idN3atmd)=var_id(i)
+          END IF
+# endif
+# ifdef FABM_N4ATMDEPO
+          IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idN4atmd))) THEN
+            got_var(idN4atmd)=.TRUE.
+            HIS(ng)%Vid(idN4atmd)=var_id(i)
+          END IF
+# endif
+          DO itrc=1,NSAT
+            IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idSAvar(itrc)))) THEN
+              got_var(idSAvar(itrc))=.TRUE.
+              HIS(ng)%Vid(idSAvar(itrc))=var_id(i)
+            END IF
+          END DO
+          DO itrc=1,NBAT
+            IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idBAvar(itrc)))) THEN
+              got_var(idBAvar(itrc))=.TRUE.
+              HIS(ng)%Vid(idBAvar(itrc))=var_id(i)
+            END IF
+          END DO
+#endif
+          IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idtss))) THEN
+            got_var(idtss)=.TRUE.
+            HIS(ng)%Vid(idtss)=var_id(i)
+          END IF
+!!!End insert PWA 22/01/2026
         END DO
 !
 !  Check if history variables are available in input NetCDF file.
@@ -2880,6 +3202,36 @@
           exit_flag=3
           RETURN
         END IF
+!!!Inserted PWA 03/06/2022
+#  if defined CALC_TDR || defined CALC_TSR
+        IF (.not.got_var(idMtdr).and.Hout(idMtdr,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idMtdr)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+#  endif
+#  ifdef CALC_TSR
+        IF (.not.got_var(idMmu).and.Hout(idMmu,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idMmu)),           &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idMnu).and.Hout(idMnu,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idMnu)),           &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idMtsr).and.Hout(idMtsr,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idMtsr)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+#  endif
+!!!End insert PWA 03/06/2022
 # endif
 # if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
         IF (.not.got_var(idPair).and.Hout(idPair,ng)) THEN
@@ -3049,6 +3401,71 @@
         END DO
 # endif
 #endif
+
+!!!PWA Inserted 22/01/2022
+#if defined RFABM
+# ifdef SHORTWAVE
+        IF (.not.got_var(idSradWm2).and.Hout(idSradWm2,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idSradWm2)),       &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+# endif
+# ifdef FABM_PCO2ATM
+        IF (.not.got_var(idxCO2atm).and.Hout(idxCO2atm,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idxCO2atm)),       &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idpCO2atm).and.Hout(idpCO2atm,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idpCO2atm)),       &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+# endif
+# ifdef FABM_N3ATMDEPO
+        IF (.not.got_var(idN3atmd).and.Hout(idN3atmd,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idN3atmd)),        &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+# endif
+# ifdef FABM_N4ATMDEPO
+        IF (.not.got_var(idN4atmd).and.Hout(idN4atmd,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idN4atmd)),        &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+# endif
+        DO i=1,NSAT
+          IF (.not.got_var(idSAvar(i)).and.Hout(idSAvar(i),ng)) THEN
+            IF (Master) WRITE (stdout,70) TRIM(Vname(1,idSAvar(i))),    &
+     &                                    TRIM(ncname)
+            exit_flag=3
+            RETURN
+          END IF
+        END DO
+        DO i=1,NBAT
+          IF (.not.got_var(idBAvar(i)).and.Hout(idBAvar(i),ng)) THEN
+            IF (Master) WRITE (stdout,70) TRIM(Vname(1,idBAvar(i))),    &
+     &                                    TRIM(ncname)
+            exit_flag=3
+            RETURN
+          END IF
+        END DO
+#endif
+        IF (.not.got_var(idtss).and.Hout(idtss,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idtss)),           &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+!!!End insert PWA 22/01/2026
 
 #if (defined BBL_MODEL || defined WAVES_OUTPUT) && defined SOLVE3D
 !
@@ -4997,6 +5414,104 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #   endif
         END IF
+!!!Inserted PWA 22/01/2026
+#   if defined CALC_TDR || defined CALC_TSR
+!
+!  Define turbulent energy dissipation rate (espilon).
+!
+        IF (Hout(idMtdr,ng)) THEN
+          Vinfo( 1)=Vname(1,idMtdr)
+          Vinfo( 2)=Vname(2,idMtdr)
+          Vinfo( 3)=Vname(3,idMtdr)
+          Vinfo(14)=Vname(4,idMtdr)
+          Vinfo(16)=Vname(1,idtime)
+#    if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#    endif
+          Vinfo(21)=Vname(6,idMtdr)
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idMtdr,ng),r8)
+          HIS(ng)%pioVar(idMtdr)%dkind=PIO_FOUT
+          HIS(ng)%pioVar(idMtdr)%gtype=r3dvar
+!
+          status=def_var(ng, model, HIS(ng)%pioFile,                    &
+     &                   HIS(ng)%pioVar(idMtdr)%vd,                     &
+     &                   PIO_FOUT, nvd4, t3dgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+#   endif
+#   ifdef CALC_TSR
+!
+!  Define dynamic viscosity.
+!
+        IF (Hout(idMmu,ng)) THEN
+          Vinfo( 1)=Vname(1,idMmu)
+          Vinfo( 2)=Vname(2,idMmu)
+          Vinfo( 3)=Vname(3,idMmu)
+          Vinfo(14)=Vname(4,idMmu)
+          Vinfo(16)=Vname(1,idtime)
+#    if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#    endif
+          Vinfo(21)=Vname(6,idMmu)
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idMmu,ng),r8)
+          HIS(ng)%pioVar(idMmu)%dkind=PIO_FOUT
+          HIS(ng)%pioVar(idMmu)%gtype=r3dvar
+!
+          status=def_var(ng, model, HIS(ng)%pioFile,                    &
+     &                   HIS(ng)%pioVar(idMmu)%vd,                      &
+     &                   PIO_FOUT, nvd4, t3dgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+!
+!  Define kinematic viscosity.
+!
+        IF (Hout(idMnu,ng)) THEN
+          Vinfo( 1)=Vname(1,idMnu)
+          Vinfo( 2)=Vname(2,idMnu)
+          Vinfo( 3)=Vname(3,idMnu)
+          Vinfo(14)=Vname(4,idMnu)
+          Vinfo(16)=Vname(1,idtime)
+#    if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#    endif
+          Vinfo(21)=Vname(6,idMnu)
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idMnu,ng),r8)
+          HIS(ng)%pioVar(idMnu)%dkind=PIO_FOUT
+          HIS(ng)%pioVar(idMnu)%gtype=r3dvar
+!
+          status=def_var(ng, model, HIS(ng)%pioFile,                    &
+     &                   HIS(ng)%pioVar(idMnu)%vd,                      &
+     &                   PIO_FOUT, nvd4, t3dgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+!
+!  Define turbulent shear rate.
+!
+        IF (Hout(idMtsr,ng)) THEN
+          Vinfo( 1)=Vname(1,idMtsr)
+          Vinfo( 2)=Vname(2,idMtsr)
+          Vinfo( 3)=Vname(3,idMtsr)
+          Vinfo(14)=Vname(4,idMtsr)
+          Vinfo(16)=Vname(1,idtime)
+#    if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#    endif
+          Vinfo(21)=Vname(6,idMtsr)
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idMtsr,ng),r8)
+          HIS(ng)%pioVar(idMtsr)%dkind=PIO_FOUT
+          HIS(ng)%pioVar(idMtsr)%gtype=r3dvar
+!
+          status=def_var(ng, model, HIS(ng)%pioFile,                    &
+     &                   HIS(ng)%pioVar(idMtsr)%vd,                     &
+     &                   PIO_FOUT, nvd4, t3dgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+#   endif
+!!!End insert PWA 22/01/2026
 #  endif
 #  if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
 !
@@ -5449,6 +5964,208 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 
+!!!PWA Inserted 22/01/2022
+# if defined RFABM
+#  ifdef SHORTWAVE
+!
+!  Define shortwave radiation flux in [W/m2].
+!
+        IF (Hout(idSradWm2,ng)) THEN
+          Vinfo( 1)=Vname(1,idSradWm2)
+          Vinfo( 2)=Vname(2,idSradWm2)
+          Vinfo( 3)=Vname(3,idSradWm2)
+          Vinfo(11)='upward flux, cooling'
+          Vinfo(12)='downward flux, heating'
+          Vinfo(14)=Vname(4,idSradWm2)
+          Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#   endif
+          Vinfo(21)=Vname(6,idSradWm2)
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idSradWm2,ng),r8)
+          HIS(ng)%pioVar(idSradWm2)%dkind=PIO_FOUT
+          HIS(ng)%pioVar(idSradWm2)%gtype=r2dvar
+!
+          status=def_var(ng, model, HIS(ng)%pioFile,                    &
+     &                   HIS(ng)%pioVar(idSradWm2)%vd,                  &
+     &                   PIO_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+#  endif
+#  ifdef FABM_PCO2ATM
+!
+!  Define dry air molar fraction atmospheric CO2.
+!
+        IF (Hout(idxCO2atm,ng)) THEN
+          Vinfo( 1)=Vname(1,idxCO2atm)
+          Vinfo( 2)=Vname(2,idxCO2atm)
+          Vinfo( 3)=Vname(3,idxCO2atm)
+          Vinfo(14)=Vname(4,idxCO2atm)
+          Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#   endif
+          Vinfo(21)=Vname(6,idxCO2atm)
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idxCO2atm,ng),r8)
+          HIS(ng)%pioVar(idxCO2atm)%dkind=PIO_FOUT
+          HIS(ng)%pioVar(idxCO2atm)%gtype=r2dvar
+!
+          status=def_var(ng, model, HIS(ng)%pioFile,                    &
+     &                   HIS(ng)%pioVar(idxCO2atm)%vd,                  &
+     &                   PIO_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+!
+!  Define partial pressure atmospheric CO2.
+!
+        IF (Hout(idpCO2atm,ng)) THEN
+          Vinfo( 1)=Vname(1,idpCO2atm)
+          Vinfo( 2)=Vname(2,idpCO2atm)
+          Vinfo( 3)=Vname(3,idpCO2atm)
+          Vinfo(14)=Vname(4,idpCO2atm)
+          Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#   endif
+          Vinfo(21)=Vname(6,idpCO2atm)
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idpCO2atm,ng),r8)
+          HIS(ng)%pioVar(idpCO2atm)%dkind=PIO_FOUT
+          HIS(ng)%pioVar(idpCO2atm)%gtype=r2dvar
+!
+          status=def_var(ng, model, HIS(ng)%pioFile,                    &
+     &                   HIS(ng)%pioVar(idpCO2atm)%vd,                  &
+     &                   PIO_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+#  endif
+#  ifdef FABM_N3ATMDEPO
+!
+!  Define atmospheric deposition fluxes for oxidized nitrogen [mmol/m2/s].
+!
+        IF (Hout(idN3atmd,ng)) THEN
+          Vinfo( 1)=Vname(1,idN3atmd)
+          Vinfo( 2)=Vname(2,idN3atmd)
+          Vinfo( 3)=Vname(3,idN3atmd)
+          Vinfo(14)=Vname(4,idN3atmd)
+          Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#   endif
+          Vinfo(21)=Vname(6,idN3atmd)
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idN3atmd,ng),r8)
+          HIS(ng)%pioVar(idN3atmd)%dkind=PIO_FOUT
+          HIS(ng)%pioVar(idN3atmd)%gtype=r2dvar
+!
+          status=def_var(ng, model, HIS(ng)%pioFile,                    &
+     &                   HIS(ng)%pioVar(idN3atmd)%vd,                   &
+     &                   PIO_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+#  endif
+#  ifdef FABM_N4ATMDEPO
+!
+!  Define atmospheric deposition fluxes for reduced nitrogen [mmol/m2/s].
+!
+        IF (Hout(idN4atmd,ng)) THEN
+          Vinfo( 1)=Vname(1,idN4atmd)
+          Vinfo( 2)=Vname(2,idN4atmd)
+          Vinfo( 3)=Vname(3,idN4atmd)
+          Vinfo(14)=Vname(4,idN4atmd)
+          Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#   endif
+          Vinfo(21)=Vname(6,idN4atmd)
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idN4atmd,ng),r8)
+          HIS(ng)%pioVar(idN4atmd)%dkind=PIO_FOUT
+          HIS(ng)%pioVar(idN4atmd)%gtype=r2dvar
+!
+          status=def_var(ng, model, HIS(ng)%pioFile,                    &
+     &                   HIS(ng)%pioVar(idN4atmd)%vd,                   &
+     &                   PIO_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+#  endif
+!------------------------------------------------
+!  Define surface/bottom attached FABM variables.
+!------------------------------------------------
+        DO itrc=1,NSAT
+          IF (Hout(idSAvar(itrc),ng)) THEN
+
+            Vinfo( 1)=Vname(1,idSAvar(itrc))
+            Vinfo( 2)=Vname(2,idSAvar(itrc))
+            Vinfo( 3)=Vname(3,idSAvar(itrc))
+            Vinfo(14)=Vname(4,idSAvar(itrc))
+            Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+            Vinfo(20)='mask_rho'
+#  endif
+            Vinfo(21)=Vname(6,idSAvar(itrc))
+            Vinfo(22)='coordinates'
+            Aval(5)=REAL(r2dvar,r8)
+            HIS(ng)%pioVar(idSAvar(itrc))%dkind=PIO_FOUT
+            HIS(ng)%pioVar(idSAvar(itrc))%gtype=r2dvar
+!
+            status=def_var(ng, model, HIS(ng)%pioFile,                  &
+     &                   HIS(ng)%pioVar(idSAvar(itrc))%vd,              &
+     &                   PIO_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          END IF
+        END DO
+        DO itrc=1,NBAT
+          IF (Hout(idBAvar(itrc),ng)) THEN
+
+            Vinfo( 1)=Vname(1,idBAvar(itrc))
+            Vinfo( 2)=Vname(2,idBAvar(itrc))
+            Vinfo( 3)=Vname(3,idBAvar(itrc))
+            Vinfo(14)=Vname(4,idBAvar(itrc))
+            Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+            Vinfo(20)='mask_rho'
+#  endif
+            Vinfo(21)=Vname(6,idBAvar(itrc))
+            Vinfo(22)='coordinates'
+            Aval(5)=REAL(r2dvar,r8)
+            HIS(ng)%pioVar(idBAvar(itrc))%dkind=PIO_FOUT
+            HIS(ng)%pioVar(idBAvar(itrc))%gtype=r2dvar
+!
+            status=def_var(ng, model, HIS(ng)%pioFile,                  &
+     &                   HIS(ng)%pioVar(idBAvar(itrc))%vd,              &
+     &                   PIO_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          END IF
+        END DO
+# endif
+!
+!  Define total suspended sediment.
+!
+        IF (Hout(idtss,ng)) THEN
+          Vinfo( 1)=Vname(1,idtss)
+          Vinfo( 2)=Vname(2,idtss)
+          Vinfo( 3)=Vname(3,idtss)
+          Vinfo(14)=Vname(4,idtss)
+          Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+# endif
+          Vinfo(21)=Vname(6,idtss)
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idtss,ng),r8)
+          HIS(ng)%pioVar(idtss)%dkind=PIO_FOUT
+          HIS(ng)%pioVar(idtss)%gtype=r3dvar
+!
+          status=def_var(ng, model, HIS(ng)%pioFile,                    &
+     &                   HIS(ng)%pioVar(idtss)%vd,                      &
+     &                   PIO_FOUT, nvd4, t3dgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+!!!End insert PWA 22/01/2026
+
 # if (defined BBL_MODEL || defined WAVES_OUTPUT) && defined SOLVE3D
 !
 !-----------------------------------------------------------------------
@@ -5856,6 +6573,32 @@
             HIS(ng)%pioVar(idMtls)%dkind=PIO_FOUT
             HIS(ng)%pioVar(idMtls)%gtype=w3dvar
 #  endif
+!!!Inserted PWA 22/01/2026
+#  if defined CALC_TDR || defined CALC_TSR
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idMtdr))) THEN
+            got_var(idMtdr)=.TRUE.
+            HIS(ng)%pioVar(idMtdr)%vd=var_desc(i)
+            HIS(ng)%pioVar(idMtdr)%dkind=PIO_FOUT
+            HIS(ng)%pioVar(idMtdr)%gtype=r3dvar
+#  endif
+#  ifdef CALC_TSR
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idMmu))) THEN
+            got_var(idMmu)=.TRUE.
+            HIS(ng)%pioVar(idMmu)%vd=var_desc(i)
+            HIS(ng)%pioVar(idMmu)%dkind=PIO_FOUT
+            HIS(ng)%pioVar(idMmu)%gtype=r3dvar
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idMnu))) THEN
+            got_var(idMnu)=.TRUE.
+            HIS(ng)%pioVar(idMnu)%vd=var_desc(i)
+            HIS(ng)%pioVar(idMnu)%dkind=PIO_FOUT
+            HIS(ng)%pioVar(idMnu)%gtype=r3dvar
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idMtsr))) THEN
+            got_var(idMtsr)=.TRUE.
+            HIS(ng)%pioVar(idMtsr)%vd=var_desc(i)
+            HIS(ng)%pioVar(idMtsr)%dkind=PIO_FOUT
+            HIS(ng)%pioVar(idMtsr)%gtype=r3dvar
+#  endif
+!!!End insert PWA 22/01/2026
 #  if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idPair))) THEN
             got_var(idPair)=.TRUE.
@@ -5997,6 +6740,70 @@
             END IF
           END DO
 # endif
+!!!PWA Inserted 22/01/2026
+# if defined RFABM
+#  ifdef SHORTWAVE
+          IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idSradWm2))) THEN
+            got_var(idSradWm2)=.TRUE.
+            HIS(ng)%pioVar(idSradWm2)%vd=var_desc(i)
+            HIS(ng)%pioVar(idSradWm2)%dkind=PIO_FOUT
+            HIS(ng)%pioVar(idSradWm2)%gtype=r2dvar
+          END IF
+#  endif
+#  ifdef FABM_PCO2ATM
+          IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idxCO2atm))) THEN
+            got_var(idxCO2atm)=.TRUE.
+            HIS(ng)%pioVar(idxCO2atm)%vd=var_desc(i)
+            HIS(ng)%pioVar(idxCO2atm)%dkind=PIO_FOUT
+            HIS(ng)%pioVar(idxCO2atm)%gtype=r2dvar
+          END IF
+          IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idpCO2atm))) THEN
+            got_var(idpCO2atm)=.TRUE.
+            HIS(ng)%pioVar(idpCO2atm)%vd=var_desc(i)
+            HIS(ng)%pioVar(idpCO2atm)%dkind=PIO_FOUT
+            HIS(ng)%pioVar(idpCO2atm)%gtype=r2dvar
+          END IF
+#  endif
+#  ifdef FABM_N3ATMDEPO
+          IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idN3atmd))) THEN
+            got_var(idN3atmd)=.TRUE.
+            HIS(ng)%pioVar(idN3atmd)%vd=var_desc(i)
+            HIS(ng)%pioVar(idN3atmd)%dkind=PIO_FOUT
+            HIS(ng)%pioVar(idN3atmd)%gtype=r2dvar
+          END IF
+#  endif
+#  ifdef FABM_N4ATMDEPO
+          IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idN4atmd))) THEN
+            got_var(idN4atmd)=.TRUE.
+            HIS(ng)%pioVar(idN4atmd)%vd=var_desc(i)
+            HIS(ng)%pioVar(idN4atmd)%dkind=PIO_FOUT
+            HIS(ng)%pioVar(idN4atmd)%gtype=r2dvar
+          END IF
+#  endif
+          DO itrc=1,NSAT
+            IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idSAvar(itrc)))) THEN
+              got_var(idSAvar(itrc))=.TRUE.
+              HIS(ng)%pioVar(idSAvar(itrc))%vd=var_desc(i)
+              HIS(ng)%pioVar(idSAvar(itrc))%dkind=PIO_FOUT
+              HIS(ng)%pioVar(idSAvar(itrc))%gtype=r2dvar
+            END IF
+          END DO
+          DO itrc=1,NBAT
+            IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idBAvar(itrc)))) THEN
+              got_var(idBAvar(itrc))=.TRUE.
+              HIS(ng)%pioVar(idBAvar(itrc))%vd=var_desc(i)
+              HIS(ng)%pioVar(idBAvar(itrc))%dkind=PIO_FOUT
+              HIS(ng)%pioVar(idBAvar(itrc))%gtype=r2dvar
+            END IF
+          END DO
+# endif
+          IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idtss))) THEN
+            got_var(idtss)=.TRUE.
+            HIS(ng)%pioVar(idtss)%vd=var_desc(i)
+            HIS(ng)%pioVar(idtss)%dkind=PIO_FOUT
+            HIS(ng)%pioVar(idtss)%gtype=r3dvar
+          END IF
+!!!End insert PWA 22/01/2026
         END DO
 !
 !  Check if history variables are available in input NetCDF file.
@@ -6348,6 +7155,36 @@
           RETURN
         END IF
 #  endif
+!!!Inserted PWA 22/01/2026
+#  if defined CALC_TDR || defined CALC_TSR
+        IF (.not.got_var(idMtdr).and.Hout(idMtdr,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idMtdr)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+#  endif
+#  ifdef CALC_TSR
+        IF (.not.got_var(idMmu).and.Hout(idMmu,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idMmu)),           &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idMnu).and.Hout(idMnu,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idMnu)),           &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idMtsr).and.Hout(idMtsr,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idMtsr)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+#  endif
+!!!End insert PWA 22/01/2026
 #  if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
         IF (.not.got_var(idPair).and.Hout(idPair,ng)) THEN
           IF (Master) WRITE (stdout,70) TRIM(Vname(1,idPair)),          &
@@ -6507,6 +7344,71 @@
         END DO
 # endif
 
+!!!PWA Inserted 22/01/2026
+# if defined RFABM
+#  ifdef SHORTWAVE
+        IF (.not.got_var(idSradWm2).and.Hout(idSradWm2,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idSradWm2)),       &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+#  endif
+#  ifdef FABM_PCO2ATM
+        IF (.not.got_var(idxCO2atm).and.Hout(idxCO2atm,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idxCO2atm)),       &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idpCO2atm).and.Hout(idpCO2atm,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idpCO2atm)),       &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+#  endif
+#  ifdef FABM_N3ATMDEPO
+        IF (.not.got_var(idN3atmd).and.Hout(idN3atmd,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idN3atmd)),        &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+#  endif
+#  ifdef FABM_N4ATMDEPO
+        IF (.not.got_var(idN4atmd).and.Hout(idN4atmd,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idN4atmd)),        &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+#  endif
+        DO i=1,NSAT
+          IF (.not.got_var(idSAvar(i)).and.Hout(idSAvar(i),ng)) THEN
+            IF (Master) WRITE (stdout,70) TRIM(Vname(1,idSAvar(i))),    &
+     &                                    TRIM(ncname)
+            exit_flag=3
+            RETURN
+          END IF
+        END DO
+        DO i=1,NBAT
+          IF (.not.got_var(idBAvar(i)).and.Hout(idBAvar(i),ng)) THEN
+            IF (Master) WRITE (stdout,70) TRIM(Vname(1,idBAvar(i))),    &
+     &                                    TRIM(ncname)
+            exit_flag=3
+            RETURN
+          END IF
+        END DO
+# endif
+        IF (.not.got_var(idtss).and.Hout(idtss,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idtss)),           &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+!!!End insert PWA 22/01/2026
+
 # if (defined BBL_MODEL || defined WAVES_OUTPUT) && defined SOLVE3D
 !
 !  Scan bottom boundary layer model and waves variables from input
@@ -6551,6 +7453,7 @@
         CALL wec_def_pio (ng, model, ldef, Hout, HIS)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
+
 !
 !  Set unlimited time record dimension to the appropriate value.
 !
