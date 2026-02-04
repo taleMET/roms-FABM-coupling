@@ -822,7 +822,8 @@
     defined NPZD_FRANKS || \
     defined NPZD_IRON   || \
     defined NPZD_POWELL || \
-    defined RED_TIDE
+    defined RED_TIDE    || \
+    defined RFABM                             /* !!! Inserted PWA 27/07/2019 */
 # define BIOLOGY
 #endif
 
@@ -1153,7 +1154,8 @@
   !(defined BIO_FENNEL      || \
     defined ECB             || \
     defined ECOSIM          || \
-    defined HYPOXIA_SRM)
+    defined HYPOXIA_SRM     || \
+    defined RFABM)          /* !!! Inserted PWA 27/07/2019 */
 #  undef DIAGNOSTICS_BIO
 #endif
 
@@ -1251,3 +1253,19 @@
 #if defined VEG_HMIXING
 # define VISC_3DCOEF
 #endif
+
+!!!Inserted PWA 09/08/2025
+/*
+ Define Mixing climatology
+ Added by DJ
+ */
+
+#if defined TKECLIMATOLOGY && defined GLSCLIMATOLOGY
+# define MIXCLIMATOLOGY
+#endif
+
+#if defined AKTCLIMATOLOGY && defined AKVCLIMATOLOGY && \
+    defined AKSCLIMATOLOGY
+# define AKXCLIMATOLOGY
+#endif
+!!!End insert PWA 09/08/2025
