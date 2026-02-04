@@ -621,10 +621,27 @@
 !  is assumed constant, but it is a function of latitude varying from
 !  1.0 at poles to 0.5 at the Equator).
 !
-          cff=(0.7859_r8+0.03477_r8*TairC(i))/                          &
-     &        (1.0_r8+0.00412_r8*TairC(i))
-          e_sat=10.0_r8**cff   ! saturation vapor pressure (hPa or mbar)
-          vap_p=e_sat*RH       ! water vapor pressure (hPa or mbar)
+!!!Modified PWA 06/10/2019 following Hedstrom code
+#  ifdef SPECIFIC_HUMIDITY
+!  specific humidity in units of kg/kg
+          vap_p=PairM*RH/(1.0_r8+0.378_r8*RH)             !WPB
+#  else
+!PWA: For consistency with the code below, the switch at RH=200% should also
+!     be applied here (but very unlikely to affect anything)
+          IF(RH.lt.2.0_r8) THEN                               !WPB
+            cff=(0.7859_r8+0.03477_r8*TairC(i))/                        &
+     &          (1.0_r8+0.00412_r8*TairC(i))
+            e_sat=10.0_r8**cff   ! saturation vapor pressure (hPa or mbar)
+            vap_p=e_sat*RH       ! water vapor pressure (hPa or mbar)
+          ELSE                                                !WPB
+            vap_p=0.001_r8*PairM*RH/(1.0_r8+0.000378_r8*RH) !WPB
+          ENDIF                                               !WPB
+#  endif
+!          cff=(0.7859_r8+0.03477_r8*TairC(i))/                          &
+!     &        (1.0_r8+0.00412_r8*TairC(i))
+!          e_sat=10.0_r8**cff   ! saturation vapor pressure (hPa or mbar)
+!          vap_p=e_sat*RH       ! water vapor pressure (hPa or mbar)
+!!!End modified PWA 06/10/2019
           cff2=TairK(i)*TairK(i)*TairK(i)
           cff1=cff2*TairK(i)
           LRad(i,j)=-emmiss*StefBo*                                     &
@@ -700,6 +717,15 @@
 !
 !  Compute specific humidity, Q (kg/kg).
 !
+!!!Modified PWA 18/02/2020 following Hedstrom code     
+#if defined CORE_FORCING || defined SPECIFIC_HUMIDITY
+! Incoming humidity is specific humidity in (kg/kg)
+          Q(i)=RH
+#else
+# ifdef SPEC_HUM
+!JF: added "SPEC_HUM" cpp option to force RH to be g/kg
+          Q(i)=RH/1000.0_r8                          !Spec Hum (kg/kg)
+# else
           IF (RH.lt.2.0_r8) THEN                       !RH fraction
             cff=cff*RH                                 !Vapor pres (mb)
             Q(i)=0.62197_r8*                                            &
@@ -707,6 +733,9 @@
           ELSE          !RH input was actually specific humidity in g/kg
             Q(i)=RH/1000.0_r8                          !Spec Hum (kg/kg)
           END IF
+# endif
+#endif
+!!!End modified PWA 18/02/2020
 !
 !  Compute water saturation vapor pressure (mb), using Teten formula.
 !
