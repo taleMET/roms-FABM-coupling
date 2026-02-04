@@ -182,6 +182,46 @@
 !
       IF ((exit_flag.eq.5).or.(exit_flag.eq.6)) RETURN
 
+!!!Inserted PWA 26/01/2026 to allow for multiple point source files
+#ifndef ANA_PSOURCE
+!
+!  If appropriate, close point Source/Sink files.
+!
+      DO i=1,nSSFfiles(ng)
+        IF ((SSF(i,ng)%Nfiles.gt.0).and.(SSF(i,ng)%ncid.ne.-1)) THEN
+          Fcount=SSF(i,ng)%Fcount
+          CALL close_file (ng, model, SSF(i,ng),                        &
+     &                       SSF(i,ng)%files(Fcount), .FALSE.)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          SSFids=-1
+          SSFncid=-1
+          Fcount=1
+          SSF(i,ng)%Fcount=Fcount
+          SSF(i,ng)%name=TRIM(SSF(i,ng)%files(Fcount))
+        END IF
+      END DO
+#endif
+
+#ifdef TS_ISOURCE
+!
+!  If appropriate, close internal point Source/Sink files.
+!
+      DO i=1,nISSFfiles(ng)
+        IF ((ISSF(i,ng)%Nfiles.gt.0).and.(ISSF(i,ng)%ncid.ne.-1)) THEN
+          Fcount=ISSF(i,ng)%Fcount
+          CALL close_file (ng, model, ISSF(i,ng),                       &
+     &                       ISSF(i,ng)%files(Fcount), .FALSE.)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          ISSFids=-1
+          ISSFncid=-1
+          Fcount=1
+          ISSF(i,ng)%Fcount=Fcount
+          ISSF(i,ng)%name=TRIM(ISSF(i,ng)%files(Fcount))
+        END IF
+      END DO
+#endif
+!!!End insert PWA 26/01/2026
+
 #ifdef FRC_FILE
 !
 !  If appropriate, close input forcing files and set several parameter
