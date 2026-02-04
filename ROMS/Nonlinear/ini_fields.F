@@ -277,7 +277,8 @@
 
 # include "set_bounds.h"
 
-# ifdef SOLVE3D
+!!!Modified condition PWA 09/08/2025
+# if defined SOLVE3D && !defined OFFLINE
 !
 !-----------------------------------------------------------------------
 !  If not perfect restart, initialize other time levels for 3D momentum.
@@ -328,6 +329,8 @@
      &                   v)
       END IF
 !
+!!!Added condition PWA 09/08/2025
+#  if !defined OFFLINE
       IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
         CALL exchange_u3d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
@@ -336,6 +339,7 @@
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
      &                          v(:,:,:,nstp))
       END IF
+#  endif
 
 #  ifdef DISTRIBUTE
 !
@@ -356,7 +360,8 @@
       CALL uv_C2A_grid (ng, tile, iNLM, nstp)
 # endif
 
-# ifdef SOLVE3D
+!!!Modified condition 09/08/2025
+# if defined SOLVE3D && !defined OFFLINE
 !
 !-----------------------------------------------------------------------
 !  If not perfect restart, compute vertically-integrated momentum
@@ -453,8 +458,8 @@
      &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    ubar(:,:,kstp), vbar(:,:,kstp))
 #  endif
-
-# else
+!!!Modified condition PWA 09/08/2025
+# elif !defined OFFLINE
 !
 !-----------------------------------------------------------------------
 !  If not perfect restart, initialize other time levels for 2D momentum
@@ -541,7 +546,8 @@
 #  endif
 # endif
 
-# ifdef SOLVE3D
+!!!Modified condition PWA 09/08/2025
+# if defined SOLVE3D && !defined OFFLINE
 !
 !-----------------------------------------------------------------------
 !  If not perfect restart, initialize other time levels for tracers.
