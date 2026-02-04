@@ -92,6 +92,12 @@
      &                       OCEAN(ng) % u,                             &
      &                       OCEAN(ng) % v,                             &
      &                       OCEAN(ng) % W,                             &
+!!!Inserted PWA 03/06/2022
+# ifdef CALC_TSR
+     &                       OCEAN(ng) % t,                             &
+     &                       OCEAN(ng) % rho,                           &
+# endif
+!!!End insert PWA 03/06/2022
 # ifdef WEC_VF
      &                       OCEAN(ng) % W_stokes,                      &
 # endif
@@ -116,6 +122,16 @@
      &                       MIXING(ng) % Akk,                          &
      &                       MIXING(ng) % Akp,                          &
      &                       MIXING(ng) % Lscale,                       &
+!!!Inserted PWA 03/06/2022
+# if defined CALC_TDR || defined CALC_TSR
+     &                       MIXING(ng) % tdr,                          &
+# endif
+# ifdef CALC_TSR
+     &                       MIXING(ng) % mu,                           &
+     &                       MIXING(ng) % nu,                           &
+     &                       MIXING(ng) % tsr,                          &
+# endif
+!!!End insert PWA 03/06/2022
      &                       MIXING(ng) % gls,                          &
      &                       MIXING(ng) % tke)
 # ifdef PROFILE
@@ -136,6 +152,11 @@
      &                             Huon, Hvom, Hz, pm, pn, z_r, z_w,    &
      &                             ZoBot,                               &
      &                             u, v, W,                             &
+!!!Inserted PWA 03/06/2022
+# ifdef CALC_TSR
+     &                             t, rho,                              &
+# endif
+!!!End insert PWA 03/06/2022
 # ifdef WEC_VF
      &                             W_stokes,                            &
 # endif
@@ -150,7 +171,16 @@
      &                             Dissip_break, Dissip_wcap,           &
 # endif
      &                             Akt, Akv, bvf,                       &
-     &                             Akk, Akp, Lscale, gls, tke)
+     &                             Akk, Akp, Lscale,                    &
+!!!Inserted PWA 03/06/2022
+# if defined CALC_TDR || defined CALC_TSR
+     &                             tdr,                                 &
+# endif
+# ifdef CALC_TSR
+     &                             mu, nu, tsr,                         &
+# endif
+!!!End insert PWA 03/06/2022
+     &                             gls, tke)
 !***********************************************************************
 !
       USE mod_param
@@ -211,6 +241,18 @@
       real(r8), intent(inout) :: Akk(LBi:,LBj:,0:)
       real(r8), intent(inout) :: Akp(LBi:,LBj:,0:)
       real(r8), intent(inout) :: Lscale(LBi:,LBj:,0:)
+!!!Inserted PWA 03/06/2022
+#  if defined CALC_TDR || defined CALC_TSR
+      real(r8), intent(out) :: tdr(LBi:,LBj:,:)
+#  endif
+#  ifdef CALC_TSR
+      real(r8), intent(in) :: t(LBi:,LBj:,:,:,:)
+      real(r8), intent(in) :: rho(LBi:,LBj:,:)
+      real(r8), intent(out) :: mu(LBi:,LBj:,:)
+      real(r8), intent(out) :: nu(LBi:,LBj:,:)
+      real(r8), intent(out) :: tsr(LBi:,LBj:,:)
+#  endif
+!!!End insert PWA 03/06/2022
       real(r8), intent(inout) :: gls(LBi:,LBj:,0:,:)
       real(r8), intent(inout) :: tke(LBi:,LBj:,0:,:)
 # else
@@ -254,6 +296,18 @@
       real(r8), intent(inout) :: Akk(LBi:UBi,LBj:UBj,0:N(ng))
       real(r8), intent(inout) :: Akp(LBi:UBi,LBj:UBj,0:N(ng))
       real(r8), intent(inout) :: Lscale(LBi:UBi,LBj:UBj,0:N(ng))
+!!!Inserted PWA 03/06/2022
+#  if defined CALC_TDR || defined CALC_TSR
+      real(r8), intent(out) :: tdr(LBi:UBi,LBj:UBj,N(ng))
+#  endif
+#  ifdef CALC_TSR
+      real(r8), intent(in) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
+      real(r8), intent(in) :: rho(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(out) :: mu(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(out) :: nu(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(out) :: tsr(LBi:UBi,LBj:UBj,N(ng))
+#  endif
+!!!End insert PWA 03/06/2022
       real(r8), intent(inout) :: gls(LBi:UBi,LBj:UBj,0:N(ng),3)
       real(r8), intent(inout) :: tke(LBi:UBi,LBj:UBj,0:N(ng),3)
 # endif
@@ -266,6 +320,16 @@
       real(r8), parameter :: Gadv = 1.0_r8/3.0_r8
       real(r8), parameter :: eps = 1.0E-10_r8
       real(r8) :: Zos_min
+!!!Inserted PWA 03/06/2022
+# ifdef CALC_TSR
+      real(r8), parameter,dimension(10) :: a_mu = (/1.5700386464E-1,    &
+     &  6.4992620050E1, -9.1296496657E1, 4.2844324477E-5,               &
+     &  1.5409136040E0, 1.9981117208E-2, -9.5203865864E-5,              &
+     &  7.9739318223E0, -7.5614568881E-2, 4.7237011074E-4/)
+     !Parameters for calculating dynamic viscosity of seawater, following
+     !SW_Viscosity.m by Mostafa H. Sharqawy (see references therein).
+# endif
+!!!End insert PWA 03/06/2022
 
       real(r8) :: Gh, Gm, Kprod, Ls_unlmt, Ls_lmt, Pprod, Sh, Sm
       real(r8) :: cff, cff1, cff2, cff3
@@ -281,6 +345,14 @@
 # if defined CRAIG_BANNER || defined TKE_WAVEDISS
       real(r8) :: cb_wallE
 # endif
+!!!Inserted PWA 03/06/2022
+# if defined CALC_TDR || defined CALC_TSR
+      real(r8) :: tke_av, gls_av
+# endif
+# ifdef CALC_TSR
+      real(r8) :: T1, S1, muw1, A1, B1
+# endif
+!!!End insert PWA 03/06/2022
 
       real(r8), dimension(IminS:ImaxS) :: tke_fluxt
       real(r8), dimension(IminS:ImaxS) :: tke_fluxb
@@ -492,6 +564,37 @@
         END DO
       END DO
 # endif
+!!!Inserted PWA 03/06/2022
+# if defined CALC_TDR || defined CALC_TSR
+      DO k=1,N(ng)
+        DO j=JstrR,JendR
+          DO i=IstrR,IendR
+            tke_av = 0.5_r8*(tke(i,j,k-1,nstp)+tke(i,j,k,nstp))
+            gls_av = 0.5_r8*(gls(i,j,k-1,nstp)+gls(i,j,k,nstp))
+
+            tdr(i,j,k) = cmu_fac2*tke_av*(tke_av**tke_exp2) *           &
+     &                   (gls_av**(-gls_exp1))
+
+#  if defined CALC_TSR
+            T1 = MAX(0.0_r8, t(i,j,k,nstp,itemp)) !Validity range 0-180C, 0-150 g/kg, see SW_Viscosity.m
+            S1 = MAX(0.0_r8, t(i,j,k,nstp,isalt)) / 1000.0_r8
+            muw1 = a_mu(4) + 1.0_r8/(a_mu(1)*(T1+a_mu(2))**2+a_mu(3))
+            A1 = a_mu(5) + a_mu(6)*T1 + a_mu(7)*T1**2
+            B1 = a_mu(8) + a_mu(9)*T1 + a_mu(10)*T1**2
+            mu(i,j,k) = muw1*(1.0_r8 + A1*S1 + B1*S1**2) !Dynamic viscosity [kg/m/s]
+            nu(i,j,k) = mu(i,j,k)/(1000.0_r8 + rho(i,j,k)) !Kinematic viscosity [m2/s]
+            !Note that kinematic viscosity varies by ~factor 2 between 0 degC and 25 degC 
+
+            tsr(i,j,k) = SQRT(tdr(i,j,k)/nu(i,j,k))
+#  endif
+          END DO
+        END DO
+      END DO
+# endif
+!!!End insert PWA 03/06/2022
+!!!Added condition PWA 13/08/2025 to ensure that (tke,gls) are not modified
+!!!in offline simulations forced by (tke,gls) input.
+# if !defined OFFLINE || !defined MIXCLIMATOLOGY
 !
 !-----------------------------------------------------------------------
 !  Time-step advective terms.
@@ -1131,10 +1234,24 @@
 !
             ql=sqrt2*0.5_r8*(Ls_lmt*SQRT(tke(i,j,k,nnew))+              &
      &                       Lscale(i,j,k)*SQRT(tke(i,j,k,nstp)))
+!!!Added OFFLINE conditions PWA 13/08/2025
+# ifdef OFFLINE
+#  if !defined AKVCLIMATOLOGY && !defined AKXCLIMATOLOGY
+            Akv(i,j,k)=Akv_bak(ng)+Sm*ql
+#  endif
+#  if !defined AKTCLIMATOLOGY && !defined AKXCLIMATOLOGY
+            Akt(i,j,k,itemp)=Akt_bak(itemp,ng)+Sh*ql
+#  endif
+#  if !defined AKSCLIMATOLOGY && !defined AKXCLIMATOLOGY
+            Akt(i,j,k,isalt)=Akt_bak(isalt,ng)+Sh*ql
+#  endif
+# else
             Akv(i,j,k)=Akv_bak(ng)+Sm*ql
             DO itrc=1,NAT
               Akt(i,j,k,itrc)=Akt_bak(itrc,ng)+Sh*ql
             END DO
+# endif
+
 !
 !  Compute vertical mixing (m2/s) coefficents of turbulent kinetic
 !  energy and generic statistical field.
@@ -1165,20 +1282,35 @@
 !  Compute vertical mixing coefficients at the surface and bottom.
 !
 !
+!!!Added OFFLINE condition PWA 13/08/2025
+# if !(defined OFFLINE && (defined AKVCLIMATOLOGY || defined AKXCLIMATOLOGY))
           Akv(i,j,N(ng))=Akv_bak(ng)+L_sft*Zos_eff(i)*gls_cmu0(ng)*     &
      &                   SQRT(tke(i,j,N(ng),nnew))
           Akv(i,j,0)=Akv_bak(ng)+vonKar*Zob_min(i,j)*gls_cmu0(ng)*      &
      &               SQRT(tke(i,j,0,nnew))
+# endif
 !
           Akk(i,j,N(ng))=Akk_bak(ng)+Akv(i,j,N(ng))/gls_sigk(ng)
           Akk(i,j,0)=Akk_bak(ng)+Akv(i,j,0)/gls_sigk(ng)
           Akp(i,j,N(ng))=Akp_bak(ng)+Akv(i,j,N(ng))*ogls_sigp
           Akp(i,j,0)=Akp_bak(ng)+Akv(i,j,0)/gls_sigp(ng)
 !
+!!!Added OFFLINE conditions PWA 13/08/2025
+# ifdef OFFLINE
+#  if !defined AKTCLIMATOLOGY && !defined AKXCLIMATOLOGY
+          Akt(i,j,N(ng),itemp)=Akt_bak(itemp,ng)
+          Akt(i,j,0,itemp)=Akt_bak(itemp,ng)
+#  endif
+#  if !defined AKSCLIMATOLOGY && !defined AKXCLIMATOLOGY
+          Akt(i,j,N(ng),isalt)=Akt_bak(isalt,ng)
+          Akt(i,j,0,isalt)=Akt_bak(isalt,ng)
+#  endif
+# else
           DO itrc=1,NAT
             Akt(i,j,N(ng),itrc)=Akt_bak(itrc,ng)
             Akt(i,j,0,itrc)=Akt_bak(itrc,ng)
           END DO
+# endif
 
 # if defined LIMIT_VDIFF || defined LIMIT_VVISC
 !
@@ -1200,6 +1332,7 @@
 # endif
         END DO
       END DO
+# endif
 !
 !-----------------------------------------------------------------------
 !  Set lateral boundary conditions.
