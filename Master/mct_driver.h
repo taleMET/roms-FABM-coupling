@@ -32,6 +32,11 @@
 !
       USE m_MCTWorld,        ONLY : MCTWorld_clean => clean
 
+!!!PWA Inserted 25/07/2022
+#ifdef RFABM
+      USE roms_fabm_mod, ONLY : roms_fabm_init
+#endif
+!!!PWA Inserted 25/07/2022
 #ifdef WRF_COUPLING
       USE mct_coupler_mod,   ONLY : finalize_ocn2atm_coupling
 #endif
@@ -159,6 +164,11 @@
             run_time=MAX(run_time, dt(ng)*ntimes(ng))
           END DO
         END IF
+!!!PWA Inserted 25/07/2022: Initialize FABM
+#ifdef RFABM
+        CALL roms_fabm_init
+#endif
+!!!PWA Inserted 25/07/2022
         IF (exit_flag.eq.NoError) THEN
           CALL ROMS_run (run_time)
         END IF
