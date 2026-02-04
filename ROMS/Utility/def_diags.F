@@ -601,7 +601,8 @@
 # endif
 
 # ifdef DIAGNOSTICS_BIO
-#  if defined BIO_FENNEL || defined ECB || defined HYPOXIA_SRM
+#  if defined BIO_FENNEL || defined ECB || defined HYPOXIA_SRM || defined RFABM
+!!!Modified PWA 22/01/2026
 !
 !  Define 2D biological diagnostic fields.
 !
@@ -625,7 +626,8 @@
           END IF
         END DO
 #  endif
-#  if defined BIO_FENNEL || defined ECB
+#  if defined BIO_FENNEL || defined ECB || defined RFABM
+!!!Modified PWA 22/01/2026
 !
 !  Define 3D biological diagnostic fields.
 !
@@ -791,7 +793,8 @@
           END DO
 # endif
 # ifdef DIAGNOSTICS_BIO
-#  if defined BIO_FENNEL || defined ECB || defined HYPOXIA_SRM
+#  if defined BIO_FENNEL || defined ECB || defined HYPOXIA_SRM || defined RFABM
+!!!Modified PWA 22/01/2026
           DO ivar=1,NDbio2d
             ifield=iDbio2(ivar)
             IF (TRIM(var_name(i)).eq.TRIM(Vname(1,ifield))) THEN
@@ -800,7 +803,8 @@
             END IF
           END DO
 #  endif
-#  if defined BIO_FENNEL || defined ECB
+#  if defined BIO_FENNEL || defined ECB || defined RFABM
+!!!Modified PWA 22/01/2026
           DO ivar=1,NDbio3d
             ifield=iDbio3(ivar)
             IF (TRIM(var_name(i)).eq.TRIM(Vname(1,ifield))) THEN
@@ -885,7 +889,8 @@
         END DO
 # endif
 # ifdef DIAGNOSTICS_BIO
-#  if defined BIO_FENNEL || defined ECB || defined HYPOXIA_SRM
+#  if defined BIO_FENNEL || defined ECB || defined HYPOXIA_SRM || defined RFABM
+!!!Modified PWA 22/01/2026
         DO ivar=1,NDbio2d
           ifield=iDbio2(ivar)
           IF (.not.got_var(ifield).and.Dout(ifield,ng)) THEN
@@ -896,7 +901,8 @@
           END IF
         END DO
 #  endif
-#  if defined BIO_FENNEL || defined ECB
+#  if defined BIO_FENNEL || defined ECB || defined RFABM
+!!!Modified PWA 22/01/2026
         DO ivar=1,NDbio3d
           ifield=iDbio3(ivar)
           IF (.not.got_var(ifield).and.Dout(ifield,ng)) THEN
@@ -1515,7 +1521,8 @@
 #  endif
 
 #  ifdef DIAGNOSTICS_BIO
-#   if defined BIO_FENNEL || defined ECB || defined HYPOXIA_SRM
+#   if defined BIO_FENNEL || defined ECB || defined HYPOXIA_SRM || defined RFABM
+!!!Modified PWA 22/01/2026
 !
 !  Define 2D biological diagnostic fields.
 !
@@ -1543,7 +1550,8 @@
           END IF
         END DO
 #   endif
-#   if defined BIO_FENNEL || defined ECB
+#   if defined BIO_FENNEL || defined ECB || defined RFABM
+!!!Modified PWA 22/01/2026
 !
 !  Define 3D biological diagnostic fields.
 !
@@ -1734,7 +1742,8 @@
           END DO
 #  endif
 #  ifdef DIAGNOSTICS_BIO
-#   if defined BIO_FENNEL || defined ECB || defined HYPOXIA_SRM
+#   if defined BIO_FENNEL || defined ECB || defined HYPOXIA_SRM || defined RFABM
+!!!Modified PWA 22/01/2026
           DO ivar=1,NDbio2d
             ifield=iDbio2(ivar)
             IF (TRIM(var_name(i)).eq.TRIM(Vname(1,ifield))) THEN
@@ -1745,7 +1754,8 @@
             END IF
           END DO
 #   endif
-#   if defined BIO_FENNEL || defined ECB
+#   if defined BIO_FENNEL || defined ECB || defined RFABM
+!!!Modified PWA 22/01/2026
           DO ivar=1,NDbio3d
             ifield=iDbio3(ivar)
             IF (TRIM(var_name(i)).eq.TRIM(Vname(1,ifield))) THEN
@@ -1836,7 +1846,8 @@
         END DO
 #  endif
 #  ifdef DIAGNOSTICS_BIO
-#   if defined BIO_FENNEL || defined ECB || defined HYPOXIA_SRM
+#   if defined BIO_FENNEL || defined ECB || defined HYPOXIA_SRM || defined RFABM
+!!!Modified PWA 22/01/2026
         DO ivar=1,NDbio2d
           ifield=iDbio2(ivar)
           IF (.not.got_var(ifield).and.Dout(ifield,ng)) THEN
@@ -1847,7 +1858,8 @@
           END IF
         END DO
 #   endif
-#   if defined BIO_FENNEL || defined ECB
+#   if defined BIO_FENNEL || defined ECB || defined RFABM
+!!!Modified PWA 22/01/2026
         DO ivar=1,NDbio3d
           ifield=iDbio3(ivar)
           IF (.not.got_var(ifield).and.Dout(ifield,ng)) THEN
