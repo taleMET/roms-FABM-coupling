@@ -151,7 +151,7 @@
 #ifdef BIOLOGY
       character (len=512)    :: bio_file
 #endif
-      character (len=4096)   :: string
+      character (len=8192) :: string !!!Modified PWA 20/01/2022, increase length from 4096 to 8192
       character (len=MaxLen) :: Vinfo(Natt)
 
       character (len=*), parameter :: MyFile =                          &
@@ -2203,6 +2203,38 @@
      &               1, (/trcdim/), Aval, Vinfo, ncname,                &
      &               SetParAccess = .FALSE.)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!!!Inserted PWA 10/02/2020
+# if defined RFABM && defined FABM_ISOURCES
+!
+!  Logical switches indicating which biological tracer variables are processed
+!  during internal point Sources/Sinks.
+!
+      Vinfo( 1)='LtracerIbio'
+      Vinfo( 2)='biotracer internal sources-sinks activation switch'
+      Vinfo( 9)='.FALSE.'
+      Vinfo(10)='.TRUE.'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
+     &               1, (/trcdim/), Aval, Vinfo, ncname,                &
+     &               SetParAccess = .FALSE.)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
+!!!End insert PWA 10/02/2020
+!!!Inserted PWA 07/02/2020
+# ifdef TS_ISOURCE
+!
+!  Logical switches indicating which tracer variables are processed
+!  during internal point Sources/Sinks.
+!
+      Vinfo( 1)='LtracerISrc'
+      Vinfo( 2)='tracer internal point sources-sinks activation switch'
+      Vinfo( 9)='.FALSE.'
+      Vinfo(10)='.TRUE.'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
+     &               1, (/trcdim/), Aval, Vinfo, ncname,                &
+     &               SetParAccess = .FALSE.)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
+!!!End insert PWA 07/02/2020
 #endif
 !
 !  Logical switches to process climatology fields.
