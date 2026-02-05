@@ -26,6 +26,11 @@
 !  bvstr        Bottom momentum flux (bottom stress) in the            !
 !                 ETA-direction (m2/s2) at horizontal V-points.        !
 !                                                                      !
+!!!PWA Inserted 30/10/2015                                             !
+#if defined RFABM
+!  bstrPa       Scalar bottom stress for use in FABM models (Pa)       !
+#endif
+!!!PWA Inserted 30/10/2015                                             !
 !  Surface wind induced waves.                                         !
 !                                                                      !
 !  Hwave        Surface wind induced wave height (m).                  !
@@ -65,6 +70,12 @@
 !  srflxG       Latest two-time snapshots of input "srflx" grided      !
 !                 data used for interpolation.                         !
 !                                                                      !
+!!!PWA Inserted 30/10/2015                                             !
+#if defined RFABM
+!  srflxWm2     Surface shortwave solar radiation flux                 !
+!                 (Watts/m2) at horizontal RHO-points                  !
+#endif
+!!!PWA Inserted 30/10/2015                                             !
 !  Cloud fraction.                                                     !
 !                                                                      !
 !  cloud        Cloud fraction (percentage/100).                       !
@@ -112,6 +123,36 @@
 !                 horizontal RHO-points.                               !
 !  VwindG       Latest two-time snapshots of input "Vwind" grided      !
 !                 data used for interpolation.                         !
+!                                                                      !
+!!!PWA Inserted 14/04/2017                                             !
+#if defined RFABM
+!  Swind        Scalar wind speed for use in FABM models (m/s)         !
+# ifdef FABM_ASILT
+!  Asilt        Absorption of silt for use in FABM models              !
+# endif
+!!!PWA Inserted 13/12/2020
+# if defined FABM_TSS || defined FABM_TSS_ONLINE
+!  tss          Total Suspended Sediment for use in FABM models        !
+# endif
+!!!End insert PWA 13/12/2020
+# ifdef FABM_PCO2ATM
+!  xCO2atm      Atmospheric dry molar fraction of CO2 (ppm)            !
+!  pCO2atm      Atmospheric partial pressure of CO2 (uatm)             !
+# endif
+# ifdef FABM_ADYTRACER
+!  ADY_0        Surface absorption due to dissolved+detrital matter    !
+# endif
+# ifdef FABM_N3ATMDEPO
+!  N3atmd       Atmospheric deposition of oxidized nitrogen (mmol/m2/s)!
+# endif
+# ifdef FABM_N4ATMDEPO
+!  N4atmd       Atmospheric deposition of reduced nitrogen (mmol/m2/s) !
+# endif
+# ifdef FABM_ISOURCES
+!  Isources     Internal biogeochemical sources (concentration/s)      !
+# endif
+#endif
+!!!End insert PWA 16/03/2015                                           !
 !                                                                      !
 !  Rain fall rate.                                                     !
 !                                                                      !
@@ -390,8 +431,10 @@
 #  endif
 # endif
 
+!!!PWA Modified to include RFABM (22/07/2019)
+!FABM models likely need Uwind(G) and Vwind(G) to calculate Swind
 # if defined BULK_FLUXES    || defined ECOSIM || \
-     defined SPECTRAL_LIGHT
+     defined SPECTRAL_LIGHT || defined RFABM
           real(r8), pointer :: Uwind(:,:)
           real(r8), pointer :: Vwind(:,:)
 #  ifndef ANA_WINDS
@@ -399,6 +442,34 @@
           real(r8), pointer :: VwindG(:,:,:)
 #  endif
 # endif
+
+!!!PWA Inserted 21/01/2026
+#if defined RFABM
+          real(r8), pointer :: srflxWm2(:,:)
+          real(r8), pointer :: Swind(:,:)
+          real(r8), pointer :: bstrPa(:,:)
+# ifdef FABM_TSS
+          real(r8), pointer :: tss(:,:,:)
+          real(r8), pointer :: tssG(:,:,:,:)
+# endif
+# ifdef FABM_TSS_ONLINE
+          real(r8), pointer :: tss(:,:,:)
+# endif
+# ifdef FABM_PCO2ATM
+          real(r8), pointer :: xCO2atm(:,:)
+          real(r8), pointer :: pCO2atm(:,:)
+          real(r8), pointer :: xCO2atmG(:,:,:)
+# endif
+# ifdef FABM_N3ATMDEPO
+          real(r8), pointer :: N3atmd(:,:)
+          real(r8), pointer :: N3atmdG(:,:,:)
+# endif
+# ifdef FABM_N4ATMDEPO
+          real(r8), pointer :: N4atmd(:,:)
+          real(r8), pointer :: N4atmdG(:,:,:)
+# endif
+#endif
+!!!End insert PWA 21/01/2026
 
 # ifdef BULK_FLUXES
           real(r8), pointer :: rain(:,:)
@@ -858,8 +929,9 @@
 #  endif
 # endif
 
+!!!PWA Modified to include RFABM (22/07/2019)
 # if defined BULK_FLUXES    || defined ECOSIM || \
-     defined SPECTRAL_LIGHT
+     defined SPECTRAL_LIGHT || defined RFABM
       allocate ( FORCES(ng) % Uwind(LBi:UBi,LBj:UBj) )
       Dmem(ng)=Dmem(ng)+size2d
 
@@ -874,6 +946,59 @@
       Dmem(ng)=Dmem(ng)+2.0_r8*size2d
 #  endif
 # endif
+
+!!!PWA Inserted 21/01/2026
+# if defined RFABM
+      allocate ( FORCES(ng) % srflxWm2(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+
+      allocate ( FORCES(ng) % Swind(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+
+      allocate ( FORCES(ng) % bstrPa(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+
+#  ifdef FABM_TSS
+      allocate ( FORCES(ng) % tss(LBi:UBi,LBj:UBj,N(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
+
+      allocate ( FORCES(ng) % tssG(LBi:UBi,LBj:UBj,N(ng),2) )
+      Dmem(ng)=Dmem(ng)+2.0_r8*REAL(N(ng),r8)*size2d
+#  endif
+
+#  ifdef FABM_TSS_ONLINE
+      allocate ( FORCES(ng) % tss(LBi:UBi,LBj:UBj,N(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
+#  endif
+
+#  ifdef FABM_PCO2ATM
+      allocate ( FORCES(ng) % xCO2atm(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+
+      allocate ( FORCES(ng) % pCO2atm(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+
+      allocate ( FORCES(ng) % xCO2atmG(LBi:UBi,LBj:UBj,2) )
+      Dmem(ng)=Dmem(ng)+2.0_r8*size2d
+#  endif
+
+#  ifdef FABM_N3ATMDEPO
+      allocate ( FORCES(ng) % N3atmd(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+
+      allocate ( FORCES(ng) % N3atmdG(LBi:UBi,LBj:UBj,2) )
+      Dmem(ng)=Dmem(ng)+2.0_r8*size2d
+#  endif
+
+#  ifdef FABM_N4ATMDEPO
+      allocate ( FORCES(ng) % N4atmd(LBi:UBi,LBj:UBj) )
+      Dmem(ng)=Dmem(ng)+size2d
+
+      allocate ( FORCES(ng) % N4atmdG(LBi:UBi,LBj:UBj,2) )
+      Dmem(ng)=Dmem(ng)+2.0_r8*size2d
+#  endif
+# endif
+!!!PWA Inserted 22/07/2019
 
 # ifdef BULK_FLUXES
       allocate ( FORCES(ng) % rain(LBi:UBi,LBj:UBj) )
@@ -2009,8 +2134,9 @@
             FORCES(ng) % Hair(i,j) = IniVal
             FORCES(ng) % Tair(i,j) = IniVal
 # endif
+!!!PWA Modified to include RFABM (22/07/2019)
 # if defined BULK_FLUXES    || defined ECOSIM || \
-     defined SPECTRAL_LIGHT
+     defined SPECTRAL_LIGHT || defined RFABM
             FORCES(ng) % Uwind(i,j) = IniVal
             FORCES(ng) % Vwind(i,j) = IniVal
 # endif
@@ -2043,7 +2169,8 @@
             FORCES(ng) % HairG(i,j,2) = IniVal
 #  endif
 # endif
-# if defined BULK_FLUXES || defined ECOSIM
+!!!PWA Modified to include RFABM (21/01/2026)
+# if defined BULK_FLUXES || defined ECOSIM || defined RFABM
 #  ifndef ANA_TAIR
             FORCES(ng) % TairG(i,j,1) = IniVal
             FORCES(ng) % TairG(i,j,2) = IniVal
@@ -2055,6 +2182,42 @@
             FORCES(ng) % VwindG(i,j,2) = IniVal
 #  endif
 # endif
+
+!!!PWA Inserted 21/01/2026
+#if defined RFABM
+            FORCES(ng) % srflxWm2(i,j) = IniVal
+            FORCES(ng) % Swind(i,j) = IniVal
+            FORCES(ng) % bstrPa(i,j) = IniVal
+# ifdef FABM_TSS
+            DO k=1,N(ng)
+              FORCES(ng) % tss(i,j,k) = IniVal
+              FORCES(ng) % tssG(i,j,k,1) = IniVal
+              FORCES(ng) % tssG(i,j,k,2) = IniVal
+            END DO
+# endif
+# ifdef FABM_TSS_ONLINE
+            DO k=1,N(ng)
+              FORCES(ng) % tss(i,j,k) = IniVal
+            END DO
+# endif
+# ifdef FABM_PCO2ATM
+            FORCES(ng) % xCO2atm(i,j) = IniVal
+            FORCES(ng) % pCO2atm(i,j) = IniVal
+            FORCES(ng) % xCO2atmG(i,j,1) = IniVal
+            FORCES(ng) % xCO2atmG(i,j,2) = IniVal
+# endif
+# ifdef FABM_N3ATMDEPO
+            FORCES(ng) % N3atmd(i,j) = IniVal
+            FORCES(ng) % N3atmdG(i,j,1) = IniVal
+            FORCES(ng) % N3atmdG(i,j,2) = IniVal
+# endif
+# ifdef FABM_N4ATMDEPO
+            FORCES(ng) % N4atmd(i,j) = IniVal
+            FORCES(ng) % N4atmdG(i,j,1) = IniVal
+            FORCES(ng) % N4atmdG(i,j,2) = IniVal
+# endif
+#endif
+!!!End insert PWA 21/01/2026
 # if !defined ANA_RAIN && defined BULK_FLUXES
             FORCES(ng) % rainG(i,j,1) = IniVal
             FORCES(ng) % rainG(i,j,2) = IniVal
