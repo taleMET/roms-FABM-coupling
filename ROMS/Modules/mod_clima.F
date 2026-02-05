@@ -148,6 +148,35 @@
 # endif
 #endif
 
+!!!Inserted PWA 10/08/2025
+#if defined AKTCLIMATOLOGY || defined AKXCLIMATOLOGY
+          real(r8), pointer :: AKtclm(:,:,:)
+          real(r8), pointer :: AKtclmG(:,:,:,:)
+#endif
+#if defined AKSCLIMATOLOGY || defined AKXCLIMATOLOGY
+          real(r8), pointer :: AKsclm(:,:,:)
+          real(r8), pointer :: AKsclmG(:,:,:,:)
+#endif
+#if defined AKVCLIMATOLOGY || defined AKXCLIMATOLOGY
+          real(r8), pointer :: AKvclm(:,:,:)
+          real(r8), pointer :: AKvclmG(:,:,:,:)
+#endif
+#if defined TKECLIMATOLOGY || defined MIXCLIMATOLOGY
+          real(r8), pointer :: tkeclm(:,:,:)
+          real(r8), pointer :: tkeclmG(:,:,:,:)
+#endif
+#if defined GLSCLIMATOLOGY || defined MIXCLIMATOLOGY
+          real(r8), pointer :: glsclm(:,:,:)
+          real(r8), pointer :: glsclmG(:,:,:,:)
+#endif
+
+#ifdef OCLIMATOLOGY
+          real(r8), pointer :: oclm(:,:,:)
+# ifndef ANA_OCLIMA
+          real(r8), pointer :: oclmG(:,:,:,:)
+# endif
+#endif
+!!!End insert PWA 10/08/2025
         END TYPE T_CLIMA
 !
         TYPE (T_CLIMA), allocatable :: CLIMA(:)
@@ -312,6 +341,52 @@
       Dmem(ng)=Dmem(ng)+2.0_r8*REAL(N(ng)*NT(ng),r8)*size2d
 # endif
 #endif
+!!!Inserted PWA 10/08/2025
+#if defined AKTCLIMATOLOGY || defined AKXCLIMATOLOGY 
+      allocate ( CLIMA(ng) % AKtclm(LBi:UBi,LBj:UBj,0:N(ng)) )
+#endif
+#if defined AKVCLIMATOLOGY || defined AKXCLIMATOLOGY
+      allocate ( CLIMA(ng) % AKvclm(LBi:UBi,LBj:UBj,0:N(ng)) )
+#endif
+#if defined AKSCLIMATOLOGY || defined AKXCLIMATOLOGY
+      allocate ( CLIMA(ng) % AKsclm(LBi:UBi,LBj:UBj,0:N(ng)) )
+#endif
+#if defined TKECLIMATOLOGY || defined MIXCLIMATOLOGY 
+      allocate ( CLIMA(ng) % tkeclm(LBi:UBi,LBj:UBj,0:N(ng)) )
+#endif
+#if defined GLSCLIMATOLOGY || defined MIXCLIMATOLOGY
+      allocate ( CLIMA(ng) % glsclm(LBi:UBi,LBj:UBj,0:N(ng)) )
+#endif
+
+!#if defined AKTCLIMATOLOGY && defined OFFLINE_FLOATS
+!      allocate ( CLIMA(ng) % Aclm(LBi:UBi,LBj:UBj,0:N(ng)) )
+!#endif
+!------------------
+#ifndef ANA_AKTCLIMA
+# if defined AKTCLIMATOLOGY || defined AKXCLIMATOLOGY
+      allocate ( CLIMA(ng) % AKtclmG(LBi:UBi,LBj:UBj,0:N(ng),2) )
+# endif
+# if defined AKVCLIMATOLOGY || defined AKXCLIMATOLOGY
+      allocate ( CLIMA(ng) % AKvclmG(LBi:UBi,LBj:UBj,0:N(ng),2) )
+# endif
+# if defined AKSCLIMATOLOGY || defined AKXCLIMATOLOGY
+      allocate ( CLIMA(ng) % AKsclmG(LBi:UBi,LBj:UBj,0:N(ng),2) )
+# endif
+#endif
+#if defined TKECLIMATOLOGY || defined MIXCLIMATOLOGY
+      allocate ( CLIMA(ng) % tkeclmG(LBi:UBi,LBj:UBj,0:N(ng),2) )
+#endif
+#if defined GLSCLIMATOLOGY || defined MIXCLIMATOLOGY
+      allocate ( CLIMA(ng) % glsclmG(LBi:UBi,LBj:UBj,0:N(ng),2) )
+#endif
+
+#ifdef OCLIMATOLOGY
+      allocate ( CLIMA(ng) % oclm(LBi:UBi,LBj:UBj,0:N(ng)) )
+# ifndef ANA_OCLIMA
+      allocate ( CLIMA(ng) % oclmG(LBi:UBi,LBj:UBj,0:N(ng),2) )
+# endif
+#endif
+!!!End insert PWA 10/08/2025
 !
       RETURN
       END SUBROUTINE allocate_clima
@@ -707,6 +782,87 @@
       END DO
 #endif
 !
+!!!Inserted PWA 10/08/2025
+#if defined AKTCLIMATOLOGY || defined AKXCLIMATOLOGY
+      DO j=Jmin,Jmax
+        DO k=0,N(ng)
+          DO i=Imin,Imax
+            CLIMA(ng) % AKtclm(i,j,k) = IniVal
+# ifndef ANA_AKTCLIMA
+            CLIMA(ng) % AKtclmG(i,j,k,1) = IniVal
+            CLIMA(ng) % AKtclmG(i,j,k,2) = IniVal
+# endif
+          END DO
+        END DO
+      END DO
+#endif
+#if defined AKSCLIMATOLOGY || defined AKXCLIMATOLOGY
+      DO j=Jmin,Jmax
+        DO k=0,N(ng)
+          DO i=Imin,Imax
+            CLIMA(ng) % AKsclm(i,j,k) = IniVal
+# ifndef ANA_AKTCLIMA
+            CLIMA(ng) % AKsclmG(i,j,k,1) = IniVal
+            CLIMA(ng) % AKsclmG(i,j,k,2) = IniVal
+# endif
+          END DO
+        END DO
+      END DO
+#endif
+#if defined AKVCLIMATOLOGY || defined AKXCLIMATOLOGY
+      DO j=Jmin,Jmax
+        DO k=0,N(ng)
+          DO i=Imin,Imax
+            CLIMA(ng) % AKvclm(i,j,k) = IniVal
+# ifndef ANA_AKTCLIMA
+            CLIMA(ng) % AKvclmG(i,j,k,1) = IniVal
+            CLIMA(ng) % AKvclmG(i,j,k,2) = IniVal
+# endif
+          END DO
+        END DO
+      END DO
+#endif
+#if defined TKECLIMATOLOGY || defined MIXCLIMATOLOGY
+      DO j=Jmin,Jmax
+        DO k=0,N(ng)
+          DO i=Imin,Imax
+            CLIMA(ng) % tkeclm(i,j,k) = IniVal
+# ifndef ANA_AKTCLIMA
+            CLIMA(ng) % tkeclmG(i,j,k,1) = IniVal
+            CLIMA(ng) % tkeclmG(i,j,k,2) = IniVal
+# endif
+          END DO
+        END DO
+      END DO
+#endif
+#if defined GLSCLIMATOLOGY || defined MIXCLIMATOLOGY
+      DO j=Jmin,Jmax
+        DO k=0,N(ng)
+          DO i=Imin,Imax
+            CLIMA(ng) % glsclm(i,j,k) = IniVal
+# ifndef ANA_AKTCLIMA
+            CLIMA(ng) % glsclmG(i,j,k,1) = IniVal
+            CLIMA(ng) % glsclmG(i,j,k,2) = IniVal
+# endif
+          END DO
+        END DO
+      END DO
+#endif
+!------------------------------------------------
+#ifdef OCLIMATOLOGY
+      DO j=Jmin,Jmax
+        DO k=0,N(ng)
+          DO i=Imin,Imax
+            CLIMA(ng) % oclm(i,j,k) = IniVal
+# ifndef ANA_OCLIMA
+            CLIMA(ng) % oclmG(i,j,k,1) = IniVal
+            CLIMA(ng) % oclmG(i,j,k,2) = IniVal
+# endif
+          END DO
+        END DO
+      END DO
+#endif
+!!!End insert PWA 10/08/2025
       RETURN
       END SUBROUTINE initialize_clima
       END MODULE mod_clima
