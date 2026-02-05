@@ -71,6 +71,11 @@
 !    SPT       Output tangent Arnoldi state vector file                !
 #endif
 !    SSF       Input Sources/Sinks forcing (river runoff)              !
+!!!Inserted PWA 19/10/2021
+#ifdef TS_ISOURCE
+!    ISSF      Input Internal Sources/Sinks forcing (e.g. fish farms)  !
+#endif
+!!!End insert PWA 19/10/2021
 !    STA       Output station data                                     !
 !    STD       Error covariance standard deviations                    !
 !                STD(1,ng)  initial conditions                         !
@@ -111,6 +116,12 @@
 !  BRYids      File ID associated with each boundary field.            !
 !  CLMids      File ID associated with each climatology field.         !
 !  FRCids      File ID associated with each forcing field.             !
+!!!Modified PWA 19/10/2021
+!  SSFids      NetCDF file ID associated with each river source field. !
+#ifdef TS_ISOURCE
+!  ISSFids     NetCDF file ID associated with each internal source.    !
+#endif
+!!!End modified PWA 19/10/2021
 !                                                                      !
 #if defined PIO_LIB && defined DISTRIBUTE
 !  Parallel-IO (PIO) library input files descriptors per each field:   !
@@ -118,6 +129,12 @@
 !  BRYdesc     File descriptor associated with each boundary field.    !
 !  CLMdesc     File descriptor associated with each climatology field. !
 !  FRCdesc     file descriptor associated with each forcing field.     !
+!!!Modified PWA 21/01/2026
+!  SSFdesc     file descriptor associated with each source field.      !
+# ifdef TS_ISOURCE
+!  ISSFdesc    file descriptor associated with each isource field.     !
+# endif
+!!!End modified PWA 21/01/2026
 !                                                                      !
 #endif
 !  Miscellaneous variables:                                            !
@@ -250,7 +267,7 @@
       TYPE(T_IO), allocatable :: SPA(:)     ! ADM Arnoldi state vector
       TYPE(T_IO), allocatable :: SPT(:)     ! TLM Arnoldi state vector
 #endif
-      TYPE(T_IO), allocatable :: SSF(:)     ! Sources/Sinks forcing
+!      TYPE(T_IO), allocatable :: SSF(:)     ! Sources/Sinks forcing !!!Commented out PWA 21/01/2026
       TYPE(T_IO), allocatable :: STA(:)     ! stations data
       TYPE(T_IO), allocatable :: STD(:,:)   ! standard deviation 
 #if defined MULTI_SCALE_B && defined NONUNIFORM_SCALES
@@ -290,6 +307,31 @@
       TYPE (File_desc_t), allocatable :: FRCdesc(:,:)
 #endif
       TYPE(T_IO), allocatable :: FRC(:,:)
+!!!Modified PWA 19/10/2021
+!
+!  Input river source data.
+!
+      integer, allocatable :: nSSFfiles(:)
+      integer, allocatable :: SSFids(:,:)
+!
+#if defined PIO_LIB && defined DISTRIBUTE
+      TYPE (File_desc_t), allocatable :: SSFdesc(:,:)
+#endif
+      TYPE(T_IO), allocatable :: SSF(:,:)
+
+#ifdef TS_ISOURCE
+!
+!  Input internal source data.
+!
+      integer, allocatable :: nISSFfiles(:)
+      integer, allocatable :: ISSFids(:,:)
+!
+# if defined PIO_LIB && defined DISTRIBUTE
+      TYPE (File_desc_t), allocatable :: ISSFdesc(:,:)
+# endif
+      TYPE(T_IO), allocatable :: ISSF(:,:)
+#endif
+!!!End modified PWA 19/10/2021
 !
 !  Error messages.
 !
@@ -476,9 +518,9 @@
         allocate ( SPT(Ngrids) )
       END IF
 #endif
-      IF (.not.allocated(SSF)) THEN
-        allocate ( SSF(Ngrids) )
-      END IF
+!      IF (.not.allocated(SSF)) THEN !!!Commented out PWA 21/01/2026
+!        allocate ( SSF(Ngrids) )
+!      END IF
       IF (.not.allocated(STA)) THEN
         allocate ( STA(Ngrids) )
       END IF
@@ -520,6 +562,16 @@
       IF (.not.allocated(nFfiles)) THEN
         allocate ( nFfiles(Ngrids) )
       END IF
+!!!Inserted PWA 21/01/2026
+      IF (.not.allocated(nSSFfiles)) THEN
+        allocate ( nSSFfiles(Ngrids) )
+      END IF
+#ifdef TS_ISOURCE
+      IF (.not.allocated(nISSFfiles)) THEN
+        allocate ( nISSFfiles(Ngrids) )
+      END IF
+#endif
+!!!End insert PWA 21/01/2026
 !
 !-----------------------------------------------------------------------
 !  Initialize I/O NetCDF files ID to close state.
@@ -566,7 +618,7 @@
 #endif
         QCK(ng)%ncid=-1
         RST(ng)%ncid=-1
-        SSF(ng)%ncid=-1
+!        SSF(ng)%ncid=-1 !!!Commented out PWA 21/01/2026
         STA(ng)%ncid=-1
 #if defined MULTI_SCALE_B && defined NONUNIFORM_SCALES
         SVC(ng)%ncid=-1
@@ -580,6 +632,12 @@
         nBCfiles(ng)=-1
         nCLMfiles(ng)=-1
         nFfiles(ng)=-1
+!!!Inserted PWA 21/01/2026
+        nSSFfiles(ng)=-1
+#ifdef TS_ISOURCE
+        nISSFfiles(ng)=-1
+#endif
+!!!End insert PWA 21/01/2026
       END DO
 !
 !-----------------------------------------------------------------------
@@ -731,9 +789,9 @@
           RST(ng)%base(i:i)=blank
           RST(ng)%name(i:i)=blank
 
-          SSF(ng)%head(i:i)=blank
-          SSF(ng)%base(i:i)=blank
-          SSF(ng)%name(i:i)=blank
+!          SSF(ng)%head(i:i)=blank !!!Commented out PWA 21/01/2026
+!          SSF(ng)%base(i:i)=blank
+!          SSF(ng)%name(i:i)=blank
 
           STA(ng)%head(i:i)=blank
           STA(ng)%base(i:i)=blank
@@ -861,6 +919,11 @@
       IF (allocated(SVC))       deallocate ( SVC )
 #endif
 
+!!!Inserted PWA 21/01/2026
+#ifdef TS_ISOURCE
+      IF (allocated(ISSF))      deallocate ( ISSF )
+#endif
+!!!End insert PWA 21/06/2026
       IF (allocated(STA))       deallocate ( STA )
       IF (allocated(TIDE))      deallocate ( TIDE )
       IF (allocated(TLF))       deallocate ( TLF )
@@ -886,10 +949,28 @@
 #if defined PIO_LIB && defined DISTRIBUTE
       IF (allocated(FRCdesc))   deallocate ( FRCdesc )
 #endif
+!!!Inserted PWA 21/01/2026
+      IF (allocated(SSFids))    deallocate ( SSFids )
+#if defined PIO_LIB && defined DISTRIBUTE
+      IF (allocated(SSFdesc))   deallocate ( SSFdesc )
+#endif
+#ifdef TS_ISOURCE
+      IF (allocated(ISSFids))   deallocate ( ISSFids )
+# if defined PIO_LIB && defined DISTRIBUTE
+      IF (allocated(ISSFdesc))  deallocate ( ISSFdesc )
+# endif
+#endif
+!!!End insert PWA 21/06/2026
 
       IF (allocated(nBCfiles))  deallocate ( nBCfiles )
       IF (allocated(nCLMfiles)) deallocate ( nCLMfiles )
       IF (allocated(nFfiles))   deallocate ( nFfiles )
+!!!Inserted PWA 21/01/2026
+      IF (allocated(nSSFfiles)) deallocate ( nSSFfiles )
+#ifdef TS_ISOURCE
+      IF (allocated(nISSFfiles)) deallocate ( nISSFfiles )
+#endif
+!!!End insert PWA 21/06/2026
 !
       RETURN
       END SUBROUTINE deallocate_iounits
