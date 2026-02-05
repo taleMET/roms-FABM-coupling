@@ -267,7 +267,8 @@
      &                 __LINE__, 'DIAGS(ng)%DiaBio2d')) RETURN
 
 #  ifdef DIAGNOSTICS_BIO
-#   if defined BIO_FENNEL || defined ECB
+!!!Modified PWA 26/01/2026 to include RFABM
+#   if defined BIO_FENNEL || defined ECB || defined RFABM
       IF (NDbio2d.gt.0) THEN
         IF (.not.destroy(ng, DIAGS(ng)%DiaBio2d, MyFile,                &
      &                   __LINE__, 'DIAGS(ng)%DiaBio2d')) RETURN
