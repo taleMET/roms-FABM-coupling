@@ -96,6 +96,16 @@
 !                 at W-points.                                         !
 !  gls          Turbulent energy squared times turbulent length        !
 !                 scale (m3/s2) at W-points.                           !
+!!!Inserted PWA 03/06/2022
+#if defined CALC_TDR || defined CALC_TSR
+!  tdr          Turbulent energy dissipation rate (m2/s3) at RHO-points!
+#endif
+#ifdef CALC_TSR
+!  mu           Dynamic viscosity (kg/m/s) at RHO-points               !
+!  nu           Kinematic viscosity (m2/s) at RHO-points               !
+!  tsr          Turbulent shear rate (1/s) at RHO-points               !
+#endif
+!!!End insert PWA 03/06/2022
 !                                                                      !
 !  Large/McWilliams/Doney interior vertical mixing variables:          !
 !                                                                      !
@@ -255,6 +265,16 @@
 #  ifdef GLS_MIXING
           real(r8), pointer :: Akp(:,:,:)
 #  endif
+!!!Inserted PWA 03/06/2022
+#  if defined CALC_TDR || defined CALC_TSR
+          real(r8), pointer :: tdr(:,:,:)
+#  endif
+#  ifdef CALC_TSR
+          real(r8), pointer :: mu(:,:,:)
+          real(r8), pointer :: nu(:,:,:)
+          real(r8), pointer :: tsr(:,:,:)
+#  endif
+!!!End insert PWA 03/06/2022
 # endif
 # if defined LMD_MIXING && defined LMD_DDMIX
           real(r8), pointer :: alfaobeta(:,:,:)
@@ -587,6 +607,21 @@
       allocate ( MIXING(ng) % Akp(LBi:UBi,LBj:UBj,0:N(ng)) )
       Dmem(ng)=Dmem(ng)+REAL(N(ng)+1,r8)*size2d
 #  endif
+
+!!!Inserted PWA 03/06/2022
+#  if defined CALC_TDR || defined CALC_TSR
+      allocate ( MIXING(ng) % tdr(LBi:UBi,LBj:UBj,N(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
+#  endif
+#  ifdef CALC_TSR
+      allocate ( MIXING(ng) % mu(LBi:UBi,LBj:UBj,N(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
+      allocate ( MIXING(ng) % nu(LBi:UBi,LBj:UBj,N(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
+      allocate ( MIXING(ng) % tsr(LBi:UBi,LBj:UBj,N(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
+#  endif
+!!!End insert PWA 03/06/2022
 # endif
 
 # if defined LMD_MIXING && defined LMD_DDMIX
@@ -1514,6 +1549,20 @@
 #  endif
             END DO
           END DO
+!!!Inserted PWA 03/06/2022
+#  if defined CALC_TDR || defined CALC_TSR
+          DO k=1,N(ng)
+            DO i=Imin,Imax
+              MIXING(ng) % tdr(i,j,k) = IniVal
+#   ifdef CALC_TSR
+              MIXING(ng) % mu(i,j,k) = IniVal
+              MIXING(ng) % nu(i,j,k) = IniVal
+              MIXING(ng) % tsr(i,j,k) = IniVal
+#   endif
+            END DO
+          END DO
+#  endif
+!!!End insert PWA 03/06/2022
 # endif
 # if defined LMD_MIXING && defined LMD_DDMIX
           DO k=0,N(ng)
