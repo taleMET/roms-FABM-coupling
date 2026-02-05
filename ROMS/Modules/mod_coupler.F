@@ -140,7 +140,13 @@
 !  Export/Import fields information structure.  This information is read
 !  from input CPLname file.
 !
+!!!Modified PWA to allow for ERSEM level of complexity (18/09/2018)
+# if defined RFABM
+      integer, parameter :: MaxNumberFields = 150
+# else
       integer, parameter :: MaxNumberFields = 50
+# endif
+!!!End modified PWA 18/09/2018
 
       TYPE (T_FIELD) :: Fields(MaxNumberFields)
 !
