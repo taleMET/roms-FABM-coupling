@@ -127,9 +127,6 @@
 !!!PWA Inserted 14/04/2017                                             !
 #if defined RFABM
 !  Swind        Scalar wind speed for use in FABM models (m/s)         !
-# ifdef FABM_ASILT
-!  Asilt        Absorption of silt for use in FABM models              !
-# endif
 !!!PWA Inserted 13/12/2020
 # if defined FABM_TSS || defined FABM_TSS_ONLINE
 !  tss          Total Suspended Sediment for use in FABM models        !
@@ -139,17 +136,11 @@
 !  xCO2atm      Atmospheric dry molar fraction of CO2 (ppm)            !
 !  pCO2atm      Atmospheric partial pressure of CO2 (uatm)             !
 # endif
-# ifdef FABM_ADYTRACER
-!  ADY_0        Surface absorption due to dissolved+detrital matter    !
-# endif
 # ifdef FABM_N3ATMDEPO
 !  N3atmd       Atmospheric deposition of oxidized nitrogen (mmol/m2/s)!
 # endif
 # ifdef FABM_N4ATMDEPO
 !  N4atmd       Atmospheric deposition of reduced nitrogen (mmol/m2/s) !
-# endif
-# ifdef FABM_ISOURCES
-!  Isources     Internal biogeochemical sources (concentration/s)      !
 # endif
 #endif
 !!!End insert PWA 16/03/2015                                           !
