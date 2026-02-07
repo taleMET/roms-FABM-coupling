@@ -101,8 +101,15 @@
 !  Maximum number of variables in a generic NetCDF file (MV) and
 !  maximum number of variables in information arrays (NV).
 !
-      integer, parameter :: MV = 1400
-      integer, parameter :: NV = 1400
+!!!Modification PWA 04/09/2018: May need more NetCDF variables with FABM models (esp. for diagnostics)
+#if defined RFABM
+        integer, parameter :: MV = 5000
+        integer, parameter :: NV = 5000
+#else
+        integer, parameter :: MV = 1400
+        integer, parameter :: NV = 1400
+#endif
+!!!End modification PWA 04/09/2018
 !
 !  Maximum number of dimension IDs stored in local array DimIDs used to
 !  defined variable dimensions in output NetCDF files.
@@ -196,6 +203,23 @@
 !  ORDER to guarantee no repetitive values. If we need a set of indices
 !  together, please choose the proper leading letters.
 !
+!!!Inserted PWA 10/08/2025
+#if defined AKSCLIMATOLOGY || defined AKXCLIMATOLOGY
+      integer  :: idAKsclm      ! 3D Aks (salinity) climatology
+#endif
+#if defined AKVCLIMATOLOGY || defined AKXCLIMATOLOGY
+      integer  :: idAKvclm      ! 3D Akv (momemtum) climatology
+#endif
+#if defined AKTCLIMATOLOGY || defined AKXCLIMATOLOGY
+      integer  :: idAKtclm      ! 3D Akt (temperature) climatology
+#endif
+#if defined TKECLIMATOLOGY || defined MIXCLIMATOLOGY
+      integer  :: idtkeclm      ! 3D TKE climatology
+#endif
+#if defined GLSCLIMATOLOGY || defined MIXCLIMATOLOGY
+      integer  :: idglsclm      ! 3D gls (length scale) climatology
+#endif
+!!!End insert PWA 10/08/2025
       integer  :: idangR        ! angle between XI-axis and EAST
       integer  :: idbath        ! time-dependent bathymetry
       integer  :: idBgEr        ! background error at observations
@@ -246,6 +270,16 @@
       integer  :: idmskV        ! land/mask on V-points
       integer  :: idMtke        ! turbulent kinetic energy
       integer  :: idMtls        ! turbulent length scale
+!!!Inserted PWA 03/06/2022
+#if defined CALC_TDR || defined CALC_TSR
+      integer  :: idMtdr        ! turbulent energy dissipation rate
+#endif
+#ifdef CALC_TSR
+      integer  :: idMmu         ! dynamic viscosity
+      integer  :: idMnu         ! kinematic viscosity
+      integer  :: idMtsr        ! turbulent shear rate
+#endif
+!!!End insert PWA 03/06/2022
       integer  :: idM2nc        ! 2D momentum nudging coefficients
       integer  :: idM3nc        ! 2D momentum nudging coefficients
       integer  :: idNLmf        ! final NLM at observation locations
@@ -270,6 +304,9 @@
       integer  :: idOval        ! observations value
       integer  :: idOvel        ! omega vertical velocity
       integer  :: idOvil        ! omega vertical velocity implicit
+!!!Inserted PWA 16/08/2025
+      integer  :: idOclm        ! omega vertical velocity climatology
+!!!End insert PWA 16/08/2025
       integer  :: idPair        ! surface air pressure
       integer  :: idPBLh        ! planetary boundary layer height
       integer  :: idPbar        ! streamfunction
@@ -507,6 +544,13 @@
 !  Input/output identification tracer indices.
 !
       integer, allocatable :: idRtrc(:)    ! river runoff for tracers
+!!!Inserted PWA 10/02/2020
+#ifdef TS_ISOURCE
+      integer  :: idIxpo        ! internal source XI-positions
+      integer  :: idIepo        ! internal source ETA-positions
+      integer, allocatable :: idItrc(:)    ! interior sources for tracers
+#endif
+!!!End insert PWA 10/02/2020
       integer, allocatable :: idsurT(:)    ! surface tracers
       integer, allocatable :: idzslT(:)    ! tracers depth slices
       integer, allocatable :: idTads(:)    ! tracers adjoint sentivity
@@ -553,6 +597,29 @@
       integer, allocatable :: idDu3d(:)     ! 3D u-momentum terms
       integer, allocatable :: idDv3d(:)     ! 3D v-momentum terms
 #endif
+
+!!!PWA Inserted 24/04/2017
+#if defined RFABM
+      integer  :: idSradWm2      ! net shortwave radiation flux in [W/m2]
+      integer, allocatable :: idSAvar(:)    ! surface-attached variables
+      integer, allocatable :: idBAvar(:)    ! bottom-attached variables
+# ifdef FABM_PCO2ATM
+      integer  :: idxCO2atm      ! Dry molar fraction of CO2 in atmosphere
+      integer  :: idpCO2atm      ! Partial pressure of CO2 in atmosphere
+# endif
+# ifdef FABM_N3ATMDEPO
+      integer  :: idN3atmd       ! Atmospheric deposition of oxidized nitrogen
+# endif
+# ifdef FABM_N4ATMDEPO
+      integer  :: idN4atmd       ! Atmospheric deposition of reduced nitrogen
+# endif
+#endif
+!!!End insert PWA 24/04/2017
+
+      integer  :: idSUV         ! horizontal current speed !!!Inserted PWA 22/10/2018
+      integer  :: idbstrPa      ! scalar bottom stress in Pa !!!Inserted PWA 11/09/2020
+      integer  :: idtss         ! total suspended sediment !!!Inserted PWA 13/12/2020
+
 !
 !  State variables indices (order is important). Notice that current
 !  extra-observations index (isRadial) needs to be initialized to zero
@@ -608,6 +675,12 @@
       integer, allocatable :: BRYncid(:,:)
       integer, allocatable :: CLMncid(:,:)
       integer, allocatable :: FRCncid(:,:)
+!!!Inserted PWA 21/01/2026
+      integer, allocatable :: SSFncid(:,:)
+#ifdef TS_ISOURCE
+      integer, allocatable :: ISSFncid(:,:)
+#endif
+!!!End insert PWA 21/01/2026
 
 #if defined PIO_LIB && defined DISTRIBUTE
 !
@@ -618,6 +691,12 @@
       TYPE (File_desc_t), pointer :: BRYpioFile(:,:)
       TYPE (File_desc_t), pointer :: CLMpioFile(:,:)
       TYPE (File_desc_t), pointer :: FRCpioFile(:,:)
+!!!Inserted PWA 21/01/2026
+      TYPE (File_desc_t), pointer :: SSFpioFile(:,:)
+# ifdef TS_ISOURCE
+      TYPE (File_desc_t), pointer :: ISSFpioFile(:,:)
+# endif
+!!!End insert PWA 21/01/2026
 #endif
 !
 !  Flags to create output files.
@@ -862,6 +941,14 @@
         allocate ( idRtrc(MT) )
         Dmem(1)=Dmem(1)+REAL(MT,r8)
       END IF
+!!!Inserted PWA 10/02/2020
+#ifdef TS_ISOURCE
+      IF (.not.allocated(idItrc)) THEN
+        allocate ( idItrc(MT) )
+        Dmem(1)=Dmem(1)+REAL(MT,r8)
+      END IF
+#endif
+!!!End insert PWA 10/02/2020
       IF (.not.allocated(idsurT)) THEN
         allocate ( idsurT(MT) )
         Dmem(1)=Dmem(1)+REAL(MT,r8)
@@ -987,6 +1074,18 @@
         allocate ( FRCncid(NV,Ngrids) )
         Dmem(1)=Dmem(1)+REAL(NV*Ngrids,r8)
       END IF
+!!!Inserted PWA 21/01/2026
+      IF (.not.allocated(SSFncid)) THEN
+        allocate ( SSFncid(NV,Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(NV*Ngrids,r8)
+      END IF
+#ifdef TS_ISOURCE
+      IF (.not.allocated(ISSFncid)) THEN
+        allocate ( ISSFncid(NV,Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(NV*Ngrids,r8)
+      END IF
+#endif
+!!!End insert PWA 21/01/2026
 
 #if defined PIO_LIB && defined DISTRIBUTE
       IF (.not.associated(BRYpioFile)) THEN
@@ -1114,6 +1213,19 @@
         Dmem(1)=Dmem(1)+REAL(NV*Ngrids,r8)
       END IF
 #endif
+
+!!!PWA Inserted 24/04/2017
+#if defined RFABM
+      IF (.not.allocated(idSAvar)) THEN
+        allocate ( idSAvar(NSAT) )
+        Dmem(1)=Dmem(1)+REAL(NSAT,r8)
+      END IF
+      IF (.not.allocated(idBAvar)) THEN
+        allocate ( idBAvar(NBAT) )
+        Dmem(1)=Dmem(1)+REAL(NBAT,r8)
+      END IF
+#endif
+!!!End PWA insert 24/04/2017
 
       IF (.not.allocated(Cinfo)) THEN
         allocate ( Cinfo(NV,Ngrids) )
@@ -1497,10 +1609,22 @@
           BRYncid(i,ng)=-1
           CLMncid(i,ng)=-1
           FRCncid(i,ng)=-1
+!!!Inserted PWA 21/01/2026
+          SSFncid(i,ng)=-1
+#ifdef TS_ISOURCE
+          ISSFncid(i,ng)=-1
+#endif
+!!!End insert PWA 21/01/2026
 #if defined PIO_LIB && defined DISTRIBUTE
           BRYpioFile(i,ng)%fh=-1
           CLMpioFile(i,ng)%fh=-1
           FRCpioFile(i,ng)%fh=-1
+!!!Inserted PWA 21/01/2026
+          SSFpioFile(i,ng)%fh=-1
+# ifdef TS_ISOURCE
+          ISSFpioFile(i,ng)%fh=-1
+# endif
+!!!End insert PWA 21/01/2026
 #endif
         END DO
       END DO
@@ -1771,10 +1895,46 @@
           CASE ('idGhat(isalt)')
             idGhat(isalt)=varid
 #endif
+!!!Inserted PWA 10/08/2025
+#if defined AKTCLIMATOLOGY || defined AKXCLIMATOLOGY
+          CASE ('idAKtclm')  !Added by DJ
+            idAKtclm=varid
+#endif
+#if defined AKSCLIMATOLOGY || defined AKXCLIMATOLOGY
+          CASE ('idAKsclm')  !Added by DJ
+            idAKsclm=varid
+#endif
+#if defined AKVCLIMATOLOGY || defined AKXCLIMATOLOGY
+          CASE ('idAKvclm')  !Added by DJ
+            idAKvclm=varid
+#endif
+#if defined TKECLIMATOLOGY || defined MIXCLIMATOLOGY
+          CASE ('idtkeclm')  !Added by DJ
+            idtkeclm=varid
+#endif
+#if defined GLSCLIMATOLOGY || defined MIXCLIMATOLOGY
+          CASE ('idglsclm')  !Added by DJ
+            idglsclm=varid
+#endif
+!!!End insert PWA 10/08/2025
           CASE ('idMtke')
             idMtke=varid
           CASE ('idMtls')
             idMtls=varid
+!!!Inserted PWA 03/06/2022
+#if defined CALC_TDR || defined CALC_TSR
+          CASE ('idMtdr')
+            idMtdr=varid
+#endif
+#ifdef CALC_TSR
+          CASE ('idMmu')
+            idMmu=varid
+          CASE ('idMnu')
+            idMnu=varid
+          CASE ('idMtsr')
+            idMtsr=varid
+#endif
+!!!End insert PWA 03/06/2022
           CASE ('idVvis')
             idVvis=varid
           CASE ('idTdif')
@@ -2005,10 +2165,44 @@
           CASE ('idRtrc(isalt)')
             idRtrc(isalt)=varid
 #endif
+!!!Modified PWA 19/10/2021
+#ifdef TS_ISOURCE
+          CASE ('idIxpo')
+            idIxpo=varid
+          CASE ('idIepo')
+            idIepo=varid
+          CASE ('idItrc(itemp)')
+            idItrc(itemp)=varid
+          CASE ('idItrc(isalt)')
+            idItrc(isalt)=varid
+#endif
+!!!End modified PWA 19/10/2021
           CASE ('idHsbl')
             idHsbl=varid
           CASE ('idHbbl')
             idHbbl=varid
+!!!Inserted PWA
+#if defined RFABM
+# ifdef SHORTWAVE
+          CASE ('idSradWm2')
+            idSradWm2=varid
+# endif
+# ifdef FABM_PCO2ATM
+          CASE ('idxCO2atm')
+            idxCO2atm=varid
+          CASE ('idpCO2atm')
+            idpCO2atm=varid
+# endif
+# ifdef FABM_N3ATMDEPO
+          CASE ('idN3atmd')
+            idN3atmd=varid
+# endif
+# ifdef FABM_N4ATMDEPO
+          CASE ('idN4atmd')
+            idN4atmd=varid
+# endif
+#endif
+!!!End insert PWA
 #ifdef WAVE_PARTITION
           CASE ('idHs01')
             idHs01=varid
@@ -2059,6 +2253,10 @@
             idUclm=varid
           CASE ('idVclm')
             idVclm=varid
+!!!Inserted PWA 16/08/2025
+          CASE ('idOclm')
+            idOclm=varid
+!!!End insert PWA 16/08/2025
           CASE ('idSSSc')
             idSSSc=varid
           CASE ('idSSTc')
@@ -2272,6 +2470,10 @@
             idUVav=varid
           CASE ('idVVav')
             idVVav=varid
+!!!Inserted PWA 22/10/2018
+          CASE ('idSUV')
+            idSUV=varid
+!!!End insert PWA 22/10/2018
 #endif
 #ifdef T_PASSIVE
           CASE ('idTvar(inert(i))')
@@ -2286,6 +2488,12 @@
             load=.TRUE.
           CASE ('idRtrc(inert(i))')
             load=.TRUE.
+!!!Inserted PWA 10/02/2020
+# ifdef TS_ISOURCE
+          CASE ('idItrc(inert(i))')
+            load=.TRUE.
+# endif
+!!!End insert PWA 10/02/2020
 #endif
           CASE ('id2dPV')
             id2dPV=varid
@@ -2295,6 +2503,14 @@
             id3dPV=varid
           CASE ('id3dRV')
             id3dRV=varid
+!!!Inserted PWA 11/09/2020
+          CASE ('idbstrPa')
+            idbstrPa=varid
+!!!End insert PWA 11/09/2020
+!!!Inserted PWA 13/12/2020
+          CASE ('idtss')
+            idtss=varid
+!!!End insert PWA 13/12/2020
 #ifdef DIAGNOSTICS_UV
           CASE ('idDu2d(M2pgrd)')
             idDu2d(M2pgrd)=varid
@@ -2627,6 +2843,10 @@
 #  include <npzd_iron_var.h>
 # elif defined RED_TIDE
 #  include <red_tide_var.h>
+!!!Inserted PWA 17/11/2014
+# elif defined RFABM
+#  include <rfabm_var.h>
+!!!Inserted PWA 17/11/2014
 # endif
 #endif
 
@@ -2883,6 +3103,33 @@
      &                  TRIM(ADJUSTL(Vinfo(6))), i
                 END DO
               END IF
+
+!!!Inserted PWA 10/02/2020
+# ifdef TS_ISOURCE
+            CASE ('idItrc(inert(i))')
+              IF (NPT.gt.0) THEN
+                varid=varid-1
+                DO i=1,NPT
+                  varid=varid+1
+                  idItrc(inert(i))=varid
+                  DO ng=1,Ngrids
+                    Fscale(varid,ng)=scale
+                    Iinfo(1,varid,ng)=gtype
+                  END DO
+                  WRITE (Vname(1,varid),'(a,i2.2)')                     &
+     &                  TRIM(ADJUSTL(Vinfo(1))), i
+                  WRITE (Vname(2,varid),'(a,a,i2.2)')                   &
+     &                  TRIM(ADJUSTL(Vinfo(2))), ', type ', i
+                  WRITE (Vname(3,varid),'(a)')                          &
+     &                  TRIM(ADJUSTL(Vinfo(3)))
+                  WRITE (Vname(4,varid),'(a,a)')                        &
+     &                  TRIM(Vname(1,varid)), ', scalar, series'
+                  WRITE (Vname(5,varid),'(a)')                          &
+     &                  TRIM(ADJUSTL(Vinfo(5)))
+                END DO
+              END IF
+# endif
+!!!End insert PWA 10/02/2020
           END SELECT
 #endif
 #ifdef DIAGNOSTICS_TS
@@ -3672,6 +3919,11 @@
 !
       last_varid=varid
       Dmem(1)=Dmem(1)+REAL(varid,r8)
+!!!PWA Inserted 05/05/2017
+#ifdef DEBUGFABM
+      IF (Master) write(stdout,*) "Done initialize_ncparam"
+#endif
+!!!End PWA insert 05/05/2017
 !
   10  FORMAT (/,' MOD_NCPARAM - too small dimension ',                  &
      &        'parameter, MV = ',2i5,/,15x,                             &
