@@ -74,6 +74,12 @@
 !  Nbed       Number of sediment bed layers.                           !
 !  NCS        Number of cohesive (mud) sediment tracers.               !
 !  NNS        Number of non-cohesive (sand) sediment tracers.          !
+!!!PWA Inserted 27/02/2015
+#if defined RFABM
+!  NSAT       No. surface-attached state variables                     !
+!  NBAT       No. bottom-attached (benthic) state variables            !
+#endif
+!!!End PWA inserted 27/02/2015
 !                                                                      !
 !  Diagnostic fields parameters:                                       !
 !                                                                      !
@@ -97,6 +103,11 @@
 !=======================================================================
 !
       USE mod_kinds
+!!!PWA Modified 31/10/2023
+#ifdef RFABM
+      USE fabm, only: type_fabm_model, type_fabm_interior_variable_id
+#endif
+!!!End PWA modified 31/10/2023
 !
       implicit none
 !
@@ -439,6 +450,22 @@
         real(r8), pointer :: vector(:)
       END TYPE
 #endif
+
+!!!PWA Inserted 06/03/2015: Declare model objects to hold metadata on bgc model
+#ifdef RFABM
+      TYPE type_fabm_model_array
+        CLASS (type_fabm_model), pointer :: model
+      END TYPE type_fabm_model_array
+      TYPE T_FABM
+        TYPE(type_fabm_model_array), dimension(:), allocatable :: f(:)
+        TYPE (type_fabm_interior_variable_id), allocatable :: id_temp(:)
+        TYPE (type_fabm_interior_variable_id), allocatable :: id_salt(:)
+        logical, allocatable :: needsT(:)
+        logical, allocatable :: needsS(:)
+      END TYPE T_FABM
+      TYPE (T_FABM), allocatable :: FMODEL(:)
+#endif
+!!!PWA Inserted 06/03/2015
 !
 !-----------------------------------------------------------------------
 !  Model grid(s) parameters.
@@ -507,6 +534,11 @@
 !  Number of biological tracers.
 !
       integer :: NBT = 0
+!!!PWA Inserted 30/10/2015
+#ifdef RFABM
+      integer :: NSAT, NBAT
+#endif
+!!!PWA Inserted 30/10/2015
 !
 !-----------------------------------------------------------------------
 !  Sediment tracers parameters.
@@ -1525,6 +1557,27 @@
       IF (.not.allocated(IOBOUNDS)) THEN
         allocate ( IOBOUNDS(Ngrids) )
       END IF
+
+!!!PWA Inserted 27/02/2015
+!  Allocate the FABM model structure FMODEL
+#ifdef RFABM
+      IF (.not.allocated(FMODEL)) THEN
+        allocate ( FMODEL(Ngrids) )
+        DO ng=1,Ngrids
+          Ntiles=NtileI(ng)*NtileJ(ng)-1
+          allocate ( FMODEL(ng) % f(-1:Ntiles) )
+          allocate ( FMODEL(ng) % id_temp(-1:Ntiles) )
+          allocate ( FMODEL(ng) % id_salt(-1:Ntiles) )
+          allocate ( FMODEL(ng) % needsT(-1:Ntiles) )
+          allocate ( FMODEL(ng) % needsS(-1:Ntiles) )
+          DO ivar=-1,Ntiles
+            FMODEL(ng) % needsT(ivar) = .false.
+            FMODEL(ng) % needsS(ivar) = .false.
+          END DO
+        END DO
+      END IF
+#endif
+!!!PWA Inserted 27/02/2015
 
 #ifdef GRID_EXTRACT
 !
