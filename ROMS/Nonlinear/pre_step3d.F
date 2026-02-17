@@ -162,6 +162,11 @@
 !
       USE mod_param
       USE mod_scalars
+!!!Modified PWA 09/08/2025
+# if defined OFFLINE_BIOLOGY
+      USE mod_biology
+# endif
+!!!End modified PWA 09/08/2025
       USE mod_sources
 !
       USE exchange_3d_mod, ONLY : exchange_r3d_tile
@@ -289,7 +294,7 @@
 !  Local variable declarations.
 !
       integer :: Isrc, Jsrc
-      integer :: i, ic, indx, is, itrc, j, k, ltrc
+      integer :: i, ic, indx, is, itrc, ibt, j, k, ltrc !!!Modified PWA 09/08/2025
 # if defined AGE_MEAN && defined T_PASSIVE
       integer :: iage
 # endif
@@ -404,7 +409,16 @@
 !  Compute time rate of change of intermediate tracer due to
 !  horizontal advection.
 !
+!!!Modified PWA 09/08/2025
+#  ifdef OFFLINE_BIOLOGY
+      T_LOOP1 :DO ibt=1,NBT
+        itrc=idbio(ibt)
+#  elif defined OFFLINE_TPASSIVE
+      T_LOOP1 :DO itrc=NAT+1,NAT+NPT
+#  else
       T_LOOP1 :DO itrc=1,NT(ng)
+#  endif
+!!!End modified PWA 09/08/2025
         K_LOOP: DO k=1,N(ng)
 !
           HADV_FLUX : IF (Hadvection(itrc,ng)%CENTERED2) THEN
@@ -682,7 +696,16 @@
 !-----------------------------------------------------------------------
 !
       J_LOOP1 : DO j=Jstr,Jend
-        T_LOOP2 : DO itrc=1,NT(ng)
+!!!Modified PWA 09/08/2025
+#ifdef OFFLINE_BIOLOGY
+        T_LOOP2: DO ibt=1,NBT
+          itrc=idbio(ibt)
+#elif defined OFFLINE_TPASSIVE
+        T_LOOP2: DO itrc=NAT+1,NAT+NPT
+#else
+        T_LOOP2: DO itrc=1,NT(ng)
+#endif
+!!!End modified PWA 09/08/2025
 !
           VADV_FLUX : IF (Vadvection(itrc,ng)%SPLINES) THEN
 !
@@ -915,7 +938,16 @@
 !
       DO j=Jstr,Jend
         cff3=dt(ng)*(1.0_r8-lambda)
+!!!Modified PWA 09/08/2025
+#ifdef OFFLINE_BIOLOGY
+        DO ibt=1,NBT
+          itrc=idbio(ibt)
+#elif defined OFFLINE_TPASSIVE
+        DO itrc=NAT+1,NAT+NPT
+#else
         DO itrc=1,NT(ng)
+#endif
+!!!End modified PWA 09/08/2025
           ltrc=MIN(NAT,itrc)
           DO k=1,N(ng)-1
             DO i=Istr,Iend
@@ -1007,6 +1039,9 @@
         END DO
       END DO
 # endif /* !TS_FIXED */
+!!!Modified PWA 09/08/2025
+# if !defined OFFLINE_BIOLOGY && !defined OFFLINE_TPASSIVE
+!!!End modified PWA 09/08/2025
 !
 !=======================================================================
 !  3D momentum equation in the XI-direction.
@@ -1218,7 +1253,9 @@
           END IF
         END IF
       END DO J_LOOP2
-
+!!!Modified PWA 09/08/2025
+# endif
+!!!End modified PWA 09/08/2025
 # ifndef TS_FIXED
 !
 !=======================================================================
@@ -1226,7 +1263,16 @@
 !=======================================================================
 !
       ic=0
+!!!Modified PWA 09/08/2025
+#  ifdef OFFLINE_BIOLOGY
+      DO ibt=1,NBT
+        itrc=idbio(ibt)
+#  elif defined OFFLINE_TPASSIVE
+      DO itrc=NAT+1,NAT+NPT
+#  else
       DO itrc=1,NT(ng)
+#  endif
+!!!End modified PWA 09/08/2025
         IF (LtracerCLM(itrc,ng).and.LnudgeTCLM(itrc,ng)) THEN
           ic=ic+1
         END IF
