@@ -750,12 +750,6 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+17)=' FABM_INITIAL_SB,'
 # endif
-# ifdef FABM_ISOURCES
-      IF (Master) WRITE (stdout,20) 'FABM_ISOURCES',                    &
-     &   'Use ROMS to provide internal sources data.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+15)=' FABM_ISOURCES,'
-# endif
 # ifdef FABM_MU
       IF (Master) WRITE (stdout,20) 'FABM_MU',                          &
      &   'Use ROMS to provide dynamic viscosity (online).'
