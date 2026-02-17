@@ -40,6 +40,18 @@
 !  TsrcG      Latest two-time snapshots of tracer (tracer units)       !
 !               point Sources/Sinks.                                   !
 !                                                                      !
+!!!Inserted PWA 18/10/2021
+#ifdef TS_ISOURCE
+!  Nisrc      Number of internal tracer point Sources/Sinks.           !
+!  Iisrc      I-grid location of internal point Sources/Sinks,         !
+!               1 =< Iisrc =< Lm(ng).                                  !
+!  Jisrc      J-grid location of internal point Sources/Sinks,         !
+!               1 =< Jisrc =< Mm(ng).                                  !
+!  Tisrc      Tracer (tracer units) internal point Sources/Sinks.      !
+!  TisrcG     Latest two-time snapshots of tracer (tracer units)       !
+!               internal point Sources/Sinks.                          !
+#endif
+!!!End insert PWA 18/10/2021
 !=======================================================================
 !
         USE mod_kinds
@@ -58,6 +70,16 @@
 
           integer, pointer :: Isrc(:)
           integer, pointer :: Jsrc(:)
+!!!Inserted PWA 18/10/2021
+#ifdef TS_ISOURCE
+          integer, pointer :: Iisrc(:)
+          integer, pointer :: Jisrc(:)
+          integer, pointer :: Nisrct(:)
+          integer, pointer :: Iisrct(:,:)
+          integer, pointer :: Jisrct(:,:)
+          integer, pointer :: isrct(:,:)
+#endif
+!!!End insert PWA 18/10/2021
 
           real(r8), pointer :: Dsrc(:)
           real(r8), pointer :: Fsrc(:)
@@ -72,6 +94,15 @@
           real(r8), pointer :: QbarG(:,:)
           real(r8), pointer :: TsrcG(:,:,:,:)
 #endif
+
+!!!Inserted PWA 18/10/2021
+#ifdef TS_ISOURCE
+          real(r8), pointer :: Tisrc(:,:,:)
+          real(r8), pointer :: Xisrc(:)
+          real(r8), pointer :: Yisrc(:)
+          real(r8), pointer :: TisrcG(:,:,:,:)
+#endif
+!!!End insert PWA 18/10/2021
 
 #ifdef ADJOINT
           real(r8), pointer :: ad_Qbar(:)
@@ -95,6 +126,11 @@
 !
         integer, allocatable :: Msrc(:)
         integer, allocatable :: Nsrc(:)
+!!!Inserted PWA 18/10/2021
+#ifdef TS_ISOURCE
+        integer, allocatable :: Nisrc(:)
+#endif
+!!!End insert PWA 18/10/2021
 !
       CONTAINS
 !
@@ -108,7 +144,8 @@
 !=======================================================================
 !
       USE mod_param
-#ifndef ANA_PSOURCE
+!!!Modified PWA 18/10/2021
+#if !defined ANA_PSOURCE || defined TS_ISOURCE
       USE mod_parallel
       USE mod_iounits
       USE mod_ncparam
@@ -123,16 +160,22 @@
 !
 !  Imported variable declarations.
 !
-      integer :: ng
+!!!Modified PWA 20/11/2019 following Hedstrom 14092019 code
+      integer :: i, ng 
+!!!End modified PWA 20/11/2019
 !
 !  Local variable declarations.
 !
-#ifndef ANA_PSOURCE
+!!!Modified PWA 18/10/2021
+#if !defined ANA_PSOURCE || defined TS_ISOURCE
       logical :: foundit
 !
       integer :: Vid, ifile, nvatt, nvdim
 #endif
       integer :: is, itrc, k, mg
+#ifdef TS_ISOURCE
+      integer :: Ntiles 
+#endif
 
       real(r8), parameter :: IniVal = 0.0_r8
 !
@@ -166,9 +209,10 @@
         DO mg=1,Ngrids
           foundit=.FALSE.
           IF (LuvSrc(mg).or.LwSrc(mg).or.ANY(LtracerSrc(:,mg))) THEN
-            SELECT CASE (SSF(ng)%IOtype)
+!!!Modified PWA 21/01/2026 to allow for multiple files (use only first)
+            SELECT CASE (SSF(1,ng)%IOtype)
               CASE (io_nf90)
-                CALL netcdf_inq_var (ng, iNLM, SSF(mg)%name,            &
+                CALL netcdf_inq_var (ng, iNLM, SSF(1,mg)%name,          &
      &                               MyVarName = Vname(1,idRxpo),       &
      &                               SearchVar = foundit,               &
      &                               VarID = Vid,                       &
@@ -177,7 +221,7 @@
 
 # if defined PIO_LIB && defined DISTRIBUTE
               CASE (io_pio)
-                CALL pio_netcdf_inq_var (ng, iNLM, SSF(mg)%name,        &
+                CALL pio_netcdf_inq_var (ng, iNLM, SSF(1,mg)%name,      &
      &                                   MyVarName = Vname(1,idRxpo),   &
      &                                   SearchVar = foundit,           &
      &                                   pioVar = my_pioVar,            &
@@ -189,11 +233,12 @@
             IF (foundit) THEN
               Nsrc(mg)=var_Dsize(1)         ! first dimension
               Msrc(mg)=Nsrc(mg)
-              CALL check_sources (mg, SSF(mg)%name, Nsrc(mg))
+              CALL check_sources (mg, SSF(1,mg)%name, Nsrc(mg))
               IF (FoundError(exit_flag, NoError, __LINE__,              &
-     &                       MyFile)) RETURN
+     &                         MyFile)) RETURN
 
             END IF
+!!!End modified PWA 21/01/2026
           END IF
         END DO
       END IF
@@ -205,6 +250,48 @@
       Msrc(ng)=200
       Nsrc(ng)=Msrc(ng)
 #endif
+
+!!!Inserted PWA 18/10/2021
+#ifdef TS_ISOURCE
+      IF (ng.eq.1) THEN
+        allocate ( Nisrc(Ngrids) )
+      END IF
+!
+!  Inquire about the number of internal tracer point sources.
+!
+      IF (ng.eq.1) THEN
+        DO mg=1,Ngrids
+          foundit=.FALSE.
+          IF (ANY(LtracerISrc(:,mg))) THEN
+            SELECT CASE (ISSF(1,ng)%IOtype)
+              CASE (io_nf90)
+                CALL netcdf_inq_var (ng, iNLM, ISSF(1,mg)%name,         &
+     &                               MyVarName = Vname(1,idIxpo),       &
+     &                               SearchVar = foundit,               &
+     &                               VarID = Vid,                       &
+     &                               nVardim = nvdim,                   &
+     &                               nVarAtt = nvatt)
+
+# if defined PIO_LIB && defined DISTRIBUTE
+              CASE (io_pio)
+                CALL pio_netcdf_inq_var (ng, iNLM, ISSF(1,mg)%name,     &
+     &                                   MyVarName = Vname(1,idIxpo),   &
+     &                                   SearchVar = foundit,           &
+     &                                   pioVar = my_pioVar,            &
+     &                                   nVardim = nvdim,               &
+     &                                   nVarAtt = nvatt)
+# endif
+            END SELECT
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+            IF (foundit) THEN
+              Nisrc(mg)=var_Dsize(1)         ! first dimension
+            END if
+          END IF
+        END DO
+      END IF
+#endif
+!!!End insert PWA 18/10/2021
+
 !
 !  Allocate structure.
 !
@@ -249,6 +336,41 @@
       allocate ( SOURCES(ng) % TsrcG(Nsrc(ng),N(ng),2,NT(ng)) )
       Dmem(ng)=Dmem(ng)+2.0_r8*REAL(Nsrc(ng)*N(ng)*NT(ng),r8)
 #endif
+
+!!!Inserted PWA 18/10/2021
+#ifdef TS_ISOURCE
+      allocate ( SOURCES(ng) % Iisrc(Nisrc(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(Nisrc(ng),r8)
+
+      allocate ( SOURCES(ng) % Jisrc(Nisrc(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(Nisrc(ng),r8)
+
+      Ntiles=NtileI(ng)*NtileJ(ng)
+      allocate ( SOURCES(ng) % Nisrct(Ntiles) )
+      Dmem(ng)=Dmem(ng)+REAL(Ntiles,r8)
+
+      allocate ( SOURCES(ng) % Iisrct(Nisrc(ng),Ntiles) )
+      Dmem(ng)=Dmem(ng)+REAL(Nisrc(ng)*Ntiles,r8)
+
+      allocate ( SOURCES(ng) % Jisrct(Nisrc(ng),Ntiles) )
+      Dmem(ng)=Dmem(ng)+REAL(Nisrc(ng)*Ntiles,r8)
+
+      allocate ( SOURCES(ng) % isrct(Nisrc(ng),Ntiles) )
+      Dmem(ng)=Dmem(ng)+REAL(Nisrc(ng)*Ntiles,r8)
+
+      allocate ( SOURCES(ng) % Tisrc(Nisrc(ng),N(ng),NT(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(Nisrc(ng)*N(ng)*NT(ng),r8)
+
+      allocate ( SOURCES(ng) % Xisrc(Nisrc(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(Nisrc(ng),r8)
+
+      allocate ( SOURCES(ng) % Yisrc(Nisrc(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(Nisrc(ng),r8)
+
+      allocate ( SOURCES(ng) % TisrcG(Nisrc(ng),N(ng),2,NT(ng)) )
+      Dmem(ng)=Dmem(ng)+2.0_r8*REAL(Nisrc(ng)*N(ng)*NT(ng),r8)
+#endif
+!!!End insert PWA 18/10/2021
 
 #ifdef ADJOINT
       allocate ( SOURCES(ng) % ad_Qbar(Nsrc(ng)) )
@@ -325,6 +447,34 @@
           END DO
         END DO
       END DO
+
+!!!Inserted PWA 18/10/2021
+#ifdef TS_ISOURCE
+      DO is=1,Nisrc(ng)
+        SOURCES(ng) % Iisrc(is) = 0
+        SOURCES(ng) % Jisrc(is) = 0
+        SOURCES(ng) % Xisrc(is) = IniVal
+        SOURCES(ng) % Yisrc(is) = IniVal
+      END DO
+      DO k=1,Ntiles
+        SOURCES(ng) % Nisrct(k) = 0
+        DO is=1,Nisrc(ng)
+          SOURCES(ng) % Iisrct(is,k) = 0
+          SOURCES(ng) % Jisrct(is,k) = 0
+          SOURCES(ng) % isrct(is,k) = 0
+        END DO
+      END DO
+      DO itrc=1,NT(ng)
+        DO k=1,N(ng)
+          DO is=1,Nisrc(ng)
+            SOURCES(ng) % Tisrc(is,k,itrc) = IniVal
+            SOURCES(ng) % TisrcG(is,k,1,itrc) = IniVal
+            SOURCES(ng) % TisrcG(is,k,2,itrc) = IniVal
+          END DO
+        END DO
+      END DO
+#endif
+!!!End insert PWA 18/10/2021
 !
       RETURN
       END SUBROUTINE allocate_sources
@@ -493,7 +643,7 @@
 !
 !  Read in Source/Sink cell-face flag.
 !
-      SELECT CASE (SSF(ng)%IOtype)
+      SELECT CASE (SSF(1,ng)%IOtype) !!!Modified PWA 21/01/2026 to allow for multifiles
         CASE (io_nf90)
           CALL netcdf_get_fvar (ng, iNLM, ncname,                       &
      &                          Vname(1,idRdir),  Dsrc,                 &
