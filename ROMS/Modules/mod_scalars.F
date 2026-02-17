@@ -228,6 +228,14 @@
 #ifdef JEDI
 !    time4jedi     Model time clock (s) to pass to roms-jedi interface.
 #endif
+!!!PWA Inserted 29/10/2015
+#if defined RFABM
+!    nFABM         No. FABM time steps per baroclinic time step
+!    dtFABM        FABM time step (s) = nFABM * dt
+!    ydayc         No. days since start of the year (set by call to caldate in rfabm.h)
+!    maxCFLwink    Maximum allowed CFL number for vertical sinking velocity
+#endif
+!!!PWA Inserted 29/10/2015
 !    time_code     Model time clock (string, YYYY-MM-DD hh:mm:ss.ss)
 !    AVGtime       Model time clock for averages output (s).
 !    DIAtime       Model time clock for diagnostics output (s).
@@ -261,9 +269,21 @@
 
         integer, allocatable :: ndtfast(:)
         integer, allocatable :: nfast(:)
+!!!PWA Inserted 05/01/2021
+#if defined RFABM
+        integer, allocatable :: nFABM(:)
+#endif
+!!!PWA Inserted 05/01/2021
 
         real(dp), allocatable :: tdays(:)                ! days
         real(dp), allocatable :: time(:)                 ! seconds
+!!!PWA Inserted 23/07/2019
+#if defined RFABM
+        real(dp), allocatable :: dtFABM(:)               ! FABM time step
+        real(dp), allocatable :: ydayc(:)                ! year day starting from 0
+        real(dp), allocatable :: maxCFLwsink(:)          ! maximum CFL number for capping wsink
+#endif
+!!!PWA Inserted 23/07/2019
 !$OMP THREADPRIVATE (tdays, time)
 
 #ifdef JEDI
@@ -546,6 +566,11 @@
         logical, allocatable :: LuvSrc(:)            ! momentum
         logical, allocatable :: LwSrc(:)             ! mass
         logical, allocatable :: LtracerSrc(:,:)      ! tracers
+!!!Inserted PWA 07/02/2020
+# ifdef TS_ISOURCE
+        logical, allocatable :: LtracerISrc(:,:)     ! tracers
+# endif
+!!!End insert PWA 07/02/2020
 !
 !  Initialize NetCDF-4/HDF5 deflate (file compression) parameters. They
 !  overwritten with standard input values.
@@ -583,6 +608,14 @@
 !
         real(dp) :: max_speed = 20.0_dp         ! m/s
         real(dp) :: max_rho = 200.0_dp          ! kg/m3
+!!!Inserted PWA 23/07/2019
+#ifdef BIOLOGY
+        real(dp), allocatable :: maxbio(:,:)
+        real(dp), allocatable :: max_bio(:)
+        real(dp), allocatable :: minbio(:,:)
+        real(dp), allocatable :: min_bio(:)
+#endif
+!!!End PWA insert 23/07/2019
 !
 !  Interpolation scheme.
 !
@@ -2122,6 +2155,22 @@
         allocate ( nfast(Ngrids) )
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+!!!PWA Inserted 05/01/2021
+#if defined RFABM
+      IF (.not.allocated(nFABM)) THEN
+        allocate ( nFABM(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
+      END IF
+      IF (.not.allocated(dtFABM)) THEN
+        allocate ( dtFABM(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
+      END IF
+      IF (.not.allocated(maxCFLwsink)) THEN
+        allocate ( maxCFLwsink(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
+      END IF
+#endif
+!!!PWA Inserted 05/01/2021
 
       IF (.not.allocated(dt)) THEN
         allocate ( dt(Ngrids) )
@@ -2209,6 +2258,14 @@
         allocate ( time_code(Ngrids) )
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
+!!!PWA Inserted 23/07/2019
+#if defined RFABM
+      IF (.not.allocated(ydayc)) THEN
+        allocate ( ydayc(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
+      END IF
+#endif
+!!!PWA Inserted 23/07/2019
 !$OMP END PARALLEL
 
 #ifdef JEDI
@@ -2369,7 +2426,14 @@
         allocate ( LtracerSrc(MT,Ngrids) )
         Dmem(1)=Dmem(1)+REAL(MT*Ngrids,r8)
       END IF
-
+!!!Inserted PWA 07/02/2020
+#ifdef TS_ISOURCE
+      IF (.not.allocated(LtracerISrc)) THEN
+        allocate ( LtracerISrc(MT,Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(MT*Ngrids,r8)
+      END IF
+#endif
+!!!End insert PWA 07/02/2020
       IF (.not.allocated(maxspeed)) THEN
         allocate ( maxspeed(Ngrids) )
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
@@ -3466,6 +3530,27 @@
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 #endif
+
+!!!Inserted PWA 23/07/2019
+#ifdef BIOLOGY
+      IF (.not.allocated(maxbio)) THEN
+        allocate ( maxbio(NBT, Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids*NBT,r8)
+      END IF
+      IF (.not.allocated(max_bio)) THEN
+        allocate ( max_bio(NBT) )
+        Dmem(1)=Dmem(1)+REAL(NBT,r8)
+      END IF
+      IF (.not.allocated(minbio)) THEN
+        allocate ( minbio(NBT, Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids*NBT,r8)
+      END IF
+      IF (.not.allocated(min_bio)) THEN
+        allocate ( min_bio(NBT) )
+        Dmem(1)=Dmem(1)+REAL(NBT,r8)
+      END IF
+#endif
+!!!Inserted PWA 23/07/2019
 
       IF (.not.allocated(gls_m)) THEN
         allocate ( gls_m(Ngrids) )
@@ -4640,6 +4725,11 @@
           LnudgeTCLM(itrc,ng)=.FALSE.
           LtracerCLM(itrc,ng)=.FALSE.
           LtracerSrc(itrc,ng)=.FALSE.
+!!!Inserted PWA 07/02/2020
+#ifdef TS_ISOURCE
+          LtracerISrc(itrc,ng)=.FALSE.
+#endif
+!!!End insert PWA 07/02/2020
           LtracerSponge(itrc,ng)=.FALSE.
           ad_Akt_fac(itrc,ng)=1.0_r8
           tl_Akt_fac(itrc,ng)=1.0_r8
@@ -4837,6 +4927,21 @@
         INItime(ng)=-1.0_dp
         INItimeS(ng)=-1.0_dp
       END DO
+
+!!!Inserted PWA 23/07/2019
+#ifdef BIOLOGY
+      DO ng=1,Ngrids
+        DO itrc=1,NBT
+          maxbio(itrc, ng) = IniVal
+          minbio(itrc, ng) = 1.0E+08_r8   !!!Modified PWA 25/05/2017
+        END DO
+      END DO
+      DO itrc=1,NBT
+        max_bio(itrc) = 1.0E+12_r8   ! bio units
+        min_bio(itrc) = 1.0E+08_r8   ! bio units !!!Modified PWA 25/05/2017
+      END DO
+#endif
+!!!End insert PWA 23/07/2019
 
 # if defined SG_BBL || defined SSW_BBL
 !
