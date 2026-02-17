@@ -31,6 +31,10 @@
 #  include <npzd_Powell_inp.h>
 # elif defined RED_TIDE
 #  include <red_tide_inp.h>
+!!!Inserted PWA 04/08/2015
+# elif defined RFABM
+#  include <rfabm_inp.h>
+!!!Inserted PWA 04/08/2015
 # endif
 #else
       SUBROUTINE read_BioPar
