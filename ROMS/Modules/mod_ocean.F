@@ -24,6 +24,15 @@
 !                                                                      !
 !  pden         Potential Density anomaly (kg/m3).                     !
 !  rho          Density anomaly (kg/m3).                               !
+!!!PWA Inserted 16/03/2015                                             !
+#if defined RFABM
+!  rhof         Full density for use in FABM models (kg/m3)            !
+!  pres         Water pressure for use in FABM models (dbar)           !
+!  state1       Water column temporary state variables for use in FABM !
+!  state_sf     Surface attached state variables for use in FABM       !
+!  state_bt     Bottom attached state variables for use in FABM        !
+#endif
+!!!PWA Inserted 16/03/2015
 !  ru           Right-hand-side of 3D U-momentum equation (m4/s2).     !
 !  rv           Right hand side of 3D V-momentum equation (m4/s2).     !
 !  t            Tracer type variables (active and passive).            !
@@ -107,6 +116,15 @@
 #ifdef SOLVE3D
           real(r8), pointer :: pden(:,:,:)
           real(r8), pointer :: rho(:,:,:)
+!!!PWA Inserted 16/03/2015: Provide full density and water pressure for FABM
+# if defined RFABM
+          real(r8), pointer :: rhof(:,:,:)
+          real(r8), pointer :: pres(:,:,:)
+          real(r8), pointer :: state1(:,:,:,:)
+          real(r8), pointer :: state_sf(:,:,:,:)
+          real(r8), pointer :: state_bt(:,:,:,:)
+# endif
+!!!PWA Inserted 16/03/2015
           real(r8), pointer :: ru(:,:,:,:)
           real(r8), pointer :: rv(:,:,:,:)
           real(r8), pointer :: t(:,:,:,:,:)
@@ -450,6 +468,26 @@
       allocate ( OCEAN(ng) % rho(LBi:UBi,LBj:UBj,N(ng)) )
       Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
 !
+
+!!!PWA Inserted 23/07/2019
+# if defined RFABM
+      allocate ( OCEAN(ng) % rhof(LBi:UBi,LBj:UBj,N(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
+
+      allocate ( OCEAN(ng) % pres(LBi:UBi,LBj:UBj,N(ng)) )
+      Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
+
+      allocate ( OCEAN(ng) % state1(LBi:UBi,LBj:UBj,N(ng),NBT) )
+      Dmem(ng)=Dmem(ng)+REAL(N(ng)*NBT,r8)*size2d
+
+      allocate ( OCEAN(ng) % state_sf(LBi:UBi,LBj:UBj,3,NSAT) )
+      Dmem(ng)=Dmem(ng)+3.0_r8*REAL(NSAT,r8)*size2d
+
+      allocate ( OCEAN(ng) % state_bt(LBi:UBi,LBj:UBj,3,NBAT) )
+      Dmem(ng)=Dmem(ng)+3.0_r8*REAL(NBAT,r8)*size2d
+# endif
+!!!PWA Inserted 23/07/2019
+
       allocate ( OCEAN(ng) % ru(LBi:UBi,LBj:UBj,0:N(ng),2) )
       Dmem(ng)=Dmem(ng)+2.0_r8*REAL(N(ng)+1,r8)*size2d
 !
@@ -1675,7 +1713,12 @@
             DO i=Imin,Imax
               OCEAN(ng) % pden(i,j,k) = IniVal
               OCEAN(ng) % rho(i,j,k) = IniVal
-
+!!!PWA Inserted 16/03/2015
+# if defined RFABM
+              OCEAN(ng) % rhof(i,j,k) = IniVal
+              OCEAN(ng) % pres(i,j,k) = IniVal
+# endif
+!!!PWA Inserted 16/03/2015
               OCEAN(ng) % u(i,j,k,1) = IniVal
               OCEAN(ng) % u(i,j,k,2) = IniVal
               OCEAN(ng) % ua(i,j,k)  = IniVal
@@ -1727,6 +1770,31 @@
               END DO
             END DO
           END DO
+!!!PWA Inserted 23/07/2019
+# if defined RFABM
+          DO itrc=1,NBT
+            DO k=1,N(ng)
+              DO i=Imin,Imax
+                OCEAN(ng) % state1(i,j,k,itrc) = IniVal
+              END DO
+            END DO
+          END DO
+          DO itrc=1,NSAT
+            DO i=Imin,Imax
+              OCEAN(ng) % state_sf(i,j,1,itrc) = IniVal
+              OCEAN(ng) % state_sf(i,j,2,itrc) = IniVal
+              OCEAN(ng) % state_sf(i,j,3,itrc) = IniVal
+            END DO
+          END DO
+          DO itrc=1,NBAT
+            DO i=Imin,Imax
+              OCEAN(ng) % state_bt(i,j,1,itrc) = IniVal
+              OCEAN(ng) % state_bt(i,j,2,itrc) = IniVal
+              OCEAN(ng) % state_bt(i,j,3,itrc) = IniVal
+            END DO
+          END DO
+# endif
+!!!PWA Inserted 23/07/2019
 #endif
         END DO
       END IF
