@@ -56,6 +56,11 @@
       USE roms_kernel_mod, ONLY : ROMS_initialize
       USE roms_kernel_mod, ONLY : ROMS_run
       USE roms_kernel_mod, ONLY : ROMS_finalize
+!!!PWA Inserted 31/03/2015
+#if defined RFABM
+      USE roms_fabm_mod, ONLY : roms_fabm_init
+#endif
+!!!PWA Inserted 31/03/2015
 #if defined PIO_LIB && defined DISTRIBUTE
       USE set_pio_mod,     ONLY : finalize_pio
 #endif
@@ -110,6 +115,13 @@
         first=.TRUE.
         CALL ROMS_initialize (first)
       END IF
+
+!!!PWA Inserted 06/03/2015: Initialize FABM
+#if defined RFABM
+      CALL roms_fabm_init
+#endif
+!!!PWA Inserted 06/03/2015
+
 !
 !-----------------------------------------------------------------------
 !  Time-step ocean model over all nested grids, if applicable, by the
