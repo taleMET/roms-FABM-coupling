@@ -303,7 +303,13 @@
 !
 !$OMP PARALLEL
 #ifdef SOLVE3D
+!!!Modified PWA 09/08/2025
+# if defined OFFLINE_BIOLOGY || defined OFFLINE_TPASSIVE
+      CALL main3d_offline (MyRunInterval)
+# else
       CALL main3d (MyRunInterval)
+# endif
+!!!End modified PWA 09/08/2025
 #else
       CALL main2d (MyRunInterval)
 #endif
