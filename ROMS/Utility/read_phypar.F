@@ -89,7 +89,12 @@
 !
       integer :: Npts, Nval, i, itrc, ivar, k, lstr, ng, nl, status
       integer :: ifield, ifile, igrid, itracer, nline, max_Ffiles
-      integer :: ibcfile, iclmfile
+!!!Modified PWA 21/01/2026
+      integer :: ibcfile, iclmfile, issffile
+#ifdef TS_ISOURCE
+      integer :: iissffile
+#endif
+!!!End modified PWA 21/01/2026
       integer :: Cdim, Clen, Rdim
       integer :: nPETs, maxPETs
       integer :: OutFiles
@@ -99,6 +104,12 @@
       integer, allocatable :: Ncount(:,:)
       integer, allocatable :: NBCcount(:,:)
       integer, allocatable :: NCLMcount(:,:)
+!!!Inserted PWA 21/01/2026
+      integer, allocatable :: NSSFcount(:,:)
+#ifdef TS_ISOURCE
+      integer, allocatable :: NISSFcount(:,:)
+#endif
+!!!End insert PWA 21/01/2026
 !
       real(dp), allocatable :: Dtracer(:,:)
       real(r8), allocatable :: Rtracer(:,:)
@@ -128,6 +139,12 @@
       ifile=1                            ! multiple file counter
       ibcfile=1                          ! multiple BC file counter
       iclmfile=1                         ! multiple CLM file counter
+!!!Inserted PWA 21/01/2026
+      issffile=1                         ! multiple Rivers file counter
+#ifdef TS_ISOURCE
+      iissffile=1                        ! multiple internal sources/sinks file counter
+#endif
+!!!End insert PWA 21/01/2026
       igrid=1                            ! nested grid counter
       itracer=0                          ! LBC tracer counter
       nline=0                            ! LBC multi-line counter
@@ -1093,6 +1110,23 @@
                 END DO
 # endif
               END DO
+!!!Inserted PWA 07/02/2020
+# ifdef TS_ISOURCE
+            CASE ('LtracerISrc')
+              Npts=load_l(Nval, Cval, NAT+NPT, Ngrids, Ltracer)
+              DO ng=1,Ngrids
+                DO itrc=1,NAT
+                  LtracerISrc(itrc,ng)=Ltracer(itrc,ng)
+                END DO
+#  ifdef T_PASSIVE
+                DO i=1,NPT
+                  itrc=inert(i)
+                  LtracerISrc(itrc,ng)=Ltracer(NAT+i,ng)
+                END DO
+#  endif
+              END DO
+# endif
+!!!End insert PWA 07/02/2020
 #endif
             CASE ('LsshCLM')
               Npts=load_l(Nval, Cval, Ngrids, LsshCLM)
@@ -2248,6 +2282,46 @@
               END IF
               Npts=load_l(Nval, Cval, Ngrids, Lswitch)
               Hout(idMtls,1:Ngrids)=Lswitch(1:Ngrids)
+!!!Inserted PWA 03/06/2022
+#if defined GLS_MIXING || defined MY25_MIXING
+# if defined CALC_TDR || defined CALC_TSR
+            CASE ('Hout(idMtdr)')
+              IF (idMtdr.eq.0) THEN
+                IF (Master) WRITE (out,280) 'idMtdr'
+                exit_flag=5
+                RETURN
+              END IF
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Hout(idMtdr,1:Ngrids)=Lswitch(1:Ngrids)
+# endif
+# ifdef CALC_TSR
+            CASE ('Hout(idMmu)')
+              IF (idMmu.eq.0) THEN
+                IF (Master) WRITE (out,280) 'idMmu'
+                exit_flag=5
+                RETURN
+              END IF
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Hout(idMmu,1:Ngrids)=Lswitch(1:Ngrids)
+            CASE ('Hout(idMnu)')
+              IF (idMnu.eq.0) THEN
+                IF (Master) WRITE (out,280) 'idMnu'
+                exit_flag=5
+                RETURN
+              END IF
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Hout(idMnu,1:Ngrids)=Lswitch(1:Ngrids)
+            CASE ('Hout(idMtsr)')
+              IF (idMtsr.eq.0) THEN
+                IF (Master) WRITE (out,280) 'idMtsr'
+                exit_flag=5
+                RETURN
+              END IF
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Hout(idMtsr,1:Ngrids)=Lswitch(1:Ngrids)
+# endif
+#endif
+!!!End insert PWA 03/06/2022
 #if defined SOLVE3D && defined T_PASSIVE
             CASE ('Hout(inert)')
               Npts=load_l(Nval, Cval, NPT, Ngrids, Linert)
@@ -2266,6 +2340,67 @@
                 END DO
               END DO
 #endif
+!!!PWA Inserted 23/07/2019
+#if defined RFABM
+            CASE ('Hout(idSradWm2)')
+              IF (idSradWm2.eq.0) THEN
+                IF (Master) WRITE (out,280) 'idSradWm2'
+                exit_flag=5
+                RETURN
+              END IF
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Hout(idSradWm2,1:Ngrids)=Lswitch(1:Ngrids)
+# ifdef FABM_PCO2ATM
+            CASE ('Hout(idxCO2atm)')
+              IF (idxCO2atm.eq.0) THEN
+                IF (Master) WRITE (out,280) 'idxCO2atm'
+                exit_flag=5
+                RETURN
+              END IF
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Hout(idxCO2atm,1:Ngrids)=Lswitch(1:Ngrids)
+            CASE ('Hout(idpCO2atm)')
+              IF (idpCO2atm.eq.0) THEN
+                IF (Master) WRITE (out,280) 'idpCO2atm'
+                exit_flag=5
+                RETURN
+              END IF
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Hout(idpCO2atm,1:Ngrids)=Lswitch(1:Ngrids)
+# endif
+# ifdef FABM_N3ATMDEPO
+            CASE ('Hout(idN3atmd)')
+              IF (idN3atmd.eq.0) THEN
+                IF (Master) WRITE (out,280) 'idN3atmd'
+                exit_flag=5
+                RETURN
+              END IF
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Hout(idN3atmd,1:Ngrids)=Lswitch(1:Ngrids)
+# endif
+# ifdef FABM_N4ATMDEPO
+            CASE ('Hout(idN4atmd)')
+              IF (idN4atmd.eq.0) THEN
+                IF (Master) WRITE (out,280) 'idN4atmd'
+                exit_flag=5
+                RETURN
+              END IF
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Hout(idN4atmd,1:Ngrids)=Lswitch(1:Ngrids)
+# endif
+#endif
+!!!End insert PWA 23/07/2019
+
+!!!Inserted PWA 13/12/2020
+            CASE ('Hout(idtss)')
+              IF (idtss.eq.0) THEN
+                IF (Master) WRITE (out,280) 'idtss'
+                exit_flag=5
+                RETURN
+              END IF
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Hout(idtss,1:Ngrids)=Lswitch(1:Ngrids)
+!!!End insert PWA 13/12/2020
             CASE ('Qout(idUvel)')
               Npts=load_l(Nval, Cval, Ngrids, Lswitch)
               Qout(idUvel,1:Ngrids)=Lswitch(1:Ngrids)
@@ -3158,6 +3293,50 @@
               END IF
               Npts=load_l(Nval, Cval, Ngrids, Lswitch)
               Aout(idVVav,1:Ngrids)=Lswitch(1:Ngrids)
+!!!Inserted PWA 23/07/2019
+            CASE ('Aout(idSUV)')
+              IF (idSUV.eq.0) THEN
+                IF (Master) WRITE (out,280) 'idSUV'
+                exit_flag=5
+                RETURN
+              END IF
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Aout(idSUV,1:Ngrids)=Lswitch(1:Ngrids)
+!!!End insert PWA 23/07/2019
+!!!Inserted PWA 11/09/2020
+            CASE ('Aout(idbstrPa)')
+              IF (idbstrPa.eq.0) THEN
+                IF (Master) WRITE (out,280) 'idbstrPa'
+                exit_flag=5
+                RETURN
+              END IF
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Aout(idbstrPa,1:Ngrids)=Lswitch(1:Ngrids)
+!!!End insert PWA 11/09/2020
+!!!Inserted PWA 03/06/2022
+#  if defined GLS_MIXING || defined MY25_MIXING
+#   if defined CALC_TDR || defined CALC_TSR
+            CASE ('Aout(idMtdr)')
+              IF (idMtdr.eq.0) THEN
+                IF (Master) WRITE (out,280) 'idMtdr'
+                exit_flag=5
+                RETURN
+              END IF
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Aout(idMtdr,1:Ngrids)=Lswitch(1:Ngrids)
+#   endif
+#   ifdef CALC_TSR
+            CASE ('Aout(idMtsr)')
+              IF (idMtsr.eq.0) THEN
+                IF (Master) WRITE (out,280) 'idMtsr'
+                exit_flag=5
+                RETURN
+              END IF
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Aout(idMtsr,1:Ngrids)=Lswitch(1:Ngrids)
+#   endif
+#  endif
+!!!End insert PWA 03/06/2022
 # endif
             CASE ('Aout(idU2av)')
               IF (idU2av.eq.0) THEN
@@ -3261,6 +3440,36 @@
               END DO
 # endif
 #endif
+!!!PWA Insert 23/07/2019
+#if defined RFABM
+            CASE ('Aout(idSradWm2)')
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Aout(idSradWm2,1:Ngrids)=Lswitch(1:Ngrids)
+# ifdef FABM_PCO2ATM
+            CASE ('Aout(idxCO2atm)')
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Aout(idxCO2atm,1:Ngrids)=Lswitch(1:Ngrids)
+            CASE ('Aout(idpCO2atm)')
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Aout(idpCO2atm,1:Ngrids)=Lswitch(1:Ngrids)
+# endif
+# ifdef FABM_N3ATMDEPO
+            CASE ('Aout(idN3atmd)')
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Aout(idN3atmd,1:Ngrids)=Lswitch(1:Ngrids)
+# endif
+# ifdef FABM_N4ATMDEPO
+            CASE ('Aout(idN4atmd)')
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Aout(idN4atmd,1:Ngrids)=Lswitch(1:Ngrids)
+# endif
+#endif
+!!!End insert PWA 23/07/2019
+!!!Inserted PWA 13/12/2020
+            CASE ('Aout(idtss)')
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Aout(idtss,1:Ngrids)=Lswitch(1:Ngrids)
+!!!End insert PWA 13/12/2020
 #ifdef DIAGNOSTICS_UV
             CASE ('Dout(M2rate)')
               IF (M2rate.le.0) THEN
@@ -4348,10 +4557,86 @@
               label='NUD - nudging coefficients'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
      &                      Ngrids, Nfiles, inp_lib, NUD)
+!!!Modified PWA 21/01/2026
+            CASE ('NSSFFILES')
+              Npts=load_i(Nval, Rval, Ngrids, nSSFfiles)
+              DO ng=1,Ngrids
+                IF (nSSFfiles(ng).le.0) THEN
+                  IF (Master) WRITE (out,260) 'NSSFFILES',              &
+     &               nSSFfiles(ng),                                     &
+     &              'Must be equal or greater than one.'
+                  exit_flag=4
+                  RETURN
+                END IF
+              END DO
+              max_Ffiles=MAXVAL(nSSFfiles)
+              allocate ( SSF(max_Ffiles,Ngrids) )
+              allocate ( SSFids(max_Ffiles,Ngrids) )
+# if defined PIO_LIB && defined DISTRIBUTE
+              allocate ( SSFdesc(max_Ffiles,Ngrids) )
+# endif
+              allocate ( NSSFcount(max_Ffiles,Ngrids) )
+              SSFids(1:max_Ffiles,1:Ngrids)=-1
+# if defined PIO_LIB && defined DISTRIBUTE
+              SSFdesc(1:max_Ffiles,1:Ngrids)%fh=-1
+# endif
+              NSSFcount(1:max_Ffiles,1:Ngrids)=0
             CASE ('SSFNAME')
               label='SSF - Sources/Sinks forcing fields'
-              Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, inp_lib, SSF)
+              DO ng=1,Ngrids
+                IF (nSSFfiles(ng).lt.0) THEN
+                  IF (Master) WRITE (out,290) 'nSSFfiles = ',           &
+     &                                        nSSFfiles(ng),            &
+     &              'KeyWord ''NSSFFILES'' unread or misssing from '//  &
+     &              'input script ''roms.in''.'
+                  exit_flag=4
+                  RETURN
+                END IF
+              END DO
+              Npts=load_s2d(Nval, Cval, Cdim, line, label, issffile,    &
+     &                      igrid, Ngrids, nSSFfiles, NSSFcount,        &
+     &                      max_Ffiles, inp_lib, SSF)
+#ifdef TS_ISOURCE
+            CASE ('NSSFFILES')
+              Npts=load_i(Nval, Rval, Ngrids, nISSFfiles)
+              DO ng=1,Ngrids
+                IF (nISSFfiles(ng).le.0) THEN
+                  IF (Master) WRITE (out,260) 'NISSFFILES',             &
+     &               nISSFfiles(ng),                                    &
+     &              'Must be equal or greater than one.'
+                  exit_flag=4
+                  RETURN
+                END IF
+              END DO
+              max_Ffiles=MAXVAL(nISSFfiles)
+              allocate ( ISSF(max_Ffiles,Ngrids) )
+              allocate ( ISSFids(max_Ffiles,Ngrids) )
+# if defined PIO_LIB && defined DISTRIBUTE
+              allocate ( ISSFdesc(max_Ffiles,Ngrids) )
+# endif
+              allocate ( NISSFcount(max_Ffiles,Ngrids) )
+              ISSFids(1:max_Ffiles,1:Ngrids)=-1
+# if defined PIO_LIB && defined DISTRIBUTE
+              ISSFdesc(1:max_Ffiles,1:Ngrids)%fh=-1
+# endif
+              NISSFcount(1:max_Ffiles,1:Ngrids)=0
+            CASE ('ISSFNAME')
+              label='ISSF - Internal Sources/Sinks forcing fields'
+              DO ng=1,Ngrids
+                IF (nISSFfiles(ng).lt.0) THEN
+                  IF (Master) WRITE (out,290) 'nISSFfiles = ',          &
+     &                                        nISSFfiles(ng),           &
+     &              'KeyWord ''NISSFFILES'' unread or misssing from '// &
+     &              'input script ''roms.in''.'
+                  exit_flag=4
+                  RETURN
+                END IF
+              END DO
+              Npts=load_s2d(Nval, Cval, Cdim, line, label, iissffile,   &
+     &                      igrid, Ngrids, nISSFfiles, NISSFcount,      &
+     &                      max_Ffiles, inp_lib, ISSF)
+#endif
+!!!End modified PWA 21/01/2026
 # if defined SSH_TIDES || defined UV_TIDES || \
      defined TIDE_GENERATING_FORCES
             CASE ('TIDENAME')
@@ -5748,6 +6033,35 @@
             END IF
           END DO
 # endif
+!!!Inserted PWA 07/02/2020
+# ifdef TS_ISOURCE
+          DO itrc=1,NAT
+            IF (LtracerISrc(itrc,ng)) THEN
+              WRITE (out,185) LtracerISrc(itrc,ng), 'LtracerISrc', itrc,&
+     &            'Turning ON internal Sources/Sinks on tracer ', itrc, &
+     &            TRIM(Vname(1,idTvar(itrc)))
+            ELSE
+              WRITE (out,185) LtracerISrc(itrc,ng), 'LtracerISrc', itrc,&
+     &            'Turning OFF internal Sources/Sinks on tracer ', itrc,&
+     &            TRIM(Vname(1,idTvar(itrc)))
+            END IF
+          END DO
+#  ifdef T_PASSIVE
+          DO i=1,NPT
+            itrc=inert(i)
+            IF (LtracerISrc(itrc,ng)) THEN
+              WRITE (out,185) LtracerISrc(itrc,ng), 'LtracerISrc', itrc,&
+     &            'Turning ON internal Sources/Sinks on tracer ', itrc, &
+     &            TRIM(Vname(1,idTvar(itrc)))
+            ELSE
+              WRITE (out,185) LtracerISrc(itrc,ng), 'LtracerISrc', itrc,&
+     &            'Turning OFF internal Sources/Sinks on tracer ', itrc,&
+     &            TRIM(Vname(1,idTvar(itrc)))
+            END IF
+          END DO
+#  endif
+# endif
+!!!End insert PWA 07/02/2020
 #endif
           IF (LsshCLM(ng)) THEN
             WRITE (out,170) LsshCLM(ng), 'LsshCLM',                     &
@@ -6435,8 +6749,56 @@
             IF (Hout(idMtls,ng)) WRITE (out,170) Hout(idMtls,ng),       &
      &         'Hout(idMtls)',                                          &
      &         'Write out turbulent generic length-scale.'
+!!!Inserted PWA 03/06/2022
+#  if defined CALC_TDR || defined CALC_TSR
+            IF (Hout(idMtdr,ng)) WRITE (out,170) Hout(idMtdr,ng),       &
+     &         'Hout(idMtdr)',                                          &
+     &         'Write out turbulent energy dissipation rate.'
+#  endif
+#  ifdef CALC_TSR
+            IF (Hout(idMmu,ng)) WRITE (out,170) Hout(idMmu,ng),         &
+     &         'Hout(idMmu)',                                           &
+     &         'Write out dynamic viscosity.'
+            IF (Hout(idMnu,ng)) WRITE (out,170) Hout(idMnu,ng),         &
+     &         'Hout(idMnu)',                                           &
+     &         'Write out kinematic viscosity.'
+            IF (Hout(idMtsr,ng)) WRITE (out,170) Hout(idMtsr,ng),       &
+     &         'Hout(idMtsr)',                                          &
+     &         'Write out turbulent shear rate.'
+#  endif
+!!!End insert PWA 03/06/2022
 # endif
 #endif
+!!!PWA Inserted 04/05/2017
+#if defined RFABM
+            IF (Hout(idSradWm2,ng)) WRITE (out,170) Hout(idSradWm2,ng), &
+     &         'Hout(idSradWm2)',                                       &
+     &         'Write out shortwave radiation in [W/m2].'
+# ifdef FABM_PCO2ATM
+            IF (Hout(idxCO2atm,ng)) WRITE (out,170) Hout(idxCO2atm,ng), &
+     &         'Hout(idxCO2atm)',                                       &
+     &         'Write out dry air molar fraction atmospheric CO2.'
+            IF (Hout(idpCO2atm,ng)) WRITE (out,170) Hout(idpCO2atm,ng), &
+     &         'Hout(idpCO2atm)',                                       &
+     &         'Write out partial pressure atmospheric CO2.'
+# endif
+# ifdef FABM_N3ATMDEPO
+            IF (Hout(idN3atmd,ng)) WRITE (out,170) Hout(idN3atmd,ng),   &
+     &         'Hout(idN3atmd)',                                        &
+     &         'Write out atmospheric deposition of oxidized nitrogen.'
+# endif
+# ifdef FABM_N4ATMDEPO
+            IF (Hout(idN4atmd,ng)) WRITE (out,170) Hout(idN4atmd,ng),   &
+     &         'Hout(idN4atmd)',                                        &
+     &         'Write out atmospheric deposition of reduced nitrogen.'
+# endif
+#endif
+!!!End PWA insert 04/05/2017
+!!!Inserted PWA 13/12/2020
+            IF (Hout(idtss,ng)) WRITE (out,170) Hout(idtss,ng),         &
+     &         'Hout(idtss)',                                           &
+     &         'Write out total suspended sediment.'
+!!!End insert PWA 13/12/2020
           END IF
 
           IF ((nQCK(ng).gt.0).and.ANY(Qout(:,ng))) THEN
@@ -7072,6 +7434,20 @@
      &         'Aout(idHbbl)',                                          &
      &         'Write out averaged depth of bottom boundary layer.'
 #  endif
+!!!Inserted PWA 03/06/2022
+#  if defined MY25_MIXING || defined GLS_MIXING
+#   if defined CALC_TDR || defined CALC_TSR
+            IF (Aout(idMtdr,ng)) WRITE (out,170) Aout(idMtdr,ng),       &
+     &         'Aout(idMtdr)',                                          &
+     &         'Write out averaged turbulent energy dissipation rate.'
+#   endif
+#   ifdef CALC_TSR
+            IF (Aout(idMtsr,ng)) WRITE (out,170) Aout(idMtsr,ng),       &
+     &         'Aout(idMtsr)',                                          &
+     &         'Write out averaged turbulent shear rate.'
+#   endif
+#  endif
+!!!End insert PWA 03/06/2022
 # endif
             IF (Aout(id2dRV,ng)) WRITE (out,170) Aout(id2dRV,ng),       &
      &         'Aout(id2dRV)',                                          &
@@ -7112,6 +7488,16 @@
             IF (Aout(idVVav,ng)) WRITE (out,170) Aout(idVVav,ng),       &
      &         'Aout(idVVav)',                                          &
      &         'Write out averaged quadratic <v*v> term.'
+!!!Inserted PWA 22/10/2018
+            IF (Aout(idSUV,ng)) WRITE (out,170) Aout(idSUV,ng),         &
+     &         'Aout(idSUV)',                                           &
+     &         'Write out averaged horizontal current speed.'
+!!!End insert PWA 22/10/2018
+!!!Inserted PWA 11/09/2020
+            IF (Aout(idbstrPa,ng)) WRITE (out,170) Aout(idbstrPa,ng),   &
+     &         'Aout(idbstrPa)',                                        &
+     &         'Write out scalar bottom stress.'
+!!!End insert PWA 11/09/2020
             DO itrc=1,NAT+NPT
               IF (Aout(idTTav(itrc),ng)) WRITE (out,180)                &
      &            Aout(idTTav(itrc),ng), 'Aout(idTTav)',                &
@@ -7172,6 +7558,36 @@
 # endif
           END IF
 #endif
+!!!Inserted PWA 04/05/2017
+#if defined RFABM
+          IF (Aout(idSradWm2,ng)) WRITE (out,170) Aout(idSradWm2,ng),   &
+     &       'Aout(idSradWm2)',                                         &
+     &       'Write out averaged shortwave radiation in [W/m2].'
+# ifdef FABM_PCO2ATM
+          IF (Aout(idxCO2atm,ng)) WRITE (out,170) Aout(idxCO2atm,ng),   &
+     &       'Aout(idxCO2atm)',                                         &
+     &       'Write out averaged dry air molar fraction CO2.'
+          IF (Aout(idpCO2atm,ng)) WRITE (out,170) Aout(idpCO2atm,ng),   &
+     &       'Aout(idpCO2atm)',                                         &
+     &       'Write out averaged partial pressure atmospheric CO2.'
+# endif
+# ifdef FABM_N3ATMDEPO
+          IF (Aout(idN3atmd,ng)) WRITE (out,170) Aout(idN3atmd,ng),     &
+     &       'Aout(idN3atmd)',                                          &
+     &       'Write out atmospheric deposition of oxidized nitrogen.'
+# endif
+# ifdef FABM_N4ATMDEPO
+          IF (Aout(idN4atmd,ng)) WRITE (out,170) Aout(idN4atmd,ng),     &
+     &       'Aout(idN4atmd)',                                          &
+     &       'Write out atmospheric deposition of reduced nitrogen.'
+# endif
+#endif
+!!!End insert PWA 04/05/2017
+!!!Inserted PWA 13/12/2020
+          IF (Aout(idtss,ng)) WRITE (out,170) Aout(idtss,ng),           &
+     &       'Aout(idtss)',                                             &
+     &       'Write out total suspended sediment.'
+!!!End insert PWA 13/12/2020
 #ifdef DIAGNOSTICS_UV
           IF ((nDIA(ng).gt.0).and.ANY(Dout(:,ng))) THEN
             WRITE (out,'(1x)')
@@ -7792,15 +8208,48 @@
 #if !defined CORRELATION
 # ifndef ANA_PSOURCE
         IF (LuvSrc(ng).or.LwSrc(ng).or.(ANY(LtracerSrc(:,ng)))) THEN
-          fname=SSF(ng)%name
-          IF (.not.find_file(ng, out, fname, 'SSFNAME')) THEN
-            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-          ELSE
-            IF (Master.and.Lwrite) WRITE (out,230)                      &
-     &        '        Input Sources/Sinks File:  ', TRIM(fname)
-          END IF
+!!!Modified PWA 21/01/2026
+          DO i=1,nSSFfiles(ng)
+            DO ifile=1,SSF(i,ng)%Nfiles
+              fname=SSF(i,ng)%files(ifile)
+              IF (.not.find_file(ng, out, fname, 'SSFNAME')) THEN
+                IF (FoundError(exit_flag, NoError, __LINE__, MyFile))   &
+     &            RETURN
+              ELSE
+                IF (ifile.eq.1) THEN
+                  IF (Master.and.Lwrite) WRITE (out,310)                &
+     &              '     Input Sources/Sinks File ',i,':  ',TRIM(fname)
+                ELSE
+                  IF (Master.and.Lwrite) WRITE (out,'(37x,a)')          &
+     &                                         TRIM(fname)
+                END IF
+              END IF
+            END DO
+          END DO
+!!!End modified PWA 21/01/2026
         END IF
 # endif
+!!!Inserted PWA 21/01/2026
+# ifdef TS_ISOURCE
+        DO i=1,nISSFfiles(ng)
+          DO ifile=1,ISSF(i,ng)%Nfiles
+            fname=ISSF(i,ng)%files(ifile)
+            IF (.not.find_file(ng, out, fname, 'ISSFNAME')) THEN
+              IF (FoundError(exit_flag, NoError, __LINE__, MyFile))     &
+     &          RETURN
+            ELSE
+              IF (ifile.eq.1) THEN
+                IF (Master.and.Lwrite) WRITE (out,310)                  &
+     &     '     Input Internal Sources/Sinks File ',i,':  ',TRIM(fname)
+              ELSE
+                IF (Master.and.Lwrite) WRITE (out,'(37x,a)')            &
+     &                                       TRIM(fname)
+              END IF
+            END IF
+          END DO
+        END DO
+# endif
+!!!End insert PWA 21/01/2026
 # if defined SSH_TIDES || defined UV_TIDES
         IF (ng.eq.1) THEN                 ! only tidal forcing on grid 1
           fname=TIDE(ng)%name
