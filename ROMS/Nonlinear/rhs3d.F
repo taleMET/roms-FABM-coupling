@@ -85,6 +85,9 @@
 !
       CALL pre_step3d (ng, tile)
 !
+!!!Modified PWA 09/08/2025
+# if !defined OFFLINE
+
 !-----------------------------------------------------------------------
 !  Compute baroclinic pressure gradient.
 !-----------------------------------------------------------------------
@@ -102,7 +105,8 @@
       CALL wec_streaming (ng, tile)
 #  endif
 # endif
-
+# endif
+!!!End modified PWA 09/08/2025
 # ifndef TS_FIXED
 #  ifdef TS_DIF2
 !
@@ -121,6 +125,9 @@
       CALL t3dmix4 (ng, tile)
 #  endif
 # endif
+!!!Modified PWA 09/08/2025
+# if !defined OFFLINE_BIOLOGY && !defined OFFLINE_TPASSIVE
+!!!End modified PWA 09/08/2025
 
 # if defined VEGETATION && defined VEG_DRAG
 
@@ -208,6 +215,9 @@
 !
       CALL uv3dmix4 (ng, tile)
 # endif
+!!!Modified PWA 09/08/2025
+# endif /* !OFFLINE */
+!!!End modified PWA 09/08/2025
 !
       RETURN
       END SUBROUTINE rhs3d
