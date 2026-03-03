@@ -75,7 +75,10 @@
 # ifdef MASKING
      &                   GRID(ng) % rmask,                              &
 # endif
-# ifdef VAR_RHO_2D
+!!!PWA Modified 16/03/2015 to include RFABM
+!# ifdef VAR_RHO_2D
+# if defined VAR_RHO_2D || defined RFABM
+!!!End modified PWA 16/03/2015
      &                   GRID(ng) % Hz,                                 &
 # endif
      &                   GRID(ng) % z_r,                                &
@@ -96,6 +99,12 @@
      &                   MIXING(ng) % alfaobeta,                        &
 #  endif
 # endif
+!!!PWA Inserted 16/03/2015: Full density rhof and water pressure pres for FABM models
+# if defined RFABM
+     &                   OCEAN(ng) % rhof,                              &
+     &                   OCEAN(ng) % pres,                              &
+# endif
+!!!PWA Inserted 16/03/2015
      &                   OCEAN(ng) % pden,                              &
      &                   OCEAN(ng) % rho)
 # ifdef PROFILE
@@ -115,7 +124,10 @@
 #  ifdef MASKING
      &                         rmask,                                   &
 #  endif
-#  ifdef VAR_RHO_2D
+!!!PWA Modified 16/03/2015 to include RFABM
+!#  ifdef VAR_RHO_2D
+#  if defined VAR_RHO_2D || defined RFABM
+!!!End modified PWA 16/03/2015
      &                         Hz,                                      &
 #  endif
      &                         z_r, z_w, t,                             &
@@ -132,6 +144,12 @@
      &                         alfaobeta,                               &
 #   endif
 #  endif
+!!!PWA Inserted 16/03/2015: Full density (rhof) and water pressure (pres) for FABM models
+#  if defined RFABM
+     &                         rhof,                                    &
+     &                         pres,                                    &
+#  endif
+!!!PWA Inserted 16/03/2015
      &                         pden,                                    &
      &                         rho)
 !***********************************************************************
@@ -160,7 +178,10 @@
 #   ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:,LBj:)
 #   endif
-#   ifdef VAR_RHO_2D
+!!!PWA Modified 16/03/2015 to include RFABM
+!#   ifdef VAR_RHO_2D
+#   if defined VAR_RHO_2D || defined RFABM
+!!!End modified PWA 16/03/2015
       real(r8), intent(in) :: Hz(LBi:,LBj:,:)
 #   endif
       real(r8), intent(in) :: z_r(LBi:,LBj:,:)
@@ -181,13 +202,22 @@
       real(r8), intent(out) :: alfaobeta(LBi:,LBj:,0:)
 #    endif
 #   endif
+!!!PWA Inserted 16/03/2015: Full density (rhof) and water pressure (pres) for FABM models
+#   if defined RFABM
+      real(r8), intent(out) :: rhof(LBi:,LBj:,:)
+      real(r8), intent(out) :: pres(LBi:,LBj:,:)
+#   endif
+!!!PWA Inserted 16/03/2015
       real(r8), intent(out) :: pden(LBi:,LBj:,:)
       real(r8), intent(out) :: rho(LBi:,LBj:,:)
 #  else
 #   ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
 #   endif
-#   ifdef VAR_RHO_2D
+!!!PWA Modified 16/03/2015 to include RFABM
+!#   ifdef VAR_RHO_2D
+#   if defined VAR_RHO_2D || defined RFABM
+!!!End modified PWA 16/03/2015
       real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
 #   endif
       real(r8), intent(in) :: z_r(LBi:UBi,LBj:UBj,N(ng))
@@ -208,6 +238,12 @@
       real(r8), intent(out) :: alfaobeta(LBi:UBi,LBj:UBj,0:N(ng))
 #    endif
 #   endif
+!!!PWA Inserted 16/03/2015: Full density (rhof) and water pressure (pres) for FABM models
+#   if defined RFABM
+      real(r8), intent(out) :: rhof(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(out) :: pres(LBi:UBi,LBj:UBj,N(ng))
+#   endif
+!!!PWA Inserted 16/03/2015
       real(r8), intent(out) :: pden(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(out) :: rho(LBi:UBi,LBj:UBj,N(ng))
 #  endif
@@ -481,6 +517,23 @@
           END DO
         END DO
       END DO
+!!!PWA Inserted 16/03/2015:
+!Note: N(ng) is the surface layer coordinate for the ngth grid
+#  if defined RFABM
+      rhof = rho + 1000.0_r8
+      pres = 0.0_r8
+      DO i=IstrT,IendT
+        DO j=JstrT,JendT
+          pres(i,j,N(ng)) = 0.5_r8*rhof(i,j,N(ng))*Hz(i,j,N(ng))
+          DO k=N(ng)-1,1,-1
+            pres(i,j,k) = pres(i,j,k+1) +                               &
+     &       0.5_r8*(rhof(i,j,k)*Hz(i,j,k)+rhof(i,j,k+1)*Hz(i,j,k+1))
+          END DO
+        END DO
+      END DO
+      pres = pres*g/10000.0_r8          !Convert from Pa to dbar
+#  endif
+!!!PWA Inserted 16/03/2015
 !
 !-----------------------------------------------------------------------
 !  Exchange boundary data.
@@ -580,7 +633,10 @@
 #  ifdef MASKING
      &                         rmask,                                   &
 #  endif
-#  ifdef VAR_RHO_2D
+!!!PWA Modified 16/03/2015 to include RFABM
+!#  ifdef VAR_RHO_2D
+#  if defined VAR_RHO_2D || defined RFABM
+!!!End modified PWA 16/03/2015
      &                         Hz,                                      &
 #  endif
      &                         z_r, z_w, t,                             &
@@ -597,6 +653,12 @@
      &                         alfaobeta,                               &
 #   endif
 #  endif
+!!!PWA Inserted 16/03/2015: Full density (rhof) and water pressure (pres) for FABM models
+#  if defined RFABM
+     &                         rhof,                                    &
+     &                         pres,                                    &
+#  endif
+!!!PWA Inserted 16/03/2015
      &                         pden,                                    &
      &                         rho)
 !***********************************************************************
@@ -624,7 +686,10 @@
 #   ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:,LBj:)
 #   endif
-#   ifdef VAR_RHO_2D
+!!!PWA Modified 16/03/2015 to include RFABM
+!#   ifdef VAR_RHO_2D
+#   if defined VAR_RHO_2D || defined RFABM
+!!!End modified PWA 16/03/2015
       real(r8), intent(in) :: Hz(LBi:,LBj:,:)
 #   endif
       real(r8), intent(in) :: z_r(LBi:,LBj:,:)
@@ -648,11 +713,20 @@
 #   endif
       real(r8), intent(out) :: pden(LBi:,LBj:,:)
       real(r8), intent(out) :: rho(LBi:,LBj:,:)
+!!!PWA Inserted 16/03/2015: Full density (rhof) and water pressure (pres) for FABM models
+#   if defined RFABM
+      real(r8), intent(out) :: rhof(LBi:,LBj:,:)
+      real(r8), intent(out) :: pres(LBi:,LBj:,:)
+#   endif
+!!!PWA Inserted 16/03/2015
 #  else
 #   ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
 #   endif
-#   ifdef VAR_RHO_2D
+!!!PWA Modified 16/03/2015 to include RFABM
+!#   ifdef VAR_RHO_2D
+#   if defined VAR_RHO_2D || defined RFABM
+!!!End modified PWA 16/03/2015
       real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
 #   endif
       real(r8), intent(in) :: z_r(LBi:UBi,LBj:UBj,N(ng))
@@ -673,6 +747,12 @@
       real(r8), intent(out) :: alfaobeta(LBi:UBi,LBj:UBj,0:N(ng))
 #    endif
 #   endif
+!!!PWA Inserted 16/03/2015: Full density (rhof) and water pressure (pres) for FABM models
+#   if defined RFABM
+      real(r8), intent(out) :: rhof(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(out) :: pres(LBi:UBi,LBj:UBj,N(ng))
+#   endif
+!!!PWA Inserted 16/03/2015
       real(r8), intent(out) :: pden(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(out) :: rho(LBi:UBi,LBj:UBj,N(ng))
 #  endif
@@ -797,6 +877,24 @@
 #   endif
 #  endif
       END DO
+
+!!!PWA Inserted 16/03/2015: Full density (rhof) and water pressure (pres) for FABM models
+#  if defined RFABM
+      rhof = rho + 1000.0_r8
+      pres = 0.0_r8
+      DO i=IstrT,IendT
+        DO j=JstrT,JendT
+          pres(i,j,N(ng)) = 0.5_r8*rhof(i,j,N(ng))*Hz(i,j,N(ng))
+          DO k=N(ng)-1,1,-1
+            pres(i,j,k) = pres(i,j,k+1) +                               &
+     &       0.5_r8*(rhof(i,j,k)*Hz(i,j,k)+rhof(i,j,k+1)*Hz(i,j,k+1))
+          END DO
+        END DO
+      END DO
+      pres = pres*g/10000.0_r8          !Convert from Pa to dbar
+#  endif
+!!!PWA Inserted 16/03/2015
+
 !
 !-----------------------------------------------------------------------
 !  Exchange boundary data.
