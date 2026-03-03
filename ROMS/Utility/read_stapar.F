@@ -43,6 +43,11 @@
 
       logical, dimension(Ngrids) :: Lswitch
       logical, dimension(MT,Ngrids) :: Ltracer
+# ifdef RFABM
+      logical, dimension(NSAT,Ngrids) :: Lsat
+      logical, dimension(NBAT,Ngrids) :: Lbat
+# endif
+!!!End insert PWA 07/08/2019
 
       integer, dimension(Ngrids) :: is
 
@@ -108,6 +113,63 @@
                   Sout(idTvar(itrc),ng)=Ltracer(itrc,ng)
                 END DO
               END DO
+!!!Inserted PWA 07/08/2019
+# ifdef RFABM
+#  ifdef SHORTWAVE
+            CASE ('Sout(idSradWm2)')
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Sout(idSradWm2,1:Ngrids)=Lswitch(1:Ngrids)
+#  endif
+#  ifdef FABM_PCO2ATM
+            CASE ('Sout(idxCO2atm)')
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Sout(idxCO2atm,1:Ngrids)=Lswitch(1:Ngrids)
+            CASE ('Sout(idpCO2atm)')
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Sout(idpCO2atm,1:Ngrids)=Lswitch(1:Ngrids)
+#  endif
+#  ifdef FABM_N3ATMDEPO
+            CASE ('Sout(idN3atmd)')
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Sout(idN3atmd,1:Ngrids)=Lswitch(1:Ngrids)
+#  endif
+#  ifdef FABM_N4ATMDEPO
+            CASE ('Sout(idN4atmd)')
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Sout(idN4atmd,1:Ngrids)=Lswitch(1:Ngrids)
+#  endif
+            CASE ('Sout(idSAvar)')
+              Npts=load_l(Nval, Cval, NSAT, Ngrids, Lsat)
+              DO ng=1,Ngrids
+                DO i=1,NSAT
+                  Sout(idSAvar(i),ng)=Lsat(i,ng)
+                END DO
+              END DO
+            CASE ('Sout(idBAvar)')
+              Npts=load_l(Nval, Cval, NBAT, Ngrids, Lbat)
+              DO ng=1,Ngrids
+                DO i=1,NBAT
+                  Sout(idBAvar(i),ng)=Lbat(i,ng)
+                END DO
+              END DO
+# endif
+!!!End insert PWA 07/08/2019
+
+!!!Inserted PWA 14/09/2020
+            CASE ('Sout(idSUV)')
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Sout(idSUV,1:Ngrids)=Lswitch(1:Ngrids)
+            CASE ('Sout(idbstrPa)')
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Sout(idbstrPa,1:Ngrids)=Lswitch(1:Ngrids)
+!!!End insert PWA 14/09/2020
+
+!!!Inserted PWA 13/12/2020
+            CASE ('Sout(idtss)')
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Sout(idtss,1:Ngrids)=Lswitch(1:Ngrids)
+!!!End insert PWA 13/12/2020
+
             CASE ('Sout(idUsms)')
               Npts=load_l(Nval, Cval, Ngrids, Lswitch)
               Sout(idUsms,1:Ngrids)=Lswitch(1:Ngrids)
@@ -418,6 +480,24 @@
             CASE ('Sout(idMtls)')
               Npts=load_l(Nval, Cval, Ngrids, Lswitch)
               Sout(idMtls,1:Ngrids)=Lswitch(1:Ngrids)
+!!!Inserted PWA 04/06/2022
+#  if defined CALC_TDR || defined CALC_TSR
+            CASE ('Sout(idMtdr)')
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Sout(idMtdr,1:Ngrids)=Lswitch(1:Ngrids)
+#  endif
+#  ifdef CALC_TSR
+            CASE ('Sout(idMmu)')
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Sout(idMmu,1:Ngrids)=Lswitch(1:Ngrids)
+            CASE ('Sout(idMnu)')
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Sout(idMnu,1:Ngrids)=Lswitch(1:Ngrids)
+            CASE ('Sout(idMtsr)')
+              Npts=load_l(Nval, Cval, Ngrids, Lswitch)
+              Sout(idMtsr,1:Ngrids)=Lswitch(1:Ngrids)
+#  endif
+!!!End insert PWA 04/06/2022
 #  if defined BBL_MODEL || defined SEDIMENT
             CASE ('Sout(isd50)')
               Npts=load_l(Nval, Cval, Ngrids, Lswitch)
@@ -656,6 +736,60 @@
      &            'Write out tracer ', itrc, TRIM(Vname(1,idTvar(itrc)))
             END DO
 # endif
+!!!Inserted PWA 07/08/2019
+# ifdef RFABM
+#  ifdef SHORTWAVE
+            IF (Sout(idSradWm2,ng)) WRITE (out,90) Sout(idSradWm2,ng),  &
+     &          'Sout(idSradWm2)',                                      &
+     &          'Write out shortwave radiation in [W/m2].'
+#  endif
+#  ifdef FABM_PCO2ATM
+            IF (Sout(idxCO2atm,ng)) WRITE (out,90) Sout(idxCO2atm,ng),  &
+     &          'Sout(idxCO2atm)',                                      &
+     &          'Write out dry air molar fraction atmospheric CO2.'
+            IF (Sout(idpCO2atm,ng)) WRITE (out,90) Sout(idpCO2atm,ng),  &
+     &          'Sout(idpCO2atm)',                                      &
+     &          'Write out partial pressure atmospheric CO2.'
+#  endif
+#  ifdef FABM_N3ATMDEPO
+            IF (Sout(idN3atmd,ng)) WRITE (out,90) Sout(idN3atmd,ng),    &
+     &          'Sout(idN3atmd)',                                       &
+     &          'Write out atmospheric deposition of oxidized nitrogen.'
+#  endif
+#  ifdef FABM_N4ATMDEPO
+            IF (Sout(idN4atmd,ng)) WRITE (out,90) Sout(idN4atmd,ng),    &
+     &          'Sout(idN4atmd)',                                       &
+     &          'Write out atmospheric deposition of reduced nitrogen.'
+#  endif
+            DO i=1,NSAT
+              IF (Sout(idSAvar(i),ng)) WRITE (out,100)                  &
+     &            Sout(idSAvar(i),ng), 'Sout(idSAvar)',                 &
+     &            'Write out surface-attached variable ', i,            &
+     &            TRIM(Vname(1,idSAvar(i)))
+            END DO
+            DO i=1,NBAT
+              IF (Sout(idBAvar(i),ng)) WRITE (out,100)                  &
+     &            Sout(idBAvar(i),ng), 'Sout(idBAvar)',                 &
+     &            'Write out bottom-attached variable ', i,             &
+     &            TRIM(Vname(1,idBAvar(i)))
+            END DO
+# endif
+!!!End insert PWA 07/08/2019
+!!!Inserted PWA 14/09/2020
+# ifdef SOLVE3D
+            IF (Sout(idSUV,ng)) WRITE (out,90) Sout(idSUV,ng),          &
+     &          'Sout(idSUV)',                                          &
+     &          'Write out horizontal current speed.'
+            IF (Sout(idbstrPa,ng)) WRITE (out,90) Sout(idbstrPa,ng),    &
+     &          'Sout(idbstrPa)',                                       &
+     &          'Write out scalar bottom stress.'
+# endif
+!!!End insert PWA 14/09/2020
+!!!Inserted PWA 13/12/2020
+            IF (Sout(idtss,ng)) WRITE (out,90) Sout(idtss,ng),          &
+     &          'Sout(idtss)',                                          &
+     &          'Write out total suspended sediment.'
+!!!End insert PWA 13/12/2020
             IF (Sout(idUsms,ng)) WRITE (out,90) Sout(idUsms,ng),        &
      &          'Sout(idUsms)',                                         &
      &          'Write out surface U-momentum stress.'
@@ -988,6 +1122,24 @@
             IF (Sout(idMtls,ng)) WRITE (out,90) Sout(idMtls,ng),        &
      &          'Sout(idMtls)',                                         &
      &          'Write out turbulent generic length-scale.'
+!!!Inserted PWA 04/06/2022
+#   if defined CALC_TDR || defined CALC_TSR
+            IF (Sout(idMtdr,ng)) WRITE (out,90) Sout(idMtdr,ng),        &
+     &          'Sout(idMtdr)',                                         &
+     &          'Write out turbulent energy dissipation rate.'
+#   endif
+#   ifdef CALC_TSR
+            IF (Sout(idMmu,ng)) WRITE (out,90) Sout(idMmu,ng),          &
+     &          'Sout(idMmu)',                                          &
+     &          'Write out dynamic viscosity.'
+            IF (Sout(idMnu,ng)) WRITE (out,90) Sout(idMnu,ng),          &
+     &          'Sout(idMnu)',                                          &
+     &          'Write out kinematic viscosity.'
+            IF (Sout(idMtsr,ng)) WRITE (out,90) Sout(idMtsr,ng),        &
+     &          'Sout(idMtsr)',                                         &
+     &          'Write out turbulent shear rate.'
+#   endif
+!!!End insert PWA 04/06/2022
 #  endif
 # endif
             WRITE (out,*)
