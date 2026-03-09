@@ -82,6 +82,16 @@
 #  endif
 # endif
       USE strings_mod,     ONLY : FoundError
+!!!Inserted PWA 09/08/2025
+# if defined OFFLINE
+      USE mod_coupling
+      USE mod_stepping
+      USE exchange_2d_mod
+#  ifdef SOLVE3D
+      USE exchange_3d_mod
+#  endif
+# endif
+!!!End insert PWA 09/08/2025
 !
       implicit none
 !
@@ -106,6 +116,24 @@
 # endif
 !
       real(r8) :: cff, cff1, cff2
+!!!Inserted PWA 14/04/2017
+# if defined RFABM
+      real(r8) :: TK1, S1
+# endif
+!!!End insert PWA 14/04/2017
+!!!Inserted PWA 09/08/2025
+# ifdef OFFLINE
+      real(r8) :: sshtemp(LBi:UBi,LBj:UBj)
+      real(r8) :: utemp(LBi:UBi,LBj:UBj,N(ng))
+      real(r8) :: vtemp(LBi:UBi,LBj:UBj,N(ng))
+#  if defined AKTCLIMATOLOGY || defined AKXCLIMATOLOGY
+      real(r8) :: Akttemp(LBi:UBi,LBj:UBj,0:N(ng))
+#  endif
+#  if defined AKSCLIMATOLOGY || defined AKXCLIMATOLOGY
+      real(r8) :: Akstemp(LBi:UBi,LBj:UBj,0:N(ng))
+#  endif
+# endif
+!!!End insert PWA 09/08/2025
 !
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", set_data_tile"
@@ -326,7 +354,10 @@
       END IF
 #  endif
 
-#  if defined BULK_FLUXES || defined ECOSIM
+!!!PWA Modified 24/07/2019 to include RFABM (needs surface winds for air-sea exchange)
+!#  if defined BULK_FLUXES || defined ECOSIM
+#  if defined BULK_FLUXES || defined ECOSIM || defined RFABM
+!!!End modified PWA 24/07/2019
 !
 !  Set surface winds (m/s).
 !
@@ -777,6 +808,29 @@
 !
       CALL ana_spinning (ng, tile, iNLM)
 # endif
+!!!Inserted PWA 19/10/2021
+# ifdef TS_ISOURCE
+!
+!-----------------------------------------------------------------------
+!  Set internal point Sources/Sinks (e.g. fish farms).
+!-----------------------------------------------------------------------
+!
+      IF (DOMAIN(ng)%SouthWest_Test(tile)) THEN
+#  ifdef SOLVE3D
+        DO itrc=1,NT(ng)
+          IF (LtracerISrc(itrc,ng)) THEN
+            CALL set_ngfld (ng, iNLM, idItrc(itrc), 1,Nisrc(ng), N(ng), &
+     &                      1, Nisrc(ng), N(ng),                        &
+     &                      SOURCES(ng) % TisrcG(:,:,:,itrc),           &
+     &                      SOURCES(ng) % Tisrc(:,:,itrc),              &
+     &                      update)
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          END IF
+        END DO
+#  endif
+      END IF
+# endif
+!!!End insert PWA 19/10/2021
 
 # ifdef HYPOXIA_SRM
 !
@@ -805,6 +859,116 @@
      &                     update)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
+
+!!PWA Inserted 14/04/2017: Calculate extra forcings for use in FABM models
+!We put them at the end of the forcings/sources so that other updated forcings/sources can be used
+!(non-FABM ROMS forcings cannot depend on FABM forcings)
+# ifdef RFABM
+      !
+      !-----------------------------------------------------------------------
+      !  Set ROMS-derived FABM forcings
+      !-----------------------------------------------------------------------
+      ! Note: The NetCDF output for srflxWm2 should be IDENTICAL to the output for srflx
+      !       because srflx is converted to W/m2 within wrt_his.F
+      !       Recall, srflxWm2 is computed because it is needed internally by FABM.
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+          FORCES(ng)%Swind(i,j) = SQRT(                                 &
+     &      FORCES(ng)%Uwind(i,j)*FORCES(ng)%Uwind(i,j) +               &
+     &      FORCES(ng)%Vwind(i,j)*FORCES(ng)%Vwind(i,j))
+        END DO
+      END DO
+
+      DO j=Jstrm1,Jendp1
+        DO i=Istrm1,Iendp1
+          FORCES(ng)%bstrPa(i,j) = OCEAN(ng)%rhof(i,j,1)*0.5_r8*SQRT(   &
+     &      (FORCES(ng)%bustr(i,j)+FORCES(ng)%bustr(i+1,j))*            &
+     &      (FORCES(ng)%bustr(i,j)+FORCES(ng)%bustr(i+1,j)) +           &
+     &      (FORCES(ng)%bvstr(i,j)+FORCES(ng)%bvstr(i,j+1))*            &
+     &      (FORCES(ng)%bvstr(i,j)+FORCES(ng)%bvstr(i,j+1)))
+          !Bottom stress in Pa given by (full density at bottom)*(scalar kinematic stress)
+          !Note: Use of OCEAN at this point (start of time step) will violate
+          !      operator splitting since biology is called later in the time step (see main3d.F).
+          !Note: Here we follow the calculation for tau_w implemented in sed_fluxes.F, using
+          !      end points (Jstrm1,Jendp1,Istrm1,Iendp1).
+        END DO
+      END DO
+
+!!!Inserted PWA 13/12/2020
+#  ifdef FABM_TSS
+      !
+      !-----------------------------------------------------------------------
+      !  Set Total Suspended Sediment.
+      !-----------------------------------------------------------------------
+      !
+      CALL set_3dfld_tile (ng, tile, iNLM, idtss,                       &
+     &                     LBi, UBi, LBj, UBj, 1, N(ng),                &
+     &                     FORCES(ng)%tssG,                             &
+     &                     FORCES(ng)%tss,                              &
+     &                     update)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
+!!!End insert PWA 13/12/2020
+
+#  ifdef FABM_PCO2ATM
+      !
+      !-----------------------------------------------------------------------
+      !  Set surface dry molar fraction atmospheric xCO2 (ppm).
+      !-----------------------------------------------------------------------
+      !
+      CALL set_2dfld_tile (ng, tile, iNLM, idxCO2atm,                   &
+     &                     LBi, UBi, LBj, UBj,                          &
+     &                     FORCES(ng)%xCO2atmG,                         &
+     &                     FORCES(ng)%xCO2atm,                          &
+     &                     update)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      !
+      !-----------------------------------------------------------------------
+      ! Calculate partial pressure pCO2 (uatm), correcting for water vapor
+      !-----------------------------------------------------------------------
+      !
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+          TK1 = OCEAN(ng)%t(i,j,N(ng),nstp(ng),1) + 273.15_r8
+          S1 = MAX(0.0_r8, OCEAN(ng)%t(i,j,N(ng),nstp(ng),2))
+
+          FORCES(ng)%pCO2atm(i,j) = FORCES(ng)%xCO2atm(i,j)*            & !Note units (ppm = 1e-6)
+     &      (FORCES(ng)%Pair(i,j)/1013.25_r8 -                          & !Convert mb to atm
+     &      exp(24.4543_r8 - (6745.09_r8/TK1) -                         & !Seawater vapor pressure (atm)
+     &      4.8489_r8*log(TK1/100_r8) - 0.000544_r8*S1))                  !(Weiss and Price, 1980, Mar Chem 8: 347-359)
+        END DO
+      END DO
+#  endif
+
+#  ifdef FABM_N3ATMDEPO
+      !
+      !-----------------------------------------------------------------------
+      !  Set atmospheric deposition of oxidized nitrogen (mmol/m2/s).
+      !-----------------------------------------------------------------------
+      !
+      CALL set_2dfld_tile (ng, tile, iNLM, idN3atmd,                    &
+     &                     LBi, UBi, LBj, UBj,                          &
+     &                     FORCES(ng)%N3atmdG,                          &
+     &                     FORCES(ng)%N3atmd,                           &
+     &                     update)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
+
+#  ifdef FABM_N4ATMDEPO
+      !
+      !-----------------------------------------------------------------------
+      !  Set atmospheric deposition of reduced nitrogen (mmol/m2/s).
+      !-----------------------------------------------------------------------
+      !
+      CALL set_2dfld_tile (ng, tile, iNLM, idN4atmd,                    &
+     &                     LBi, UBi, LBj, UBj,                          &
+     &                     FORCES(ng)%N4atmdG,                          &
+     &                     FORCES(ng)%N4atmd,                           &
+     &                     update)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
+# endif
+!!!End PWA insertion 14/04/2017
 
 #if defined FOUR_DVAR   && \
     defined BULK_FLUXES && defined PRIOR_BULK_FLUXES
@@ -1306,6 +1470,28 @@
      &                       update)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
+!!!Inserted PWA 09/08/2025
+# if defined OFFLINE
+        DO j=Jstr-1,Jend+1
+          DO i=Istr-1,Iend+1
+            COUPLING(ng)%Zt_avg1(i,j) = CLIMA(ng)%ssh(i,j)
+          END DO
+        END DO
+        IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+          DO i=1,2
+            CALL exchange_r2d_tile (ng, tile,                           &
+     &                      LBi, UBi, LBj, UBj, OCEAN(ng)%zeta(:,:,i))
+          END DO
+        END IF
+#  ifdef DISTRIBUTE
+        CALL mp_exchange3d (ng, tile, iNLM, 1,                          &
+     &                      LBi, UBi, LBj, UBj, 1, 2,                   &
+     &                      NghostPoints,                               &
+     &                      EWperiodic(ng), NSperiodic(ng),             &
+     &                      OCEAN(ng)%zeta)
+#  endif
+# endif
+!!!End insert PWA 09/08/2025
       END IF
 !
 !  Set 2D momentum components climatology (m/s).
@@ -1328,6 +1514,33 @@
      &                       update)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
+!!!Inserted PWA 09/08/2025
+# if defined OFFLINE
+        DO j=Jstr-1,Jend+1
+          DO i=Istr-1,Iend+1
+            OCEAN(ng)%ubar(i,j,1) = CLIMA(ng)%ubarclm(i,j)
+            OCEAN(ng)%ubar(i,j,2) = CLIMA(ng)%ubarclm(i,j)
+            OCEAN(ng)%vbar(i,j,1) = CLIMA(ng)%vbarclm(i,j)
+            OCEAN(ng)%vbar(i,j,2) = CLIMA(ng)%vbarclm(i,j)
+          ENDDO
+        ENDDO
+        IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+          DO i=1,2
+            CALL exchange_u2d_tile (ng, tile,                           &
+     &                       LBi, UBi, LBj, UBj, OCEAN(ng)%ubar(:,:,i))
+            CALL exchange_v2d_tile (ng, tile,                           &
+     &                       LBi, UBi, LBj, UBj, OCEAN(ng)%vbar(:,:,i))
+          END DO
+        END IF
+#  ifdef DISTRIBUTE
+        CALL mp_exchange3d (ng, tile, iNLM, 2,                          &
+     &                      LBi, UBi, LBj, UBj, 1, 2,                   &
+     &                      NghostPoints,                               &
+     &                      EWperiodic(ng), NSperiodic(ng),             &
+     &                      OCEAN(ng)%ubar, OCEAN(ng)%vbar)
+#  endif
+# endif
+!!!End insert PWA 09/08/2025
       END IF
 
 # ifdef SOLVE3D
@@ -1352,6 +1565,38 @@
      &                       update)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
+!!!Inserted PWA 09/08/2025
+#  if defined OFFLINE
+        DO k=1,N(ng)
+          DO j=Jstr-1,Jend+1
+            DO i=Istr-1,Iend+1
+              OCEAN(ng)%u(i,j,k,nnew(ng)) = CLIMA(ng)%uclm(i,j,k)
+              OCEAN(ng)%v(i,j,k,nnew(ng)) = CLIMA(ng)%vclm(i,j,k)
+            END DO
+          END DO
+        END DO
+
+        IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+          DO i=1,2
+            CALL exchange_u3d_tile (ng, tile,                           &
+     &                            LBi, UBi, LBj, UBj, 1, N(ng),         &
+     &                            OCEAN(ng)%u(:,:,:,i))
+            CALL exchange_v3d_tile (ng, tile,                           &
+     &                            LBi, UBi, LBj, UBj, 1, N(ng),         &
+     &                            OCEAN(ng)%v(:,:,:,i))
+          END DO
+        END IF
+#   ifdef DISTRIBUTE
+        DO i=1,2
+          CALL mp_exchange3d (ng, tile, iNLM, 2,                        &
+     &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
+     &                        NghostPoints,                             &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
+     &                        OCEAN(ng)%u(:,:,:,i),OCEAN(ng)%v(:,:,:,i))
+      END DO
+#   endif
+#  endif
+!!!End insert PWA 09/08/2025
       END IF
 !
 !  Set tracer variables climatology.
@@ -1374,7 +1619,257 @@
         END IF
       END DO
 #  endif
+
+!!!Inserted PWA 09/08/2025
+#  if defined OFFLINE && defined ATCLIMATOLOGY  
+      DO itrc=1,NAT     
+        DO k=1,N(ng)    
+          DO j=Jstr-1,Jend+1    
+            DO i=Istr-1,Iend+1  
+              ! KMT changed so that both time steps set at once for 3D  
+              ! fields instead of alternating, fixing a shift in the output     
+              OCEAN(ng)%t(i,j,k,1,itrc) = CLIMA(ng)%tclm(i,j,k,itrc)    
+              OCEAN(ng)%t(i,j,k,2,itrc) = CLIMA(ng)%tclm(i,j,k,itrc)    
+            ENDDO       
+          ENDDO 
+        ENDDO   
+      ENDDO     
+      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN        
+        DO itrc=1,NAT   
+          DO i=1,2      
+            CALL exchange_r3d_tile (ng, tile,                           &       
+     &                              LBi, UBi, LBj, UBj, 1, N(ng),       &       
+     &                              OCEAN(ng)%t(:,:,:,i,itrc))  
+          END DO        
+        END DO  
+      END IF    
+#   ifdef DISTRIBUTE    
+      DO itrc=1,NAT     
+        DO i=1,2        
+          CALL mp_exchange3d (ng, tile, iNLM, 1,                        &       
+     &                        LBi, UBi, LBj, UBj, 1, N(ng),             &       
+     &                        NghostPoints,                             &       
+     &                        EWperiodic(ng), NSperiodic(ng),           &       
+     &                        OCEAN(ng)%t(:,:,:,i,itrc))        
+        END DO  
+      END DO    
+#   endif       
+#  endif
+!!!End insert PWA 09/08/2025
 # endif
+!!!Inserted PWA 10/08/2025
+# if defined SOLVE3D && defined OCLIMATOLOGY
+!
+!-----------------------------------------------------------------------
+!  Set omega climatology.
+!-----------------------------------------------------------------------
+!
+#  ifdef ANA_OCLIMA
+      CALL ana_oclima (ng, tile, iNLM)
+#  else
+      CALL set_3dfld_tile (ng, tile, iNLM, idOclm,                      &
+     &                       LBi, UBi, LBj, UBj, 0, N(ng),              &
+     &                       CLIMA(ng)%oclmG,                           &
+     &                       CLIMA(ng)%oclm,                            &
+     &                       update)
+#  endif
+#  if defined OFFLINE
+      DO k=0,N(ng)
+        DO j=Jstr-1,Jend+1
+          DO i=Istr-1,Iend+1
+            OCEAN(ng)%W(i,j,k) = CLIMA(ng)%oclm(i,j,k)/                 &
+     &          ( (GRID(ng)%pm(i,j)) * (GRID(ng)%pn(i,j)) )
+          ENDDO
+        ENDDO
+      ENDDO
+      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+        CALL exchange_w3d_tile (ng, tile,                               &
+     &                          LBi, UBi, LBj, UBj, 0, N(ng),           &
+     &                          OCEAN(ng)%W(:,:,:))
+      END IF
+#   ifdef DISTRIBUTE
+      CALL mp_exchange3d (ng, tile, iNLM, 1,                            &
+     &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
+     &                    OCEAN(ng)%W)
+#   endif
+#  endif
+# endif
+
+# if defined SOLVE3D && defined OFFLINE
+!
+!-----------------------------------------------------------------------
+!  Set vertical diffusion climatology.
+!-----------------------------------------------------------------------
+!
+
+#  if defined ANA_AKTCLIMA || defined ANA_VMIX
+!      CALL ana_aktclima (ng, tile, iNLM)
+      CALL ana_vmix (ng, tile, iNLM)
+#  elif defined AKTCLIMATOLOGY || defined AKXCLIMATOLOGY
+      CALL set_3dfld_tile (ng, tile, iNLM, idAKtclm,                    &
+     &                     LBi, UBi, LBj, UBj, 0, N(ng),                &
+     &                     CLIMA(ng)%AKtclmG,                           &
+     &                     CLIMA(ng)%AKtclm,                            &
+     &                     update)
+      ! KMT added to access subsequent time step value
+      ! Going to store this in extra GLS index.
+      ! temporarily shift time forward to access next time step value
+      time(ng)=time(ng)+dt(ng)
+        CALL set_3dfld_tile (ng, tile, iNLM, idAKtclm,                  &
+     &                       LBi, UBi, LBj, UBj, 0, N(ng),              &
+     &                       CLIMA(ng)%AKtclmG,                         &
+     &                       Akttemp,                                   &
+     &                       update)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+      ! undo time shift
+      time(ng)=time(ng)-dt(ng)
+#  endif
+#  if defined AKSCLIMATOLOGY || defined AKXCLIMATOLOGY
+      CALL set_3dfld_tile (ng, tile, iNLM, idAKsclm,                    &
+     &                       LBi, UBi, LBj, UBj, 0, N(ng),              &
+     &                       CLIMA(ng)%AKsclmG,                         &
+     &                       CLIMA(ng)%AKsclm,                          &
+     &                       update)
+      ! KMT added to access subsequent time step value
+      time(ng)=time(ng)+dt(ng)
+        CALL set_3dfld_tile (ng, tile, iNLM, idAKsclm,                  &
+     &                       LBi, UBi, LBj, UBj, 0, N(ng),              &
+     &                       CLIMA(ng)%AKsclmG,                         &
+     &                       Akstemp,                                   &
+     &                       update)
+        IF (FoundError(exit_flag, NoError, __LINE__,                    &
+     &                 __FILE__)) RETURN
+      ! undo time shift
+      time(ng)=time(ng)-dt(ng)
+#  endif
+#  if defined AKVCLIMATOLOGY || defined AKXCLIMATOLOGY
+      CALL set_3dfld_tile (ng, tile, iNLM, idAKvclm,                    &
+     &                       LBi, UBi, LBj, UBj, 0, N(ng),              &
+     &                       CLIMA(ng)%AKvclmG,                         &
+     &                       CLIMA(ng)%AKvclm,                          &
+     &                       update)
+#  endif
+!      DO k=1,3
+#  if defined TKECLIMATOLOGY || defined MIXCLIMATOLOGY
+         CALL set_3dfld_tile (ng, tile, iNLM, idtkeclm,                 &
+     &                       LBi, UBi, LBj, UBj, 0, N(ng),              &
+     &                       CLIMA(ng)%tkeclmG,                         &
+     &                       CLIMA(ng)%tkeclm ,                 &
+     &                       update)
+#  endif
+#  if defined GLSCLIMATOLOGY || defined MIXCLIMATOLOGY
+         CALL set_3dfld_tile (ng, tile, iNLM, idglsclm,                 &
+     &                       LBi, UBi, LBj, UBj, 0, N(ng),              &
+     &                       CLIMA(ng)%glsclmG,                         &
+     &                       CLIMA(ng)%glsclm,                 &
+     &                       update)
+#  endif
+
+#  if defined OFFLINE && !defined ANA_VMIX
+      DO k=0,N(ng)
+        DO j=Jstr-1,Jend+1
+          DO i=Istr-1,Iend+1
+#  if defined AKTCLIMATOLOGY || defined AKXCLIMATOLOGY
+            MIXING(ng)%Akt(i,j,k,1) = CLIMA(ng)%AKtclm(i,j,k)
+            ! KMT save subsequent time step
+            MIXING(ng)%gls(i,j,k,nnew(ng)) = Akttemp(i,j,k)
+#  endif
+#  if defined AKSCLIMATOLOGY || defined AKXCLIMATOLOGY
+            MIXING(ng)%Akt(i,j,k,2) = CLIMA(ng)%AKsclm(i,j,k)
+            ! KMT save subsequent time step
+            MIXING(ng)%gls(i,j,k,3) = Akstemp(i,j,k)
+#  endif
+#  if defined AKVCLIMATOLOGY || defined AKXCLIMATOLOGY
+            MIXING(ng)%Akv(i,j,k) = CLIMA(ng)%AKvclm(i,j,k)
+#  endif
+#  if defined TKECLIMATOLOGY || defined MIXCLIMATOLOGY
+            ! KMT changed time index used so no time shift in output
+            MIXING(ng)%tke(i,j,k,nrhs(ng)) = CLIMA(ng)%tkeclm(i,j,k)
+#  endif
+#  if defined GLSCLIMATOLOGY || defined MIXCLIMATOLOGY
+            ! KMT changed time index used so no time shift in output
+            MIXING(ng)%gls(i,j,k,nrhs(ng)) = CLIMA(ng)%glsclm(i,j,k)
+#  endif
+          ENDDO
+        ENDDO
+      ENDDO
+
+      IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+#  if defined AKTCLIMATOLOGY || defined AKXCLIMATOLOGY
+        CALL exchange_w3d_tile (ng, tile,                               &
+     &                          LBi, UBi, LBj, UBj, 0, N(ng),           &
+     &                          MIXING(ng)%Akt(:,:,:,1))
+#  endif
+#  if defined AKSCLIMATOLOGY || defined AKXCLIMATOLOGY
+        CALL exchange_w3d_tile (ng, tile,                               &
+     &                          LBi, UBi, LBj, UBj, 0, N(ng),           &
+     &                          MIXING(ng)%Akt(:,:,:,2))
+#  endif
+#  if defined AKVCLIMATOLOGY || defined AKXCLIMATOLOGY
+        CALL exchange_w3d_tile (ng, tile,                               &
+     &                          LBi, UBi, LBj, UBj, 0, N(ng),           &
+     &                          MIXING(ng)%Akv)
+#  endif
+        DO i=1,3
+#  if defined TKECLIMATOLOGY || defined MIXCLIMATOLOGY
+           CALL exchange_w3d_tile (ng, tile,                            &
+     &                          LBi, UBi, LBj, UBj, 0, N(ng),           &
+     &                          MIXING(ng)%tke(:,:,:,i))
+#  endif
+#  if defined GLSCLIMATOLOGY || defined MIXCLIMATOLOGY
+           CALL exchange_w3d_tile (ng, tile,                            &
+     &                          LBi, UBi, LBj, UBj, 0, N(ng),           &
+     &                          MIXING(ng)%gls(:,:,:,i))
+#  endif
+        ENDDO
+      END IF
+#  ifdef DISTRIBUTE
+#   if defined AKTCLIMATOLOGY || defined AKXCLIMATOLOGY
+      CALL mp_exchange3d (ng, tile, iNLM, 1,                            &
+     &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
+     &                    MIXING(ng)%Akt(:,:,:,1))
+#   endif
+#   if defined AKSCLIMATOLOGY || defined AKXCLIMATOLOGY
+      CALL mp_exchange3d (ng, tile, iNLM, 1,                            &
+     &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
+     &                    MIXING(ng)%Akt(:,:,:,2))
+#   endif
+#   if defined AKVCLIMATOLOGY || defined AKXCLIMATOLOGY
+      CALL mp_exchange3d (ng, tile, iNLM, 1,                            &
+     &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
+     &                    MIXING(ng)%Akv)
+#   endif
+
+      DO i=1,3
+#    if defined TKECLIMATOLOGY || defined MIXCLIMATOLOGY      
+         CALL mp_exchange3d (ng, tile, iNLM, 1,                         &
+     &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
+     &                    MIXING(ng)%tke(:,:,:,i))
+#    endif
+#    if defined GLSCLIMATOLOGY || defined MIXCLIMATOLOGY
+         CALL mp_exchange3d (ng, tile, iNLM, 1,                         &
+     &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
+     &                    MIXING(ng)%gls(:,:,:,i))
+#    endif
+      ENDDO
+
+#  endif
+#  endif
+# endif
+!!!End insert PWA 09/08/2025
 
 # if defined NLM_OUTER                || \
      defined RBL4DVAR                 || \
