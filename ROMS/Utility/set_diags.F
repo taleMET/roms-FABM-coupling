@@ -62,6 +62,11 @@
       USE mod_param
 # ifdef DIAGNOSTICS_BIO
       USE mod_biology
+!!!PWA Inserted 30/04/2017: Access Dout to economize on diagnostic calculations
+#  if defined RFABM
+      USE mod_ncparam
+#  endif
+!!!End insert PWA 30/04/2017
 # endif
       USE mod_diags
       USE mod_grid
@@ -103,6 +108,11 @@
       real(r8) :: rfac(IminS:ImaxS,JminS:JmaxS)
       real(r8) :: ufac(IminS:ImaxS,JminS:JmaxS)
       real(r8) :: vfac(IminS:ImaxS,JminS:JmaxS)
+!!!Inserted PWA 09/01/2021
+# ifdef RFABM
+      real(r8) :: rfacFABM(IminS:ImaxS,JminS:JmaxS)
+# endif
+!!!End insert PWA 09/01/2021
 
 # include "set_bounds.h"
 !
@@ -408,7 +418,15 @@
           END DO
         END DO
 # endif
-
+!!!Inserted PWA 09/01/2021
+# ifdef RFABM
+        DO j=JstrR,JendR
+          DO i=IstrR,IendR
+            rfacFABM(i,j)=REAL(nFABM(ng),r8)*rfac(i,j)
+          END DO
+        END DO
+# endif
+!!!End insert PWA 09/01/2021
 # ifdef WET_DRY
 !
 !  If last time-step of average window, convert time dependent counters
@@ -536,7 +554,32 @@
             END DO
           END DO
         END DO
+!!!Inserted PWA 25/07/2019
+#  elif defined RFABM
+        DO idiag=1,NDbio2d
+          IF (Dout(iDbio2(idiag),ng)) THEN
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                DIAGS(ng)%DiaBio2d(i,j,idiag)=rfacFABM(i,j)*            &
+     &                      DIAGS(ng)%DiaBio2d(i,j,idiag)
+              END DO
+            END DO
+          END IF
+        END DO
+        DO idiag=1,NDbio3d
+          IF (Dout(iDbio3(idiag),ng)) THEN
+            DO k=1,N(ng)
+              DO j=JstrR,JendR
+                DO i=IstrR,IendR
+                  DIAGS(ng)%DiaBio3d(i,j,k,idiag)=rfacFABM(i,j)*        &
+     &                      DIAGS(ng)%DiaBio3d(i,j,k,idiag)
+                END DO
+              END DO
+            END DO
+          END IF
+        END DO
 #  endif
+!!!End insert PWA 25/07/2019
 # endif
 # ifdef DIAGNOSTICS_UV
         DO idiag=1,NDM2d
@@ -721,6 +764,37 @@
      &                        DIAGS(ng)%DiaBio4d(:,:,:,:,idiag))
 #    endif
         END DO
+!!!Inserted PWA 25/07/2019: For FABM models, economize using Dout
+        #   elif defined RFABM
+        DO idiag=1,NDbio2d
+          IF (Dout(iDbio2(idiag),ng)) THEN
+            CALL bc_r2d_tile (ng, tile,                                 &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      DIAGS(ng)%DiaBio2d(:,:,idiag))
+          END IF
+        END DO
+#    ifdef DISTRIBUTE
+        CALL mp_exchange3d (ng, tile, iNLM, 1,                          &
+     &                      LBi, UBi, LBj, UBj, 1, NDbio2d,             &
+     &                      NghostPoints,                               &
+     &                      EWperiodic(ng), NSperiodic(ng),             &
+     &                      DIAGS(ng)%DiaBio2d)
+#    endif
+        DO idiag=1,NDbio3d
+          IF (Dout(iDbio3(idiag),ng)) THEN
+            CALL bc_r3d_tile (ng, tile,                                 &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
+     &                      DIAGS(ng)%DiaBio3d(:,:,:,idiag))
+          END IF
+        END DO
+#    ifdef DISTRIBUTE
+        CALL mp_exchange4d (ng, tile, iNLM, 1,                          &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng), 1, NDbio3d,   &
+     &                      NghostPoints,                               &
+     &                      EWperiodic(ng), NSperiodic(ng),             &
+     &                      DIAGS(ng)%DiaBio3d)
+#    endif
+!!!End insert PWA 25/07/2019
 #   endif
 #  endif
 # endif
