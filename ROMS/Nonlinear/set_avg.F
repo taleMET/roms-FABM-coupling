@@ -525,6 +525,41 @@
         END IF
 #   endif
 #  endif
+!!!Inserted PWA 03/06/2022
+#  if defined MY25_MIXING || defined GLS_MIXING
+#   if defined CALC_TDR || defined CALC_TSR
+        IF (Aout(idMtdr,ng)) THEN
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgtdr(i,j,k)=AVERAGE(ng)%avgtdr(i,j,k)+    &
+#    ifdef WET_DRY
+     &                                    GRID(ng)%rmask_full(i,j)*     &
+#    endif
+     &                                    MIXING(ng)%tdr(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+#   endif
+#   ifdef CALC_TSR
+        IF (Aout(idMtsr,ng)) THEN
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgtsr(i,j,k)=AVERAGE(ng)%avgtsr(i,j,k)+    &
+#    ifdef WET_DRY
+     &                                    GRID(ng)%rmask_full(i,j)*     &
+#    endif
+     &                                    MIXING(ng)%tsr(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+#   endif
+#  endif
+!!!End insert PWA 03/06/2022
+
 #  ifdef LMD_SKPP
         IF (Aout(idHsbl,ng)) THEN
           DO j=JstrR,JendR
@@ -948,6 +983,106 @@
         END IF
 #  endif
 # endif
+
+!!!Inserted PWA 23/04/2017: Initialise surface and bottom-attached averages
+!(this follows the code for idTvar)
+# if defined RFABM
+#  ifdef SHORTWAVE
+        IF (Aout(idSradWm2,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgsrfWm2(i,j)=FORCES(ng)%srflxWm2(i,j)
+#   ifdef WET_DRY
+              AVERAGE(ng)%avgsrfWm2(i,j)=AVERAGE(ng)%avgsrfWm2(i,j)*    &
+     &                                GRID(ng)%rmask_full(i,j)
+#   endif
+            END DO
+          END DO
+        END IF
+#  endif
+#  ifdef FABM_PCO2ATM
+        IF (Aout(idxCO2atm,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgxCO2atm(i,j)=FORCES(ng)%xCO2atm(i,j)
+#   ifdef WET_DRY
+              AVERAGE(ng)%avgxCO2atm(i,j)=AVERAGE(ng)%avgxCO2atm(i,j)*  &
+     &                                GRID(ng)%rmask_full(i,j)
+#   endif
+            END DO
+          END DO
+        END IF
+        IF (Aout(idpCO2atm,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgpCO2atm(i,j)=FORCES(ng)%pCO2atm(i,j)
+#   ifdef WET_DRY
+              AVERAGE(ng)%avgpCO2atm(i,j)=AVERAGE(ng)%avgpCO2atm(i,j)*  &
+     &                                GRID(ng)%rmask_full(i,j)
+#   endif
+            END DO
+          END DO
+        END IF
+#  endif
+#  ifdef FABM_N3ATMDEPO
+        IF (Aout(idN3atmd,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgN3atmd(i,j)=FORCES(ng)%N3atmd(i,j)
+#   ifdef WET_DRY
+              AVERAGE(ng)%avgN3atmd(i,j)=AVERAGE(ng)%avgN3atmd(i,j)*    &
+     &                                GRID(ng)%rmask_full(i,j)
+#   endif
+            END DO
+          END DO
+        END IF
+#  endif
+#  ifdef FABM_N4ATMDEPO
+        IF (Aout(idN4atmd,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgN4atmd(i,j)=FORCES(ng)%N4atmd(i,j)
+#   ifdef WET_DRY
+              AVERAGE(ng)%avgN4atmd(i,j)=AVERAGE(ng)%avgN4atmd(i,j)*    &
+     &                                GRID(ng)%rmask_full(i,j)
+#   endif
+            END DO
+          END DO
+        END IF
+#  endif
+        DO it=1,NSAT
+          IF (Aout(idSAvar(it),ng)) THEN
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgstate_sf(i,j,it)=                        &
+     &                      OCEAN(ng)%state_sf(i,j,Nout,it)
+#  ifdef WET_DRY
+                AVERAGE(ng)%avgstate_sf(i,j,it)=                        &
+     &                      AVERAGE(ng)%avgstate_sf(i,j,it)*            &
+     &                                  GRID(ng)%rmask_full(i,j)
+#  endif
+              END DO
+            END DO
+          END IF
+        END DO
+        DO it=1,NBAT
+          IF (Aout(idBAvar(it),ng)) THEN
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgstate_bt(i,j,it)=                        &
+     &                      OCEAN(ng)%state_bt(i,j,Nout,it)
+#  ifdef WET_DRY
+                AVERAGE(ng)%avgstate_bt(i,j,it)=                        &
+     &                      AVERAGE(ng)%avgstate_bt(i,j,it)*            &
+     &                                  GRID(ng)%rmask_full(i,j)
+#  endif
+              END DO
+            END DO
+          END IF
+        END DO
+# endif
+!!!End PWA insert 23/04/2017
+
 # ifdef WEC
 !
 !  Initialize Waves Effect on Currents fields.
@@ -1471,7 +1606,72 @@
             END DO
           END DO
         END IF
-
+!!!Inserted PWA 22/10/2018, following avgUV
+        IF (Aout(idSUV,ng)) THEN
+          DO k=1,N(ng)
+            DO j=Jstr,Jend
+              DO i=Istr,Iend
+                AVERAGE(ng)%avgSUV(i,j,k)=0.5_r8*SQRT(                  &
+     &   (OCEAN(ng)%u(i,j,k,Nout) + OCEAN(ng)%u(i+1,j,k,Nout))*         &
+     &   (OCEAN(ng)%u(i,j,k,Nout) + OCEAN(ng)%u(i+1,j,k,Nout)) +        &
+     &   (OCEAN(ng)%v(i,j,k,Nout) + OCEAN(ng)%v(i,j+1,k,Nout))*         &
+     &   (OCEAN(ng)%v(i,j,k,Nout) + OCEAN(ng)%v(i,j+1,k,Nout)))
+#  ifdef WET_DRY
+                AVERAGE(ng)%avgSUV(i,j,k)=AVERAGE(ng)%avgSUV(i,j,k)*    &
+     &                                   GRID(ng)%rmask_full(i,j)
+#  endif
+              END DO
+            END DO
+          END DO
+        END IF
+!!!End PWA insert 22/10/2018
+!!!Inserted PWA 11/09/2020, following avgUV
+        IF (Aout(idbstrPa,ng)) THEN
+          DO j=Jstr,Jend
+            DO i=Istr,Iend
+              AVERAGE(ng)%avgbstrPa(i,j) =                              &
+     &             (1000.0_r8+OCEAN(ng)%rho(i,j,1)) * 0.5_r8*SQRT(      &
+     &             (FORCES(ng)%bustr(i,j)+FORCES(ng)%bustr(i+1,j))*     &
+     &             (FORCES(ng)%bustr(i,j)+FORCES(ng)%bustr(i+1,j)) +    &
+     &             (FORCES(ng)%bvstr(i,j)+FORCES(ng)%bvstr(i,j+1))*     &
+     &             (FORCES(ng)%bvstr(i,j)+FORCES(ng)%bvstr(i,j+1)))
+#  ifdef WET_DRY
+              AVERAGE(ng)%avgbstrPa(i,j)=AVERAGE(ng)%avgbstrPa(i,j)*    &
+     &                                   GRID(ng)%rmask_full(i,j)
+#  endif
+            END DO
+          END DO
+        END IF
+!!!End PWA insert 11/09/2020
+!!!Inserted PWA 13/12/2020
+#  ifdef SEDIMENT 
+        IF (Aout(idtss,ng)) THEN
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                  AVERAGE(ng)%avgtss(i,j,k) = 0.0_r8
+              END DO
+            END DO
+          END DO
+          DO it=1,NST
+            DO k=1,N(ng)
+              DO j=JstrR,JendR
+                DO i=IstrR,IendR
+                  AVERAGE(ng)%avgtss(i,j,k) =                           &
+#   ifdef WET_DRY
+     &            GRID(ng)%rmask_full(i,j)*(AVERAGE(ng)%avgtss(i,j,k) + &
+     &                                OCEAN(ng)%t(i,j,k,Nout,idsed(it)))
+#   else
+     &            AVERAGE(ng)%avgtss(i,j,k) +                           &
+     &                                 OCEAN(ng)%t(i,j,k,Nout,idsed(it))
+#   endif
+                END DO
+              END DO
+            END DO
+          END DO
+        END IF
+#  endif
+!!!End PWA insert 13/12/2020
         IF (Aout(idHUav,ng)) THEN
           DO k=1,N(ng)
             DO j=JstrR,JendR
@@ -1882,6 +2082,59 @@
         END IF
 #   endif
 #  endif
+!!!Inserted PWA 02/06/2022
+        IF (Aout(idSUV,ng)) THEN
+          DO k=1,N(ng)
+            DO j=Jstr,Jend
+              DO i=Istr,Iend
+                AVERAGE(ng)%avgSUV(i,j,k)=0.5_r8*SQRT(                  &
+     &   (OCEAN(ng)%u(i,j,k,Nout) + OCEAN(ng)%u(i+1,j,k,Nout))*         &
+     &   (OCEAN(ng)%u(i,j,k,Nout) + OCEAN(ng)%u(i+1,j,k,Nout)) +        &
+     &   (OCEAN(ng)%v(i,j,k,Nout) + OCEAN(ng)%v(i,j+1,k,Nout))*         &
+     &   (OCEAN(ng)%v(i,j,k,Nout) + OCEAN(ng)%v(i,j+1,k,Nout)))
+#  ifdef WET_DRY
+                AVERAGE(ng)%avgSUV(i,j,k)=AVERAGE(ng)%avgSUV(i,j,k)*    &
+     &                                   GRID(ng)%rmask_full(i,j)
+#  endif
+              END DO
+            END DO
+          END DO
+        END IF
+!!!End PWA insert 02/06/2022
+!!!Inserted PWA 03/06/2022
+#  if defined MY25_MIXING || defined GLS_MIXING
+#   if defined CALC_TDR || defined CALC_TSR
+        IF (Aout(idMtdr,ng)) THEN
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgtdr(i,j,k)=AVERAGE(ng)%avgtdr(i,j,k)+    &
+#    ifdef WET_DRY
+     &                                    GRID(ng)%rmask_full(i,j)*     &
+#    endif
+     &                                    MIXING(ng)%tdr(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+#   endif
+#   ifdef CALC_TSR
+        IF (Aout(idMtsr,ng)) THEN
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgtsr(i,j,k)=AVERAGE(ng)%avgtsr(i,j,k)+    &
+#    ifdef WET_DRY
+     &                                    GRID(ng)%rmask_full(i,j)*     &
+#    endif
+     &                                    MIXING(ng)%tsr(i,j,k)
+              END DO
+            END DO
+          END DO
+        END IF
+#   endif
+#  endif
+!!!End insert PWA 03/06/2022
 #  ifdef LMD_SKPP
         IF (Aout(idHsbl,ng)) THEN
           DO j=JstrR,JendR
@@ -2306,6 +2559,102 @@
         END IF
 #  endif
 # endif
+
+!!!PWA Inserted 23/04/2017
+# if defined RFABM
+#  ifdef SHORTWAVE
+        IF (Aout(idSradWm2,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgsrfWm2(i,j)=AVERAGE(ng)%avgsrfWm2(i,j)+    &
+#   ifdef WET_DRY
+     &                                GRID(ng)%rmask_full(i,j)*         &
+#   endif
+     &                                FORCES(ng)%srflxWm2(i,j)
+            END DO
+          END DO
+        END IF
+#  endif
+#  ifdef FABM_PCO2ATM
+        IF (Aout(idxCO2atm,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgxCO2atm(i,j)=AVERAGE(ng)%avgxCO2atm(i,j)+  &
+#   ifdef WET_DRY
+     &                                GRID(ng)%rmask_full(i,j)*         &
+#   endif
+     &                                FORCES(ng)%xCO2atm(i,j)
+            END DO
+          END DO
+        END IF
+        IF (Aout(idpCO2atm,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgpCO2atm(i,j)=AVERAGE(ng)%avgpCO2atm(i,j)+  &
+#   ifdef WET_DRY
+     &                                GRID(ng)%rmask_full(i,j)*         &
+#   endif
+     &                                FORCES(ng)%pCO2atm(i,j)
+            END DO
+          END DO
+        END IF
+#  endif
+#  ifdef FABM_N3ATMDEPO
+        IF (Aout(idN3atmd,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgN3atmd(i,j)=AVERAGE(ng)%avgN3atmd(i,j)+    &
+#   ifdef WET_DRY
+     &                                GRID(ng)%rmask_full(i,j)*         &
+#   endif
+     &                                FORCES(ng)%N3atmd(i,j)
+            END DO
+          END DO
+        END IF
+#  endif
+#  ifdef FABM_N4ATMDEPO
+        IF (Aout(idN4atmd,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgN4atmd(i,j)=AVERAGE(ng)%avgN4atmd(i,j)+    &
+#   ifdef WET_DRY
+     &                                GRID(ng)%rmask_full(i,j)*         &
+#   endif
+     &                                FORCES(ng)%N4atmd(i,j)
+            END DO
+          END DO
+        END IF
+#  endif
+        DO it=1,NSAT
+          IF (Aout(idSAvar(it),ng)) THEN
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgstate_sf(i,j,it)=                        &
+     &            AVERAGE(ng)%avgstate_sf(i,j,it)+                      &
+#  ifdef WET_DRY
+     &            GRID(ng)%rmask_full(i,j)*                             &
+#  endif
+     &            OCEAN(ng)%state_sf(i,j,Nout,it)
+              END DO
+            END DO
+          END IF
+        END DO
+        DO it=1,NBAT
+          IF (Aout(idBAvar(it),ng)) THEN
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgstate_bt(i,j,it)=                        &
+     &            AVERAGE(ng)%avgstate_bt(i,j,it)+                      &
+#  ifdef WET_DRY
+     &            GRID(ng)%rmask_full(i,j)*                             &
+#  endif
+     &            OCEAN(ng)%state_bt(i,j,Nout,it)
+              END DO
+            END DO
+          END IF
+        END DO
+# endif
+!!!End PWA insert 23/04/2017
 # ifdef WEC
         IF (Aout(idU2Sd,ng)) THEN
           DO j=JstrR,JendR
@@ -2824,7 +3173,61 @@
             END DO
           END DO
         END IF
-
+!!!Inserted PWA 22/10/2018, following avgUV
+        IF (Aout(idSUV,ng)) THEN
+          DO k=1,N(ng)
+            DO j=Jstr,Jend
+              DO i=Istr,Iend
+                AVERAGE(ng)%avgSUV(i,j,k)=AVERAGE(ng)%avgSUV(i,j,k)+    &
+#  ifdef WET_DRY
+     &                                   GRID(ng)%rmask_full(i,j)*      &
+#  endif
+     &                                   0.5_r8*SQRT(                   &
+     &   (OCEAN(ng)%u(i,j,k,Nout) + OCEAN(ng)%u(i+1,j,k,Nout))*         &
+     &   (OCEAN(ng)%u(i,j,k,Nout) + OCEAN(ng)%u(i+1,j,k,Nout)) +        &
+     &   (OCEAN(ng)%v(i,j,k,Nout) + OCEAN(ng)%v(i,j+1,k,Nout))*         &
+     &   (OCEAN(ng)%v(i,j,k,Nout) + OCEAN(ng)%v(i,j+1,k,Nout)))
+              END DO
+            END DO
+          END DO
+        END IF
+!!!End insert PWA 22/10/2018
+!!!Inserted PWA 11/09/2020, following avgUV
+        IF (Aout(idbstrPa,ng)) THEN
+          DO j=Jstr,Jend
+            DO i=Istr,Iend
+              AVERAGE(ng)%avgbstrPa(i,j) = AVERAGE(ng)%avgbstrPa(i,j) + &
+#  ifdef WET_DRY
+     &                                    GRID(ng)%rmask_full(i,j)*     &
+#  endif
+     &             (1000.0_r8+OCEAN(ng)%rho(i,j,1)) * 0.5_r8*SQRT(      &
+     &             (FORCES(ng)%bustr(i,j)+FORCES(ng)%bustr(i+1,j))*     &
+     &             (FORCES(ng)%bustr(i,j)+FORCES(ng)%bustr(i+1,j)) +    &
+     &             (FORCES(ng)%bvstr(i,j)+FORCES(ng)%bvstr(i,j+1))*     &
+     &             (FORCES(ng)%bvstr(i,j)+FORCES(ng)%bvstr(i,j+1)))
+            END DO
+          END DO
+        END IF
+!!!End PWA insert 11/09/2020
+!!!Inserted PWA 13/12/2020
+#  ifdef SEDIMENT 
+        IF (Aout(idtss,ng)) THEN
+          DO it=1,NST
+            DO k=1,N(ng)
+              DO j=JstrR,JendR
+                DO i=IstrR,IendR
+                  AVERAGE(ng)%avgtss(i,j,k)=AVERAGE(ng)%avgtss(i,j,k) + &
+#   ifdef WET_DRY
+     &                                        GRID(ng)%rmask_full(i,j)* &
+#   endif
+     &                                 OCEAN(ng)%t(i,j,k,Nout,idsed(it))
+                END DO
+              END DO
+            END DO
+          END DO
+        END IF
+#  endif
+!!!End insert PWA 13/12/2020
         IF (Aout(idHUav,ng)) THEN
           DO k=1,N(ng)
             DO j=JstrR,JendR
@@ -3397,6 +3800,59 @@
         END IF
 #   endif
 #  endif
+
+!!!Inserted PWA 03/06/2022
+#  if defined MY25_MIXING || defined GLS_MIXING
+#   if defined CALC_TDR || defined CALC_TSR
+        IF (Aout(idMtdr,ng)) THEN
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgtdr(i,j,k)=rfac(i,j)*                    &
+     &                                    AVERAGE(ng)%avgtdr(i,j,k)
+              END DO
+            END DO
+          END DO
+          IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+            CALL exchange_r3d_tile (ng, tile,                           &
+     &                              LBi, UBi, LBj, UBj, 1, N(ng),       &
+     &                              AVERAGE(ng)%avgtdr)
+#    ifdef DISTRIBUTE
+            CALL mp_exchange3d (ng, tile, model, 1,                     &
+     &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
+     &                          NghostPoints,                           &
+     &                          EWperiodic(ng), NSperiodic(ng),         &
+     &                          AVERAGE(ng)%avgtdr)
+#    endif
+          END IF
+        END IF
+#   endif
+#   ifdef CALC_TSR
+        IF (Aout(idMtsr,ng)) THEN
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgtsr(i,j,k)=rfac(i,j)*                    &
+     &                                    AVERAGE(ng)%avgtsr(i,j,k)
+              END DO
+            END DO
+          END DO
+          IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+            CALL exchange_r3d_tile (ng, tile,                           &
+     &                              LBi, UBi, LBj, UBj, 1, N(ng),       &
+     &                              AVERAGE(ng)%avgtsr)
+#    ifdef DISTRIBUTE
+            CALL mp_exchange3d (ng, tile, model, 1,                     &
+     &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
+     &                          NghostPoints,                           &
+     &                          EWperiodic(ng), NSperiodic(ng),         &
+     &                          AVERAGE(ng)%avgtsr)
+#    endif
+          END IF
+        END IF
+#   endif
+#  endif
+!!!End insert PWA 03/06/2022
 
 #  ifdef LMD_SKPP
         IF (Aout(idHsbl,ng)) THEN
@@ -4135,6 +4591,169 @@
         END IF
 #  endif
 # endif
+
+!!!PWA Inserted 23/04/2017: Convert sums to time-averages
+# if defined RFABM
+#  ifdef SHORTWAVE
+        IF (Aout(idSradWm2,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgsrfWm2(i,j)=rfac(i,j)*                     &
+     &                                AVERAGE(ng)%avgsrfWm2(i,j)
+            END DO
+          END DO
+          IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+            CALL exchange_r2d_tile (ng, tile,                           &
+     &                              LBi, UBi, LBj, UBj,                 &
+     &                              AVERAGE(ng)%avgsrfWm2)
+#   ifdef DISTRIBUTE
+            CALL mp_exchange2d (ng, tile, model, 1,                     &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          NghostPoints,                           &
+     &                          EWperiodic(ng), NSperiodic(ng),         &
+     &                          AVERAGE(ng)%avgsrfWm2)
+#   endif
+          END IF
+        END IF
+#  endif
+
+#  ifdef FABM_PCO2ATM
+        IF (Aout(idxCO2atm,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgxCO2atm(i,j)=rfac(i,j)*                    &
+     &                                AVERAGE(ng)%avgxCO2atm(i,j)
+            END DO
+          END DO
+          IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+            CALL exchange_r2d_tile (ng, tile,                           &
+     &                              LBi, UBi, LBj, UBj,                 &
+     &                              AVERAGE(ng)%avgxCO2atm)
+#   ifdef DISTRIBUTE
+            CALL mp_exchange2d (ng, tile, model, 1,                     &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          NghostPoints,                           &
+     &                          EWperiodic(ng), NSperiodic(ng),         &
+     &                          AVERAGE(ng)%avgxCO2atm)
+#   endif
+          END IF
+        END IF
+        IF (Aout(idpCO2atm,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgpCO2atm(i,j)=rfac(i,j)*                    &
+     &                                AVERAGE(ng)%avgpCO2atm(i,j)
+            END DO
+          END DO
+          IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+            CALL exchange_r2d_tile (ng, tile,                           &
+     &                              LBi, UBi, LBj, UBj,                 &
+     &                              AVERAGE(ng)%avgpCO2atm)
+#   ifdef DISTRIBUTE
+            CALL mp_exchange2d (ng, tile, model, 1,                     &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          NghostPoints,                           &
+     &                          EWperiodic(ng), NSperiodic(ng),         &
+     &                          AVERAGE(ng)%avgpCO2atm)
+#   endif
+          END IF
+        END IF
+#  endif
+
+
+#  ifdef FABM_N3ATMDEPO
+        IF (Aout(idN3atmd,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgN3atmd(i,j)=rfac(i,j)*                     &
+     &                                AVERAGE(ng)%avgN3atmd(i,j)
+            END DO
+          END DO
+          IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+            CALL exchange_r2d_tile (ng, tile,                           &
+     &                              LBi, UBi, LBj, UBj,                 &
+     &                              AVERAGE(ng)%avgN3atmd)
+#   ifdef DISTRIBUTE
+            CALL mp_exchange2d (ng, tile, model, 1,                     &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          NghostPoints,                           &
+     &                          EWperiodic(ng), NSperiodic(ng),         &
+     &                          AVERAGE(ng)%avgN3atmd)
+#   endif
+          END IF
+        END IF
+#  endif
+#  ifdef FABM_N4ATMDEPO
+        IF (Aout(idN4atmd,ng)) THEN
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgpCO2atm(i,j)=rfac(i,j)*                    &
+     &                                AVERAGE(ng)%avgN4atmd(i,j)
+            END DO
+          END DO
+          IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+            CALL exchange_r2d_tile (ng, tile,                           &
+     &                              LBi, UBi, LBj, UBj,                 &
+     &                              AVERAGE(ng)%avgN4atmd)
+#   ifdef DISTRIBUTE
+            CALL mp_exchange2d (ng, tile, model, 1,                     &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          NghostPoints,                           &
+     &                          EWperiodic(ng), NSperiodic(ng),         &
+     &                          AVERAGE(ng)%avgN4atmd)
+#   endif
+          END IF
+        END IF
+#  endif
+
+
+        DO it=1,NSAT
+          IF (Aout(idSAvar(it),ng)) THEN
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgstate_sf(i,j,it)=rfac(i,j)*              &
+     &                                AVERAGE(ng)%avgstate_sf(i,j,it)
+              END DO
+            END DO
+            IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+              CALL exchange_r2d_tile (ng, tile,                         &
+     &                                LBi, UBi, LBj, UBj,               &
+     &                                AVERAGE(ng)%avgstate_sf(:,:,it))
+#  ifdef DISTRIBUTE
+              CALL mp_exchange2d (ng, tile, model, 1,                   &
+     &                            LBi, UBi, LBj, UBj,                   &
+     &                            NghostPoints,                         &
+     &                            EWperiodic(ng), NSperiodic(ng),       &
+     &                            AVERAGE(ng)%avgstate_sf(:,:,it))
+#  endif
+            END IF
+          END IF
+        END DO
+
+        DO it=1,NBAT
+          IF (Aout(idBAvar(it),ng)) THEN
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgstate_bt(i,j,it)=rfac(i,j)*              &
+     &                                AVERAGE(ng)%avgstate_bt(i,j,it)
+              END DO
+            END DO
+            IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+              CALL exchange_r2d_tile (ng, tile,                         &
+     &                                LBi, UBi, LBj, UBj,               &
+     &                                AVERAGE(ng)%avgstate_bt(:,:,it))
+#  ifdef DISTRIBUTE
+              CALL mp_exchange2d (ng, tile, model, 1,                   &
+     &                            LBi, UBi, LBj, UBj,                   &
+     &                            NghostPoints,                         &
+     &                            EWperiodic(ng), NSperiodic(ng),       &
+     &                            AVERAGE(ng)%avgstate_bt(:,:,it))
+#  endif
+            END IF
+          END IF
+        END DO
+# endif
+!!!End PWA insert 23/04/2017
 # ifdef WEC
 !
 !  Process Waves Effect on Currents fields.
@@ -5019,6 +5638,79 @@
 #  endif
           END IF
         END IF
+
+!!!Inserted PWA 22/10/2018, following avgUV
+        IF (Aout(idSUV,ng)) THEN
+          DO k=1,N(ng)
+            DO j=Jstr,Jend
+              DO i=Istr,Iend
+                AVERAGE(ng)%avgSUV(i,j,k)=rfac(i,j)*                    &
+     &                                   AVERAGE(ng)%avgSUV(i,j,k)
+              END DO
+            END DO
+          END DO
+          IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+            CALL exchange_r3d_tile (ng, tile,                           &
+     &                              LBi, UBi, LBj, UBj, 1, N(ng),       &
+     &                              AVERAGE(ng)%avgSUV)
+#  ifdef DISTRIBUTE
+            CALL mp_exchange3d (ng, tile, model, 1,                     &
+     &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
+     &                          NghostPoints,                           &
+     &                          EWperiodic(ng), NSperiodic(ng),         &
+     &                          AVERAGE(ng)%avgSUV)
+#  endif
+          END IF
+        END IF
+!!!End insert PWA 22/10/2018
+
+!!!Inserted PWA 11/09/2020, following avgUV
+        IF (Aout(idbstrPa,ng)) THEN
+          DO j=Jstr,Jend
+            DO i=Istr,Iend
+              AVERAGE(ng)%avgbstrPa(i,j)=rfac(i,j)*                     &
+     &                                  AVERAGE(ng)%avgbstrPa(i,j)
+            END DO
+          END DO
+          IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+            CALL exchange_r2d_tile (ng, tile,                           &
+     &                              LBi, UBi, LBj, UBj,                 &
+     &                              AVERAGE(ng)%avgbstrPa)
+#  ifdef DISTRIBUTE
+            CALL mp_exchange2d (ng, tile, model, 1,                     &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          NghostPoints,                           &
+     &                          EWperiodic(ng), NSperiodic(ng),         &
+     &                          AVERAGE(ng)%avgbstrPa)
+#  endif
+          END IF
+        END IF
+!!!End insert PWA 11/09/2020
+
+!!!Inserted PWA 13/12/2020, following avgt
+        IF (Aout(idtss,ng)) THEN
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgtss(i,j,k)=rfac(i,j)*                    &
+     &                                   AVERAGE(ng)%avgtss(i,j,k)
+              END DO
+            END DO
+          END DO
+          IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+            CALL exchange_r3d_tile (ng, tile,                           &
+     &                              LBi, UBi, LBj, UBj, 1, N(ng),       &
+     &                              AVERAGE(ng)%avgtss)
+#  ifdef DISTRIBUTE
+            CALL mp_exchange3d (ng, tile, model, 1,                     &
+     &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
+     &                          NghostPoints,                           &
+     &                          EWperiodic(ng), NSperiodic(ng),         &
+     &                          AVERAGE(ng)%avgtss)
+#  endif
+          END IF
+        END IF
+!!!End insert PWA 13/12/2020
 
         IF (Aout(idHUav,ng)) THEN
           DO k=1,N(ng)
