@@ -113,6 +113,11 @@
 !
       USE mod_param
       USE mod_scalars
+!!!Inserted PWA 09/08/2025
+#ifdef OFFLINE_BIOLOGY
+      USE mod_biology
+#endif
+!!!End insert PWA 09/08/2025
 !
 !  Imported variable declarations.
 !
@@ -178,7 +183,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: i, itrc, j, k
+      integer :: i, itrc, ibt, j, k !!!Modified PWA 09/08/2025
 
       real(r8) :: cff, cff1, cff2, cff3
 
@@ -195,7 +200,16 @@
 #endif
 !-----------------------------------------------------------------------
 !
+!!!Modified PWA 09/08/2025
+#ifdef OFFLINE_BIOLOGY
+      DO ibt=1,NBT
+        itrc=idbio(ibt)
+#elif defined OFFLINE_TPASSIVE
+      DO itrc=NAT+1,NAT+NPT
+#else
       DO itrc=1,NT(ng)
+#endif
+!!!End modified PWA 09/08/2025
         DO k=1,N(ng)
 !
 !  Compute XI- and ETA-components of diffusive tracer flux (T m3/s).
