@@ -128,6 +128,11 @@
       USE mod_param
       USE mod_ncparam
       USE mod_scalars
+!!!Inserted PWA 09/08/2025
+#ifdef OFFLINE_BIOLOGY
+      USE mod_biology
+#endif
+!!!End insert PWA 09/08/2025
 !
 !  Imported variable declarations.
 !
@@ -210,7 +215,7 @@
 !  Local variable declarations.
 !
       integer :: Imin, Imax, Jmin, Jmax
-      integer :: i, itrc, j, k, k1, k2
+      integer :: i, itrc, ibt, j, k, k1, k2 !!!Modified PWA 09/08/2025
 
       real(r8), parameter :: eps = 0.5_r8
       real(r8), parameter :: small = 1.0E-14_r8
@@ -269,8 +274,16 @@
 !  as: 3/4 t(:,:,:,nrhs,:) + 1/4 t(:,:,:,nstp,:).
 !
 #endif
-
+!!!Modified PWA 09/08/2025
+#ifdef OFFLINE_BIOLOGY
+      T_LOOP : DO ibt=1,NBT
+        itrc=idbio(ibt)
+#elif defined OFFLINE_TPASSIVE
+      T_LOOP : DO itrc=NAT+1,NAT+NPT
+#else
       T_LOOP : DO itrc=1,NT(ng)
+#endif
+!!!End modified PWA 09/08/2025
         k2=1
         K_LOOP1 : DO k=0,N(ng)
           k1=k2
