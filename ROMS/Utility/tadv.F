@@ -88,7 +88,14 @@
       character (len=  13) :: Hstring, Vstring
       character (len=  17) :: frmt
       character (len=  70) :: line
+
+!!!Modified PWA 30/01/2021
+      #if defined RFABM
+      character (len=5632) :: tadv_att ! May need more length to allow for ERSEM-type models
+#else
       character (len=2816) :: tadv_att
+#endif
+!!!End modified PWA 30/01/2021
 
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", tadv_putatt_nf90"
