@@ -170,6 +170,11 @@
       USE nesting_mod, ONLY : bry_fluxes
 # endif
       USE t3dbc_mod, ONLY : t3dbc_tile
+!!!Inserted PWA 09/08/2025
+# if defined OFFLINE_BIOLOGY
+      USE mod_biology
+# endif
+!!!End insert PWA 09/08/2025
 !
 !  Imported variable declarations.
 !
@@ -282,7 +287,12 @@
 # endif
       integer :: IminT, ImaxT, JminT, JmaxT
       integer :: Isrc, Jsrc
-      integer :: i, ic, ii, is, itrc, j, jj, k, ltrc
+!!!Modified PWA 21/10/2021
+#ifdef TS_ISOURCE
+      integer :: Nisrc1,isrc1
+#endif
+!!!End modified PWA
+      integer :: i, ic, ii, is, itrc, ibt, j, jj, k, ltrc !!!Modified PWA 09/08/2025
 # if defined AGE_MEAN && defined T_PASSIVE
       integer :: iage
 # endif
@@ -398,11 +408,44 @@
           END DO
         END DO
       END IF
+
+!!!Modified PWA 21/10/2021
+#ifdef TS_ISOURCE
+      IF (iic(ng).eq.ntstart(ng)) THEN
+        ic=0
+        DO is=1,Nisrc(ng)
+          Isrc=SOURCES(ng)%Iisrc(is)
+          Jsrc=SOURCES(ng)%Jisrc(is)
+          IF ((IstrR.le.Isrc).and.(Isrc.le.IendR).and.                  &
+     &        (JstrR.le.Jsrc).and.(Jsrc.le.JendR)) THEN
+            ic=ic+1
+            SOURCES(ng)%Iisrct(ic,tile+1) = Isrc
+            SOURCES(ng)%Jisrct(ic,tile+1) = Jsrc
+            SOURCES(ng)%isrct(ic,tile+1) = is
+          END IF
+        END DO
+        SOURCES(ng)%Nisrct(tile+1) = ic
+        !Note: The variables (Iisrct,Jisrct,isrct,Nisrct) have tile index ranging over 1:Ntiles
+        !      (where Ntiles is the total number of tiles) while the ROMS variable 'tile' ranges 
+        !      over 0:Ntiles-1.  Hence the index values 'tile+1'.
+      END IF
+      Nisrc1 = SOURCES(ng)%Nisrct(tile+1) ! No. of internal sources in this tile
+#endif
+!!!End modified PWA
 !
 !  Horizontal tracer advection.  It is possible to have a different
 !  advection schme for each tracer.
 !
+!!!Modified PWA 09/08/2025
+# ifdef OFFLINE_BIOLOGY
+      T_LOOP1 : DO ibt=1,NBT
+        itrc=idbio(ibt)
+# elif defined OFFLINE_TPASSIVE
+      T_LOOP1 : DO itrc=NAT+1,NAT+NPT
+# else
       T_LOOP1 : DO itrc=1,NT(ng)
+# endif
+!!!End modified PWA 09/08/2025
 !
 !  The MPDATA and HSIMT algorithms requires a three-point footprint, so
 !  exchange boundary data on t(:,:,:,nnew,:) so other processes computed
@@ -922,7 +965,16 @@
 !  Time-step vertical advection term.
 !-----------------------------------------------------------------------
 !
+!!!Modified PWA 09/08/2025
+# ifdef OFFLINE_BIOLOGY
+      T_LOOP2 : DO ibt=1,NBT
+        itrc=idbio(ibt)
+# elif defined OFFLINE_TPASSIVE
+      T_LOOP2 : DO itrc=NAT+1,NAT+NPT
+# else
       T_LOOP2 : DO itrc=1,NT(ng)
+# endif
+!!!End modified PWA 09/08/2025
         IF (Vadvection(itrc,ng)%MPDATA) THEN
           JminT=JstrVm2
           JmaxT=Jendp2i
@@ -1372,7 +1424,16 @@
 !  using MPDATA recursive method.  Notice that pipelined J-loop ended.
 !-----------------------------------------------------------------------
 !
+!!!Modified PWA 09/08/2025
+# ifdef OFFLINE_BIOLOGY
+      T_LOOP3 : DO ibt=1,NBT
+        itrc=idbio(ibt)
+# elif defined OFFLINE_TPASSIVE
+      T_LOOP3 : DO itrc=NAT+1,NAT+NPT
+# else
       T_LOOP3 : DO itrc=1,NT(ng)
+# endif
+!!!End modified PWA 09/08/2025
         MPDATA : IF ((Hadvection(itrc,ng)%MPDATA).and.                  &
      &               (Vadvection(itrc,ng)%MPDATA)) THEN
           CALL mpdata_adiff_tile (ng, tile,                             &
@@ -1658,7 +1719,16 @@
 !-----------------------------------------------------------------------
 !
       J_LOOP2 : DO j=Jstr,Jend                  ! start pipelined J-loop
+!!!Modified PWA 09/08/2025
+#ifdef OFFLINE_BIOLOGY
+        DO ibt=1,NBT
+          itrc=idbio(ibt)
+#elif defined OFFLINE_TPASSIVE
+        DO itrc=NAT+1,NAT+NPT
+#else
         DO itrc=1,NT(ng)
+#endif
+!!!End modified PWA 09/08/2025
           ltrc=MIN(NAT,itrc)
 
 # ifdef SPLINES_VDIFF
@@ -1832,19 +1902,63 @@
         END DO
       END DO
 # endif
+!!!Inserted PWA 07/02/2020
+# ifdef TS_ISOURCE
+!
+!  Correct tracer concentrations for interior sources/sinks not associated 
+!  with water fluxes (e.g. fish farms).
+!  NOTE: It is assumed that, at this point, t(:,:,:,nnew,:) is in concentration units (Tunits)
+!        (otherwise the nudging towards climatology below would be wrong, because
+!        CLIMA(ng)%tclm is definitely in Tunits (see mod_clima.F and set_data.F)).
+!  NOTE: The code below violates the column-major-friendly order of loop indices 
+!        that is standard in ROMS, but this is overcompensated by the efficiency
+!        gained from assigning the point sources indices at the head of the loop
+!        over point sources (is).  The present code was tested against a
+!        column-major alternative code inserted after the nudge towards climatology,
+!        and gave 15-20% faster run speed on a dense tiling (16x32 tiles, size 30x13x42),
+!        but insignificant difference on a coarser tiling (16x16 tiles, size 30x27x42). 
+!
+      IF (Nisrc1.gt.0) THEN
+        DO is=1,Nisrc1
+          Isrc=SOURCES(ng)%Iisrct(is,tile+1)
+          Jsrc=SOURCES(ng)%Jisrct(is,tile+1)
+          isrc1=SOURCES(ng)%isrct(is,tile+1)
+          DO itrc=1,NT(ng)
+            IF (LtracerISrc(itrc,ng)) THEN
+              DO k=1,N(ng)
+                t(Isrc,Jsrc,k,nnew,itrc) =                              &
+     &             MAX(0.0_r8, t(Isrc,Jsrc,k,nnew,itrc) +               &
+     &             dt(ng)*SOURCES(ng)%Tisrc(isrc1,k,itrc)*              &
+     &             pm(Isrc,Jsrc)*pn(Isrc,Jsrc)*oHz(Isrc,Jsrc,k))
+              END DO
+            END IF
+          END DO
+        END DO
+      END IF
+# endif
+!!!End insert PWA 07/02/2020
 !
 !-----------------------------------------------------------------------
 !  Apply lateral boundary conditions and, if appropriate, nudge
 !  to tracer data and apply Land/Sea mask.
 !-----------------------------------------------------------------------
 !
+!!!Modified PWA 09/08/2025
+      ic=0
+#ifdef OFFLINE_BIOLOGY
+      DO ibt=1,NBT
+        itrc=idbio(ibt)
+#elif defined OFFLINE_TPASSIVE
+      DO itrc=NAT+1,NAT+NPT
+#else
 !  Initialize tracer counter index. The "tclm" array is only allocated
 !  to the NTCLM fields that need to be processed. This is done to
 !  reduce memory.
 !
-      ic=0
 !
       DO itrc=1,NT(ng)
+#endif
+!!!End modified PWA 09/08/2025
 !
 !  Set compact reduced memory tracer index for nudging coefficients and
 !  climatology arrays.
