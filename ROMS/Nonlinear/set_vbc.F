@@ -91,6 +91,14 @@
      &                   FORCES(ng) % sustr,                            &
      &                   FORCES(ng) % svstr,                            &
 #  endif
+!!!PWA Inserted 01/05/2017
+#  if defined RFABM && defined SHORTWAVE
+#   ifndef ICESHELF
+     &                   FORCES(ng) % srflx,                            &
+#   endif
+     &                   FORCES(ng) % srflxWm2,                         &
+#  endif
+!!!End PWA insert 01/05/2017
 #  ifndef BBL_MODEL
      &                   FORCES(ng) % bustr,                            &
      &                   FORCES(ng) % bvstr,                            &
@@ -147,6 +155,14 @@
 #   endif
      &                         sustr, svstr,                            &
 #  endif
+!!!PWA Inserted 01/05/2017
+#  if defined RFABM && defined SHORTWAVE
+#   ifndef ICESHELF
+     &                         srflx,                                   &
+#   endif
+     &                         srflxWm2,                                &
+#  endif
+!!!End PWA insert 01/05/2017
 #  ifndef BBL_MODEL
      &                         bustr, bvstr,                            &
 #  endif
@@ -212,6 +228,14 @@
       real(r8), intent(inout) :: sustr(LBi:,LBj:)
       real(r8), intent(inout) :: svstr(LBi:,LBj:)
 #   endif
+!!!PWA Inserted 01/05/2017
+#   if defined RFABM && defined SHORTWAVE
+#    ifndef ICESHELF
+      real(r8), intent(inout) :: srflx(LBi:,LBj:)
+#    endif
+      real(r8), intent(inout) :: srflxWm2(LBi:,LBj:)
+#   endif
+!!!End PWA insert 01/05/2017
 #   ifndef BBL_MODEL
       real(r8), intent(inout) :: bustr(LBi:,LBj:)
       real(r8), intent(inout) :: bvstr(LBi:,LBj:)
@@ -261,6 +285,14 @@
       real(r8), intent(inout) :: sustr(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: svstr(LBi:UBi,LBj:UBj)
 #   endif
+!!!PWA Inserted 01/05/2017
+#   if defined RFABM && defined SHORTWAVE
+#    ifndef ICESHELF
+      real(r8), intent(inout) :: srflx(LBi:UBi,LBj:UBj)
+#    endif
+      real(r8), intent(inout) :: srflxWm2(LBi:UBi,LBj:UBj)
+#   endif
+!!!End PWA insert 01/05/2017
 #   ifndef BBL_MODEL
       real(r8), intent(inout) :: bustr(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: bvstr(LBi:UBi,LBj:UBj)
@@ -572,7 +604,22 @@
      &                    sustr, svstr)
 #   endif
 #  endif
-
+!!!PWA Inserted 01/05/2017
+#  if defined RFABM && defined SHORTWAVE
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+          srflxWm2(i,j) = srflx(i,j)*rho0*Cp !Surface downwelling shortwave flux in [W/m2]
+        END DO
+      END DO
+!Scale back to W/m2 using standard density rho0 = 1025 kg/m3
+!and heat capacity Cp = 3985 J/kg/degC, see e.g. fennel.h
+!We do this here because it is the last place in the time step where FORCES(ng)%srflx
+!is potentially corrected (to account for ice cover) -- see Nonlinear/main3d.F
+!(to check, try e.g. grep -r "intent(inout) :: srflx" ROMS)
+!An alternative would be to rescale within rfabm.h, however this would require relinking
+!the FABM to the local variable srflx within rfabm.h at each time step (slightly inefficient)
+#  endif
+!!!End PWA insert 01/05/2017
 #  ifndef BBL_MODEL
 !
 !-----------------------------------------------------------------------
