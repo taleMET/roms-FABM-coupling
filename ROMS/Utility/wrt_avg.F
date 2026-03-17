@@ -1758,6 +1758,304 @@
         END IF
       END IF
 
+!!!PWA Inserted 21/01/2026
+# if defined RFABM
+#  ifdef SHORTWAVE
+!
+!  Write out shortwave radiation flux in [W/m2].
+!
+      IF (Aout(idSradWm2,ng)) THEN
+        scale=1.0_dp
+        gtype=gfactor*r2dvar
+        status=nf_fwrite2d(ng, model, AVG(ng)%ncid, idSradWm2,          &
+     &                     AVG(ng)%Vid(idSradWm2),                      &
+     &                     AVG(ng)%Rindex, gtype,                       &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+#   ifdef MASKING
+     &                     GRID(ng) % rmask,                            &
+#   endif
+     &                     AVERAGE(ng) % avgsrfWm2)
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idSradWm2)), AVG(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+#  endif
+#  ifdef FABM_PCO2ATM
+!
+!  Write out dry molar fraction of CO2 in air [ppm]
+!
+      IF (Aout(idxCO2atm,ng)) THEN
+        scale=1.0_dp
+        gtype=gfactor*r2dvar
+        status=nf_fwrite2d(ng, model, AVG(ng)%ncid, idxCO2atm,          &
+     &                     AVG(ng)%Vid(idxCO2atm),                      &
+     &                     AVG(ng)%Rindex, gtype,                       &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+#   ifdef MASKING
+     &                     GRID(ng) % rmask,                            &
+#   endif
+     &                     AVERAGE(ng) % avgxCO2atm)
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idxCO2atm)), AVG(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out partial pressure of CO2 in air [uatm]
+!
+      IF (Aout(idpCO2atm,ng)) THEN
+        scale=1.0_dp
+        gtype=gfactor*r2dvar
+        status=nf_fwrite2d(ng, model, AVG(ng)%ncid, idpCO2atm,          &
+     &                     AVG(ng)%Vid(idpCO2atm),                      &
+     &                     AVG(ng)%Rindex, gtype,                       &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+#   ifdef MASKING
+     &                     GRID(ng) % rmask,                            &
+#   endif
+     &                     AVERAGE(ng) % avgpCO2atm)
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idpCO2atm)), AVG(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+#  endif
+#  ifdef FABM_N3ATMDEPO
+!
+!  Write out atmospheric deposition fluxes for oxidized nitrogen [mmol/m2/s].
+!
+      IF (Aout(idN3atmd,ng)) THEN
+        scale=1.0_dp
+        gtype=gfactor*r2dvar
+        status=nf_fwrite2d(ng, model, AVG(ng)%ncid, idN3atmd,           &
+     &                     AVG(ng)%Vid(idN3atmd),                       &
+     &                     AVG(ng)%Rindex, gtype,                       &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+#   ifdef MASKING
+     &                     GRID(ng) % rmask,                            &
+#   endif
+     &                     AVERAGE(ng) % avgN3atmd)
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idN3atmd)), AVG(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+#  endif
+#  ifdef FABM_N4ATMDEPO
+!
+!  Write out atmospheric deposition fluxes for reduced nitrogen [mmol/m2/s].
+!
+      IF (Aout(idN4atmd,ng)) THEN
+        scale=1.0_dp
+        gtype=gfactor*r2dvar
+        status=nf_fwrite2d(ng, model, AVG(ng)%ncid, idN4atmd,           &
+     &                     AVG(ng)%Vid(idN4atmd),                       &
+     &                     AVG(ng)%Rindex, gtype,                       &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+#   ifdef MASKING
+     &                     GRID(ng) % rmask,                            &
+#   endif
+     &                     AVERAGE(ng) % avgN4atmd)
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idN4atmd)), AVG(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+#  endif
+!
+!  Write out surface/bottom attached FABM variables.
+!
+      DO itrc=1,NSAT
+        IF (Aout(idSAvar(itrc),ng)) THEN
+          scale=1.0_dp
+          gtype=gfactor*r2dvar
+          status=nf_fwrite2d(ng, model, AVG(ng)%ncid, idSAvar(itrc),    &
+     &                       AVG(ng)%Vid(idSAvar(itrc)),                &
+     &                       AVG(ng)%Rindex, gtype,                     &
+     &                       LBi, UBi, LBj, UBj, scale,                 &
+#  ifdef MASKING
+     &                       GRID(ng) % rmask,                          &
+#  endif
+     &                       AVERAGE(ng) % avgstate_sf(:,:,itrc))
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            IF (Master) THEN
+              WRITE (stdout,20) TRIM(Vname(1,idSAvar(itrc))),           &
+     &                          AVG(ng)%Rindex
+            END IF
+            exit_flag=3
+            ioerror=status
+            RETURN
+          END IF
+        END IF
+      END DO
+      DO itrc=1,NBAT
+        IF (Aout(idBAvar(itrc),ng)) THEN
+          scale=1.0_dp
+          gtype=gfactor*r2dvar
+          status=nf_fwrite2d(ng, model, AVG(ng)%ncid, idBAvar(itrc),    &
+     &                       AVG(ng)%Vid(idBAvar(itrc)),                &
+     &                       AVG(ng)%Rindex, gtype,                     &
+     &                       LBi, UBi, LBj, UBj, scale,                 &
+#  ifdef MASKING
+     &                       GRID(ng) % rmask,                          &
+#  endif
+     &                       AVERAGE(ng) % avgstate_bt(:,:,itrc))
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            IF (Master) THEN
+              WRITE (stdout,20) TRIM(Vname(1,idBAvar(itrc))),           &
+     &                          AVG(ng)%Rindex
+            END IF
+            exit_flag=3
+            ioerror=status
+            RETURN
+          END IF
+        END IF
+      END DO
+# endif
+!
+!  Write out horizontal current speed.
+!
+      IF (Aout(idSUV,ng)) THEN
+        scale=1.0_dp
+        gtype=gfactor*r3dvar
+        status=nf_fwrite3d(ng, model, AVG(ng)%ncid, idSUV,              &
+     &                     AVG(ng)%Vid(idSUV),                          &
+     &                     AVG(ng)%Rindex, gtype,                       &
+     &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
+# ifdef MASKING
+     &                     GRID(ng) % rmask,                            &
+# endif
+     &                     AVERAGE(ng) % avgSUV)
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idSUV)), AVG(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out scalar bottom stress (Pa).
+!
+      IF (Aout(idbstrPa,ng)) THEN
+        scale=1.0_dp
+        gtype=gfactor*r2dvar
+        status=nf_fwrite2d(ng, model, AVG(ng)%ncid, idbstrPa,           &
+     &                     AVG(ng)%Vid(idbstrPa),                       &
+     &                     AVG(ng)%Rindex, gtype,                       &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+# ifdef MASKING
+     &                     GRID(ng) % rmask,                            &
+# endif
+     &                     AVERAGE(ng) % avgbstrPa)
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idbstrPa)), AVG(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out total suspended sediment.
+!
+      IF (Aout(idtss,ng)) THEN
+        scale=1.0_dp
+        gtype=gfactor*r3dvar
+        status=nf_fwrite3d(ng, model, AVG(ng)%ncid, idtss,              &
+     &                     AVG(ng)%Vid(idtss),                          &
+     &                     AVG(ng)%Rindex, gtype,                       &
+     &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
+# ifdef MASKING
+     &                     GRID(ng) % rmask,                            &
+# endif
+     &                     AVERAGE(ng) % avgtss)
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idtss)), AVG(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+# if defined MY25_MIXING || defined GLS_MIXING
+#  if defined CALC_TDR || defined CALC_TSR
+!
+!  Write out turbulent energy dissipation rate (espilon).
+!
+      IF (Aout(idMtdr,ng)) THEN
+        scale=1.0_dp
+        gtype=gfactor*r3dvar
+        status=nf_fwrite3d(ng, model, AVG(ng)%ncid, idMtdr,             &
+     &                     AVG(ng)%Vid(idMtdr),                         &
+     &                     AVG(ng)%Rindex, gtype,                       &
+     &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
+#   ifdef MASKING
+     &                     GRID(ng) % rmask,                            &
+#   endif
+     &                     AVERAGE(ng) % avgtdr)
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idMtdr)), AVG(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+#  endif
+#  ifdef CALC_TSR
+!
+!  Write out turbulent shear rate.
+!
+      IF (Aout(idMtsr,ng)) THEN
+        scale=1.0_dp
+        gtype=gfactor*r3dvar
+        status=nf_fwrite3d(ng, model, AVG(ng)%ncid, idMtsr,             &
+     &                     AVG(ng)%Vid(idMtsr),                         &
+     &                     AVG(ng)%Rindex, gtype,                       &
+     &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
+#   ifdef MASKING
+     &                     GRID(ng) % rmask,                            &
+#   endif
+     &                     AVERAGE(ng) % avgtsr)
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idMtsr)), AVG(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+#  endif
+# endif
+!!!End PWA insert 21/01/2026
+
 # if (defined BBL_MODEL || defined WAVES_OUTPUT) && defined SOLVE3D
 !
 !-----------------------------------------------------------------------
@@ -3772,6 +4070,364 @@
           RETURN
         END IF
       END IF
+
+!!!PWA Inserted 21/01/2026
+# if defined RFABM
+#  ifdef SHORTWAVE
+!
+!  Write out shortwave radiation flux in [W/m2].
+!
+      IF (Aout(idSradWm2,ng)) THEN
+        scale=1.0_dp
+        IF (AVG(ng)%pioVar(idSradWm2)%dkind.eq.PIO_double) THEN
+          ioDesc => ioDesc_dp_r2dvar(ng)
+        ELSE
+          ioDesc => ioDesc_sp_r2dvar(ng)
+        END IF
+        status=nf_fwrite2d(ng, model, AVG(ng)%pioFile, idSradWm2,       &
+     &                     AVG(ng)%pioVar(idSradWm2),                   &
+     &                     AVG(ng)%Rindex,                              &
+     &                     ioDesc,                                      &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+#     ifdef MASKING
+     &                     GRID(ng) % rmask,                            &
+#     endif
+     &                     AVERAGE(ng) % avgsrfWm2)
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idSradWm2)), AVG(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+#  endif
+#  ifdef FABM_PCO2ATM
+!
+!  Write out dry molar fraction of CO2 in air [ppm]
+!
+      IF (Aout(idxCO2atm,ng)) THEN
+        scale=1.0_dp
+        IF (AVG(ng)%pioVar(idxCO2atm)%dkind.eq.PIO_double) THEN
+          ioDesc => ioDesc_dp_r2dvar(ng)
+        ELSE
+          ioDesc => ioDesc_sp_r2dvar(ng)
+        END IF
+        status=nf_fwrite2d(ng, model, AVG(ng)%pioFile, idxCO2atm,       &
+     &                     AVG(ng)%pioVar(idxCO2atm),                   &
+     &                     AVG(ng)%Rindex,                              &
+     &                     ioDesc,                                      &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+#     ifdef MASKING
+     &                     GRID(ng) % rmask,                            &
+#     endif
+     &                     AVERAGE(ng) % avgxCO2atm)
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idxCO2atm)), AVG(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out partial pressure of CO2 in air [uatm]
+!
+      IF (Aout(idpCO2atm,ng)) THEN
+        scale=1.0_dp
+        IF (AVG(ng)%pioVar(idpCO2atm)%dkind.eq.PIO_double) THEN
+          ioDesc => ioDesc_dp_r2dvar(ng)
+        ELSE
+          ioDesc => ioDesc_sp_r2dvar(ng)
+        END IF
+        status=nf_fwrite2d(ng, model, AVG(ng)%pioFile, idpCO2atm,       &
+     &                     AVG(ng)%pioVar(idpCO2atm),                   &
+     &                     AVG(ng)%Rindex,                              &
+     &                     ioDesc,                                      &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+#     ifdef MASKING
+     &                     GRID(ng) % rmask,                            &
+#     endif
+     &                     AVERAGE(ng) % avgpCO2atm)
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idpCO2atm)), AVG(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+#  endif
+#  ifdef FABM_N3ATMDEPO
+!
+!  Write out atmospheric deposition fluxes for oxidized nitrogen [mmol/m2/s].
+!
+      IF (Aout(idN3atmd,ng)) THEN
+        scale=1.0_dp
+        IF (AVG(ng)%pioVar(idN3atmd)%dkind.eq.PIO_double) THEN
+          ioDesc => ioDesc_dp_r2dvar(ng)
+        ELSE
+          ioDesc => ioDesc_sp_r2dvar(ng)
+        END IF
+        status=nf_fwrite2d(ng, model, AVG(ng)%pioFile, idN3atmd,        &
+     &                     AVG(ng)%pioVar(idN3atmd),                    &
+     &                     AVG(ng)%Rindex,                              &
+     &                     ioDesc,                                      &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+#     ifdef MASKING
+     &                     GRID(ng) % rmask,                            &
+#     endif
+     &                     AVERAGE(ng) % avgN3atmd)
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idN3atmd)), AVG(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+#  endif
+#  ifdef FABM_N4ATMDEPO
+!
+!  Write out atmospheric deposition fluxes for reduced nitrogen [mmol/m2/s].
+!
+      IF (Aout(idN4atmd,ng)) THEN
+        scale=1.0_dp
+        IF (AVG(ng)%pioVar(idN4atmd)%dkind.eq.PIO_double) THEN
+          ioDesc => ioDesc_dp_r2dvar(ng)
+        ELSE
+          ioDesc => ioDesc_sp_r2dvar(ng)
+        END IF
+        status=nf_fwrite2d(ng, model, AVG(ng)%pioFile, idN4atmd,        &
+     &                     AVG(ng)%pioVar(idN4atmd),                    &
+     &                     AVG(ng)%Rindex,                              &
+     &                     ioDesc,                                      &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+#     ifdef MASKING
+     &                     GRID(ng) % rmask,                            &
+#     endif
+     &                     AVERAGE(ng) % avgN4atmd)
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idN4atmd)), AVG(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+#  endif
+!
+!  Write out surface/bottom attached FABM variables.
+!
+      DO itrc=1,NSAT
+        IF (Aout(idSAvar(itrc),ng)) THEN
+          scale=1.0_dp
+          IF (AVG(ng)%pioVar(idSAvar(itrc))%dkind.eq.PIO_double) THEN
+            ioDesc => ioDesc_dp_r2dvar(ng)
+          ELSE
+            ioDesc => ioDesc_sp_r2dvar(ng)
+          END IF
+          status=nf_fwrite2d(ng, model, AVG(ng)%pioFile, idSAvar(itrc), &
+     &                       AVG(ng)%pioVar(idSAvar(itrc)),             &
+     &                       AVG(ng)%Rindex,                            &
+     &                       ioDesc,                                    &
+     &                       LBi, UBi, LBj, UBj, scale,                 &
+#     ifdef MASKING
+     &                       GRID(ng) % rmask,                          &
+#     endif
+     &                       AVERAGE(ng) % avgstate_sf(:,:,itrc))
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            IF (Master) THEN
+              WRITE (stdout,20) TRIM(Vname(1,idSAvar(itrc))),           &
+     &                          AVG(ng)%Rindex
+            END IF
+            exit_flag=3
+            ioerror=status
+            RETURN
+          END IF
+        END IF
+      END DO
+      DO itrc=1,NBAT
+        IF (Aout(idBAvar(itrc),ng)) THEN
+          scale=1.0_dp
+          IF (AVG(ng)%pioVar(idBAvar(itrc))%dkind.eq.PIO_double) THEN
+            ioDesc => ioDesc_dp_r2dvar(ng)
+          ELSE
+            ioDesc => ioDesc_sp_r2dvar(ng)
+          END IF
+          status=nf_fwrite2d(ng, model, AVG(ng)%pioFile, idBAvar(itrc), &
+     &                       AVG(ng)%pioVar(idBAvar(itrc)),             &
+     &                       AVG(ng)%Rindex,                            &
+     &                       ioDesc,                                    &
+     &                       LBi, UBi, LBj, UBj, scale,                 &
+#  ifdef MASKING
+     &                       GRID(ng) % rmask,                          &
+#  endif
+     &                       AVERAGE(ng) % avgstate_bt(:,:,itrc))
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            IF (Master) THEN
+              WRITE (stdout,20) TRIM(Vname(1,idBAvar(itrc))),           &
+     &                          AVG(ng)%Rindex
+            END IF
+            exit_flag=3
+            ioerror=status
+            RETURN
+          END IF
+        END IF
+      END DO
+# endif
+!
+!  Write out horizontal current speed.
+!
+      IF (Aout(idSUV,ng)) THEN
+        scale=1.0_dp
+        IF (AVG(ng)%pioVar(idSUV)%dkind.eq.PIO_double) THEN
+          ioDesc => ioDesc_dp_r3dvar(ng)
+        ELSE
+          ioDesc => ioDesc_sp_r3dvar(ng)
+        END IF
+        status=nf_fwrite3d(ng, model, AVG(ng)%pioFile, idSUV,           &
+     &                     AVG(ng)%pioVar(idSUV),                       &
+     &                     AVG(ng)%Rindex,                              &
+     &                     ioDesc,                                      &
+     &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
+# ifdef MASKING
+     &                     GRID(ng) % rmask,                            &
+# endif
+     &                     AVERAGE(ng) % avgSUV)
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idSUV)), AVG(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out scalar bottom stress (Pa).
+!
+      IF (Aout(idbstrPa,ng)) THEN
+        scale=1.0_dp
+        IF (AVG(ng)%pioVar(idbstrPa)%dkind.eq.PIO_double) THEN
+          ioDesc => ioDesc_dp_r2dvar(ng)
+        ELSE
+          ioDesc => ioDesc_sp_r2dvar(ng)
+        END IF
+        status=nf_fwrite2d(ng, model, AVG(ng)%pioFile, idbstrPa,        &
+     &                     AVG(ng)%pioVar(idbstrPa),                    &
+     &                     AVG(ng)%Rindex,                              &
+     &                     ioDesc,                                      &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+# ifdef MASKING
+     &                     GRID(ng) % rmask,                            &
+# endif
+     &                     AVERAGE(ng) % avgbstrPa)
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idbstrPa)), AVG(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out total suspended sediment.
+!
+      IF (Aout(idtss,ng)) THEN
+        scale=1.0_dp
+        IF (AVG(ng)%pioVar(idtss)%dkind.eq.PIO_double) THEN
+          ioDesc => ioDesc_dp_r3dvar(ng)
+        ELSE
+          ioDesc => ioDesc_sp_r3dvar(ng)
+        END IF
+        status=nf_fwrite3d(ng, model, AVG(ng)%pioFile, idtss,           &
+     &                     AVG(ng)%pioVar(idtss),                       &
+     &                     AVG(ng)%Rindex,                              &
+     &                     ioDesc,                                      &
+     &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
+# ifdef MASKING
+     &                     GRID(ng) % rmask,                            &
+# endif
+     &                     AVERAGE(ng) % avgtss)
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idtss)), AVG(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+# if defined MY25_MIXING || defined GLS_MIXING
+#  if defined CALC_TDR || defined CALC_TSR
+!
+!  Write out turbulent energy dissipation rate (espilon).
+!
+      IF (Aout(idMtdr,ng)) THEN
+        scale=1.0_dp
+        IF (AVG(ng)%pioVar(idMtdr)%dkind.eq.PIO_double) THEN
+          ioDesc => ioDesc_dp_r3dvar(ng)
+        ELSE
+          ioDesc => ioDesc_sp_r3dvar(ng)
+        END IF
+        status=nf_fwrite3d(ng, model, AVG(ng)%pioFile, idMtdr,          &
+     &                     AVG(ng)%pioVar(idMtdr),                      &
+     &                     AVG(ng)%Rindex,                              &
+     &                     ioDesc,                                      &
+     &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
+# ifdef MASKING
+     &                     GRID(ng) % rmask,                            &
+# endif
+     &                     AVERAGE(ng) % avgtdr)
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idMtdr)), AVG(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+#  endif
+#  ifdef CALC_TSR
+!
+!  Write out turbulent shear rate.
+!
+      IF (Aout(idMtsr,ng)) THEN
+        scale=1.0_dp
+        IF (AVG(ng)%pioVar(idMtsr)%dkind.eq.PIO_double) THEN
+          ioDesc => ioDesc_dp_r3dvar(ng)
+        ELSE
+          ioDesc => ioDesc_sp_r3dvar(ng)
+        END IF
+        status=nf_fwrite3d(ng, model, AVG(ng)%pioFile, idMtsr,          &
+     &                     AVG(ng)%pioVar(idMtsr),                      &
+     &                     AVG(ng)%Rindex,                              &
+     &                     ioDesc,                                      &
+     &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
+# ifdef MASKING
+     &                     GRID(ng) % rmask,                            &
+# endif
+     &                     AVERAGE(ng) % avgtsr)
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idMtsr)), AVG(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+#  endif
+# endif
+!!!End PWA insert 21/01/2026
 
 #  if (defined BBL_MODEL || defined WAVES_OUTPUT) && defined SOLVE3D
 !
