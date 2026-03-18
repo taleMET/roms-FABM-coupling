@@ -1750,89 +1750,6 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
         END IF
-
-!!!Inserted PWA 03/06/2022
-#  if defined CALC_TDR || defined CALC_TSR
-!
-!  Define turbulent energy dissipation rate (espilon).
-!
-        IF (Hout(idMtdr,ng)) THEN
-          Vinfo( 1)=Vname(1,idMtdr)
-          Vinfo( 2)=Vname(2,idMtdr)
-          Vinfo( 3)=Vname(3,idMtdr)
-          Vinfo(14)=Vname(4,idMtdr)
-          Vinfo(16)=Vname(1,idtime)
-#   if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#   endif
-          Vinfo(21)=Vname(6,idMtdr)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idMtdr,ng),r8)
-          status=def_var(ng, iNLM, HIS(ng)%ncid, HIS(ng)%Vid(idMtdr),   &
-     &                   NF_FOUT, nvd4, t3dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-#  endif
-#  ifdef CALC_TSR
-!
-!  Define dynamic viscosity.
-!
-        IF (Hout(idMmu,ng)) THEN
-          Vinfo( 1)=Vname(1,idMmu)
-          Vinfo( 2)=Vname(2,idMmu)
-          Vinfo( 3)=Vname(3,idMmu)
-          Vinfo(14)=Vname(4,idMmu)
-          Vinfo(16)=Vname(1,idtime)
-#   if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#   endif
-          Vinfo(21)=Vname(6,idMmu)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idMmu,ng),r8)
-          status=def_var(ng, iNLM, HIS(ng)%ncid, HIS(ng)%Vid(idMmu),    &
-     &                   NF_FOUT, nvd4, t3dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define kinematic viscosity.
-!
-        IF (Hout(idMnu,ng)) THEN
-          Vinfo( 1)=Vname(1,idMnu)
-          Vinfo( 2)=Vname(2,idMnu)
-          Vinfo( 3)=Vname(3,idMnu)
-          Vinfo(14)=Vname(4,idMnu)
-          Vinfo(16)=Vname(1,idtime)
-#   if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#   endif
-          Vinfo(21)=Vname(6,idMnu)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idMnu,ng),r8)
-          status=def_var(ng, iNLM, HIS(ng)%ncid, HIS(ng)%Vid(idMnu),    &
-     &                   NF_FOUT, nvd4, t3dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define turbulent shear rate.
-!
-        IF (Hout(idMtsr,ng)) THEN
-          Vinfo( 1)=Vname(1,idMtsr)
-          Vinfo( 2)=Vname(2,idMtsr)
-          Vinfo( 3)=Vname(3,idMtsr)
-          Vinfo(14)=Vname(4,idMtsr)
-          Vinfo(16)=Vname(1,idtime)
-#   if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#   endif
-          Vinfo(21)=Vname(6,idMtsr)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idMtsr,ng),r8)
-          status=def_var(ng, iNLM, HIS(ng)%ncid, HIS(ng)%Vid(idMtsr),   &
-     &                   NF_FOUT, nvd4, t3dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-#  endif
-!!!End insert PWA 03/06/2022
 # endif
 # if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
 !
@@ -2214,7 +2131,7 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 
-!!!PWA Inserted 22/01/2026
+!!!PWA Inserted 21/01/2026
 #if defined RFABM
 # ifdef SHORTWAVE
 !
@@ -2384,7 +2301,89 @@
      &                   NF_FOUT, nvd4, t3dgrd, Aval, Vinfo, ncname)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
-!!!End insert PWA 22/01/2026
+# if defined GLS_MIXING || defined MY25_MIXING
+#  if defined CALC_TDR || defined CALC_TSR
+!
+!  Define turbulent energy dissipation rate (espilon).
+!
+        IF (Hout(idMtdr,ng)) THEN
+          Vinfo( 1)=Vname(1,idMtdr)
+          Vinfo( 2)=Vname(2,idMtdr)
+          Vinfo( 3)=Vname(3,idMtdr)
+          Vinfo(14)=Vname(4,idMtdr)
+          Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#   endif
+          Vinfo(21)=Vname(6,idMtdr)
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idMtdr,ng),r8)
+          status=def_var(ng, iNLM, HIS(ng)%ncid, HIS(ng)%Vid(idMtdr),   &
+     &                   NF_FOUT, nvd4, t3dgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+#  endif
+#  ifdef CALC_TSR
+!
+!  Define dynamic viscosity.
+!
+        IF (Hout(idMmu,ng)) THEN
+          Vinfo( 1)=Vname(1,idMmu)
+          Vinfo( 2)=Vname(2,idMmu)
+          Vinfo( 3)=Vname(3,idMmu)
+          Vinfo(14)=Vname(4,idMmu)
+          Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#   endif
+          Vinfo(21)=Vname(6,idMmu)
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idMmu,ng),r8)
+          status=def_var(ng, iNLM, HIS(ng)%ncid, HIS(ng)%Vid(idMmu),    &
+     &                   NF_FOUT, nvd4, t3dgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+!
+!  Define kinematic viscosity.
+!
+        IF (Hout(idMnu,ng)) THEN
+          Vinfo( 1)=Vname(1,idMnu)
+          Vinfo( 2)=Vname(2,idMnu)
+          Vinfo( 3)=Vname(3,idMnu)
+          Vinfo(14)=Vname(4,idMnu)
+          Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#   endif
+          Vinfo(21)=Vname(6,idMnu)
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idMnu,ng),r8)
+          status=def_var(ng, iNLM, HIS(ng)%ncid, HIS(ng)%Vid(idMnu),    &
+     &                   NF_FOUT, nvd4, t3dgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+!
+!  Define turbulent shear rate.
+!
+        IF (Hout(idMtsr,ng)) THEN
+          Vinfo( 1)=Vname(1,idMtsr)
+          Vinfo( 2)=Vname(2,idMtsr)
+          Vinfo( 3)=Vname(3,idMtsr)
+          Vinfo(14)=Vname(4,idMtsr)
+          Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#   endif
+          Vinfo(21)=Vname(6,idMtsr)
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idMtsr,ng),r8)
+          status=def_var(ng, iNLM, HIS(ng)%ncid, HIS(ng)%Vid(idMtsr),   &
+     &                   NF_FOUT, nvd4, t3dgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+#  endif
+# endif
+!!!End insert PWA 21/01/2026
 
 #if (defined BBL_MODEL || defined WAVES_OUTPUT) && defined SOLVE3D
 !
@@ -2687,24 +2686,6 @@
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idMtls))) THEN
             got_var(idMtls)=.TRUE.
             HIS(ng)%Vid(idMtls)=var_id(i)
-!!!Inserted PWA 03/06/2022
-#  if defined CALC_TDR || defined CALC_TSR
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idMtdr))) THEN
-            got_var(idMtdr)=.TRUE.
-            HIS(ng)%Vid(idMtdr)=var_id(i)
-#  endif
-#  ifdef CALC_TSR
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idMmu))) THEN
-            got_var(idMmu)=.TRUE.
-            HIS(ng)%Vid(idMmu)=var_id(i)
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idMnu))) THEN
-            got_var(idMnu)=.TRUE.
-            HIS(ng)%Vid(idMnu)=var_id(i)
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idMtsr))) THEN
-            got_var(idMtsr)=.TRUE.
-            HIS(ng)%Vid(idMtsr)=var_id(i)
-#  endif
-!!!End insert PWA 03/06/2022
 # endif
 # if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idPair))) THEN
@@ -2804,7 +2785,7 @@
           END DO
 #endif
 
-!!!PWA Inserted 22/01/2026
+!!!PWA Inserted 21/01/2026
 #if defined RFABM
 # ifdef SHORTWAVE
           IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idSradWm2))) THEN
@@ -2851,7 +2832,27 @@
             got_var(idtss)=.TRUE.
             HIS(ng)%Vid(idtss)=var_id(i)
           END IF
-!!!End insert PWA 22/01/2026
+#if defined GLS_MIXING || defined MY25_MIXING
+# if defined CALC_TDR || defined CALC_TSR
+          IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idMtdr))) THEN
+            got_var(idMtdr)=.TRUE.
+            HIS(ng)%Vid(idMtdr)=var_id(i)
+          END IF
+# endif
+# ifdef CALC_TSR
+          IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idMmu))) THEN
+            got_var(idMmu)=.TRUE.
+            HIS(ng)%Vid(idMmu)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idMnu))) THEN
+            got_var(idMnu)=.TRUE.
+            HIS(ng)%Vid(idMnu)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idMtsr))) THEN
+            got_var(idMtsr)=.TRUE.
+            HIS(ng)%Vid(idMtsr)=var_id(i)
+          END IF
+# endif
+#endif
+!!!End insert PWA 21/01/2026
         END DO
 !
 !  Check if history variables are available in input NetCDF file.
@@ -3202,36 +3203,6 @@
           exit_flag=3
           RETURN
         END IF
-!!!Inserted PWA 03/06/2022
-#  if defined CALC_TDR || defined CALC_TSR
-        IF (.not.got_var(idMtdr).and.Hout(idMtdr,ng)) THEN
-          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idMtdr)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-#  endif
-#  ifdef CALC_TSR
-        IF (.not.got_var(idMmu).and.Hout(idMmu,ng)) THEN
-          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idMmu)),           &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idMnu).and.Hout(idMnu,ng)) THEN
-          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idMnu)),           &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idMtsr).and.Hout(idMtsr,ng)) THEN
-          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idMtsr)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-#  endif
-!!!End insert PWA 03/06/2022
 # endif
 # if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
         IF (.not.got_var(idPair).and.Hout(idPair,ng)) THEN
@@ -3402,7 +3373,7 @@
 # endif
 #endif
 
-!!!PWA Inserted 22/01/2022
+!!!PWA Inserted 21/01/2022
 #if defined RFABM
 # ifdef SHORTWAVE
         IF (.not.got_var(idSradWm2).and.Hout(idSradWm2,ng)) THEN
@@ -3465,7 +3436,37 @@
           exit_flag=3
           RETURN
         END IF
-!!!End insert PWA 22/01/2026
+#if defined GLS_MIXING || defined MY25_MIXING
+# if defined CALC_TDR || defined CALC_TSR
+        IF (.not.got_var(idMtdr).and.Hout(idMtdr,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idMtdr)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+# endif
+# ifdef CALC_TSR
+        IF (.not.got_var(idMmu).and.Hout(idMmu,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idMmu)),           &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idMnu).and.Hout(idMnu,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idMnu)),           &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idMtsr).and.Hout(idMtsr,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idMtsr)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+# endif
+#endif
+!!!End insert PWA 21/01/2026
 
 #if (defined BBL_MODEL || defined WAVES_OUTPUT) && defined SOLVE3D
 !
@@ -5414,104 +5415,6 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #   endif
         END IF
-!!!Inserted PWA 22/01/2026
-#   if defined CALC_TDR || defined CALC_TSR
-!
-!  Define turbulent energy dissipation rate (espilon).
-!
-        IF (Hout(idMtdr,ng)) THEN
-          Vinfo( 1)=Vname(1,idMtdr)
-          Vinfo( 2)=Vname(2,idMtdr)
-          Vinfo( 3)=Vname(3,idMtdr)
-          Vinfo(14)=Vname(4,idMtdr)
-          Vinfo(16)=Vname(1,idtime)
-#    if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#    endif
-          Vinfo(21)=Vname(6,idMtdr)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idMtdr,ng),r8)
-          HIS(ng)%pioVar(idMtdr)%dkind=PIO_FOUT
-          HIS(ng)%pioVar(idMtdr)%gtype=r3dvar
-!
-          status=def_var(ng, model, HIS(ng)%pioFile,                    &
-     &                   HIS(ng)%pioVar(idMtdr)%vd,                     &
-     &                   PIO_FOUT, nvd4, t3dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-#   endif
-#   ifdef CALC_TSR
-!
-!  Define dynamic viscosity.
-!
-        IF (Hout(idMmu,ng)) THEN
-          Vinfo( 1)=Vname(1,idMmu)
-          Vinfo( 2)=Vname(2,idMmu)
-          Vinfo( 3)=Vname(3,idMmu)
-          Vinfo(14)=Vname(4,idMmu)
-          Vinfo(16)=Vname(1,idtime)
-#    if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#    endif
-          Vinfo(21)=Vname(6,idMmu)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idMmu,ng),r8)
-          HIS(ng)%pioVar(idMmu)%dkind=PIO_FOUT
-          HIS(ng)%pioVar(idMmu)%gtype=r3dvar
-!
-          status=def_var(ng, model, HIS(ng)%pioFile,                    &
-     &                   HIS(ng)%pioVar(idMmu)%vd,                      &
-     &                   PIO_FOUT, nvd4, t3dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define kinematic viscosity.
-!
-        IF (Hout(idMnu,ng)) THEN
-          Vinfo( 1)=Vname(1,idMnu)
-          Vinfo( 2)=Vname(2,idMnu)
-          Vinfo( 3)=Vname(3,idMnu)
-          Vinfo(14)=Vname(4,idMnu)
-          Vinfo(16)=Vname(1,idtime)
-#    if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#    endif
-          Vinfo(21)=Vname(6,idMnu)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idMnu,ng),r8)
-          HIS(ng)%pioVar(idMnu)%dkind=PIO_FOUT
-          HIS(ng)%pioVar(idMnu)%gtype=r3dvar
-!
-          status=def_var(ng, model, HIS(ng)%pioFile,                    &
-     &                   HIS(ng)%pioVar(idMnu)%vd,                      &
-     &                   PIO_FOUT, nvd4, t3dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-!
-!  Define turbulent shear rate.
-!
-        IF (Hout(idMtsr,ng)) THEN
-          Vinfo( 1)=Vname(1,idMtsr)
-          Vinfo( 2)=Vname(2,idMtsr)
-          Vinfo( 3)=Vname(3,idMtsr)
-          Vinfo(14)=Vname(4,idMtsr)
-          Vinfo(16)=Vname(1,idtime)
-#    if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#    endif
-          Vinfo(21)=Vname(6,idMtsr)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idMtsr,ng),r8)
-          HIS(ng)%pioVar(idMtsr)%dkind=PIO_FOUT
-          HIS(ng)%pioVar(idMtsr)%gtype=r3dvar
-!
-          status=def_var(ng, model, HIS(ng)%pioFile,                    &
-     &                   HIS(ng)%pioVar(idMtsr)%vd,                     &
-     &                   PIO_FOUT, nvd4, t3dgrd, Aval, Vinfo, ncname)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-#   endif
-!!!End insert PWA 22/01/2026
 #  endif
 #  if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
 !
@@ -5964,7 +5867,7 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 
-!!!PWA Inserted 22/01/2022
+!!!PWA Inserted 21/01/2022
 # if defined RFABM
 #  ifdef SHORTWAVE
 !
@@ -6164,7 +6067,105 @@
      &                   PIO_FOUT, nvd4, t3dgrd, Aval, Vinfo, ncname)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
-!!!End insert PWA 22/01/2026
+# if defined GLS_MIXING || defined MY25_MIXING
+#  if defined CALC_TDR || defined CALC_TSR
+!
+!  Define turbulent energy dissipation rate (espilon).
+!
+        IF (Hout(idMtdr,ng)) THEN
+          Vinfo( 1)=Vname(1,idMtdr)
+          Vinfo( 2)=Vname(2,idMtdr)
+          Vinfo( 3)=Vname(3,idMtdr)
+          Vinfo(14)=Vname(4,idMtdr)
+          Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#   endif
+          Vinfo(21)=Vname(6,idMtdr)
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idMtdr,ng),r8)
+          HIS(ng)%pioVar(idMtdr)%dkind=PIO_FOUT
+          HIS(ng)%pioVar(idMtdr)%gtype=r3dvar
+!
+          status=def_var(ng, model, HIS(ng)%pioFile,                    &
+     &                   HIS(ng)%pioVar(idMtdr)%vd,                     &
+     &                   PIO_FOUT, nvd4, t3dgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+#  endif
+#  ifdef CALC_TSR
+!
+!  Define dynamic viscosity.
+!
+        IF (Hout(idMmu,ng)) THEN
+          Vinfo( 1)=Vname(1,idMmu)
+          Vinfo( 2)=Vname(2,idMmu)
+          Vinfo( 3)=Vname(3,idMmu)
+          Vinfo(14)=Vname(4,idMmu)
+          Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#   endif
+          Vinfo(21)=Vname(6,idMmu)
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idMmu,ng),r8)
+          HIS(ng)%pioVar(idMmu)%dkind=PIO_FOUT
+          HIS(ng)%pioVar(idMmu)%gtype=r3dvar
+!
+          status=def_var(ng, model, HIS(ng)%pioFile,                    &
+     &                   HIS(ng)%pioVar(idMmu)%vd,                      &
+     &                   PIO_FOUT, nvd4, t3dgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+!
+!  Define kinematic viscosity.
+!
+        IF (Hout(idMnu,ng)) THEN
+          Vinfo( 1)=Vname(1,idMnu)
+          Vinfo( 2)=Vname(2,idMnu)
+          Vinfo( 3)=Vname(3,idMnu)
+          Vinfo(14)=Vname(4,idMnu)
+          Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#   endif
+          Vinfo(21)=Vname(6,idMnu)
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idMnu,ng),r8)
+          HIS(ng)%pioVar(idMnu)%dkind=PIO_FOUT
+          HIS(ng)%pioVar(idMnu)%gtype=r3dvar
+!
+          status=def_var(ng, model, HIS(ng)%pioFile,                    &
+     &                   HIS(ng)%pioVar(idMnu)%vd,                      &
+     &                   PIO_FOUT, nvd4, t3dgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+!
+!  Define turbulent shear rate.
+!
+        IF (Hout(idMtsr,ng)) THEN
+          Vinfo( 1)=Vname(1,idMtsr)
+          Vinfo( 2)=Vname(2,idMtsr)
+          Vinfo( 3)=Vname(3,idMtsr)
+          Vinfo(14)=Vname(4,idMtsr)
+          Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#   endif
+          Vinfo(21)=Vname(6,idMtsr)
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idMtsr,ng),r8)
+          HIS(ng)%pioVar(idMtsr)%dkind=PIO_FOUT
+          HIS(ng)%pioVar(idMtsr)%gtype=r3dvar
+!
+          status=def_var(ng, model, HIS(ng)%pioFile,                    &
+     &                   HIS(ng)%pioVar(idMtsr)%vd,                     &
+     &                   PIO_FOUT, nvd4, t3dgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+#  endif
+# endif
+!!!End insert PWA 21/01/2026
 
 # if (defined BBL_MODEL || defined WAVES_OUTPUT) && defined SOLVE3D
 !
@@ -6573,32 +6574,6 @@
             HIS(ng)%pioVar(idMtls)%dkind=PIO_FOUT
             HIS(ng)%pioVar(idMtls)%gtype=w3dvar
 #  endif
-!!!Inserted PWA 22/01/2026
-#  if defined CALC_TDR || defined CALC_TSR
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idMtdr))) THEN
-            got_var(idMtdr)=.TRUE.
-            HIS(ng)%pioVar(idMtdr)%vd=var_desc(i)
-            HIS(ng)%pioVar(idMtdr)%dkind=PIO_FOUT
-            HIS(ng)%pioVar(idMtdr)%gtype=r3dvar
-#  endif
-#  ifdef CALC_TSR
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idMmu))) THEN
-            got_var(idMmu)=.TRUE.
-            HIS(ng)%pioVar(idMmu)%vd=var_desc(i)
-            HIS(ng)%pioVar(idMmu)%dkind=PIO_FOUT
-            HIS(ng)%pioVar(idMmu)%gtype=r3dvar
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idMnu))) THEN
-            got_var(idMnu)=.TRUE.
-            HIS(ng)%pioVar(idMnu)%vd=var_desc(i)
-            HIS(ng)%pioVar(idMnu)%dkind=PIO_FOUT
-            HIS(ng)%pioVar(idMnu)%gtype=r3dvar
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idMtsr))) THEN
-            got_var(idMtsr)=.TRUE.
-            HIS(ng)%pioVar(idMtsr)%vd=var_desc(i)
-            HIS(ng)%pioVar(idMtsr)%dkind=PIO_FOUT
-            HIS(ng)%pioVar(idMtsr)%gtype=r3dvar
-#  endif
-!!!End insert PWA 22/01/2026
 #  if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idPair))) THEN
             got_var(idPair)=.TRUE.
@@ -6740,7 +6715,7 @@
             END IF
           END DO
 # endif
-!!!PWA Inserted 22/01/2026
+!!!PWA Inserted 21/01/2026
 # if defined RFABM
 #  ifdef SHORTWAVE
           IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idSradWm2))) THEN
@@ -6803,7 +6778,35 @@
             HIS(ng)%pioVar(idtss)%dkind=PIO_FOUT
             HIS(ng)%pioVar(idtss)%gtype=r3dvar
           END IF
-!!!End insert PWA 22/01/2026
+# if defined GLS_MIXING || defined MY25_MIXING
+#  if defined CALC_TDR || defined CALC_TSR
+          IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idMtdr))) THEN
+            got_var(idMtdr)=.TRUE.
+            HIS(ng)%pioVar(idMtdr)%vd=var_desc(i)
+            HIS(ng)%pioVar(idMtdr)%dkind=PIO_FOUT
+            HIS(ng)%pioVar(idMtdr)%gtype=r3dvar
+          END IF
+#  endif
+#  ifdef CALC_TSR
+          IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idMmu))) THEN
+            got_var(idMmu)=.TRUE.
+            HIS(ng)%pioVar(idMmu)%vd=var_desc(i)
+            HIS(ng)%pioVar(idMmu)%dkind=PIO_FOUT
+            HIS(ng)%pioVar(idMmu)%gtype=r3dvar
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idMnu))) THEN
+            got_var(idMnu)=.TRUE.
+            HIS(ng)%pioVar(idMnu)%vd=var_desc(i)
+            HIS(ng)%pioVar(idMnu)%dkind=PIO_FOUT
+            HIS(ng)%pioVar(idMnu)%gtype=r3dvar
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idMtsr))) THEN
+            got_var(idMtsr)=.TRUE.
+            HIS(ng)%pioVar(idMtsr)%vd=var_desc(i)
+            HIS(ng)%pioVar(idMtsr)%dkind=PIO_FOUT
+            HIS(ng)%pioVar(idMtsr)%gtype=r3dvar
+          END IF
+#  endif
+# endif
+!!!End insert PWA 21/01/2026
         END DO
 !
 !  Check if history variables are available in input NetCDF file.
@@ -7155,36 +7158,6 @@
           RETURN
         END IF
 #  endif
-!!!Inserted PWA 22/01/2026
-#  if defined CALC_TDR || defined CALC_TSR
-        IF (.not.got_var(idMtdr).and.Hout(idMtdr,ng)) THEN
-          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idMtdr)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-#  endif
-#  ifdef CALC_TSR
-        IF (.not.got_var(idMmu).and.Hout(idMmu,ng)) THEN
-          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idMmu)),           &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idMnu).and.Hout(idMnu,ng)) THEN
-          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idMnu)),           &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idMtsr).and.Hout(idMtsr,ng)) THEN
-          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idMtsr)),          &
-     &                                  TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-#  endif
-!!!End insert PWA 22/01/2026
 #  if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
         IF (.not.got_var(idPair).and.Hout(idPair,ng)) THEN
           IF (Master) WRITE (stdout,70) TRIM(Vname(1,idPair)),          &
@@ -7344,7 +7317,7 @@
         END DO
 # endif
 
-!!!PWA Inserted 22/01/2026
+!!!PWA Inserted 21/01/2026
 # if defined RFABM
 #  ifdef SHORTWAVE
         IF (.not.got_var(idSradWm2).and.Hout(idSradWm2,ng)) THEN
@@ -7407,7 +7380,37 @@
           exit_flag=3
           RETURN
         END IF
-!!!End insert PWA 22/01/2026
+# if defined GLS_MIXING || defined MY25_MIXING
+#  if defined CALC_TDR || defined CALC_TSR
+        IF (.not.got_var(idMtdr).and.Hout(idMtdr,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idMtdr)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+#  endif
+#  ifdef CALC_TSR
+        IF (.not.got_var(idMmu).and.Hout(idMmu,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idMmu)),           &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idMnu).and.Hout(idMnu,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idMnu)),           &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idMtsr).and.Hout(idMtsr,ng)) THEN
+          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idMtsr)),          &
+     &                                  TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+#  endif
+# endif
+!!!End insert PWA 21/01/2026
 
 # if (defined BBL_MODEL || defined WAVES_OUTPUT) && defined SOLVE3D
 !
