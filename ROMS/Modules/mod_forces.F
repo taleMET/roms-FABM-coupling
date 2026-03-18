@@ -26,11 +26,6 @@
 !  bvstr        Bottom momentum flux (bottom stress) in the            !
 !                 ETA-direction (m2/s2) at horizontal V-points.        !
 !                                                                      !
-!!!PWA Inserted 30/10/2015                                             !
-#if defined RFABM
-!  bstrPa       Scalar bottom stress for use in FABM models (Pa)       !
-#endif
-!!!PWA Inserted 30/10/2015                                             !
 !  Surface wind induced waves.                                         !
 !                                                                      !
 !  Hwave        Surface wind induced wave height (m).                  !
@@ -70,12 +65,6 @@
 !  srflxG       Latest two-time snapshots of input "srflx" grided      !
 !                 data used for interpolation.                         !
 !                                                                      !
-!!!PWA Inserted 30/10/2015                                             !
-#if defined RFABM
-!  srflxWm2     Surface shortwave solar radiation flux                 !
-!                 (Watts/m2) at horizontal RHO-points                  !
-#endif
-!!!PWA Inserted 30/10/2015                                             !
 !  Cloud fraction.                                                     !
 !                                                                      !
 !  cloud        Cloud fraction (percentage/100).                       !
@@ -124,14 +113,10 @@
 !  VwindG       Latest two-time snapshots of input "Vwind" grided      !
 !                 data used for interpolation.                         !
 !                                                                      !
-!!!PWA Inserted 14/04/2017                                             !
+!!!PWA Inserted 21/01/2026                                             !
 #if defined RFABM
-!  Swind        Scalar wind speed for use in FABM models (m/s)         !
-!!!PWA Inserted 13/12/2020
-# if defined FABM_TSS || defined FABM_TSS_ONLINE
-!  tss          Total Suspended Sediment for use in FABM models        !
-# endif
-!!!End insert PWA 13/12/2020
+!  srflxWm2     Surface shortwave solar radiation flux                 !
+!                 (Watts/m2) at horizontal RHO-points                  !
 # ifdef FABM_PCO2ATM
 !  xCO2atm      Atmospheric dry molar fraction of CO2 (ppm)            !
 !  pCO2atm      Atmospheric partial pressure of CO2 (uatm)             !
@@ -142,8 +127,13 @@
 # ifdef FABM_N4ATMDEPO
 !  N4atmd       Atmospheric deposition of reduced nitrogen (mmol/m2/s) !
 # endif
+!  Swind        Scalar wind speed for use in FABM models (m/s)         !
+!  bstrPa       Scalar bottom stress for use in FABM models (Pa)       !
+# if defined FABM_TSS || defined FABM_TSS_ONLINE
+!  tss          Total Suspended Sediment for use in FABM models        !
+# endif
 #endif
-!!!End insert PWA 16/03/2015                                           !
+!!!End insert PWA 21/01/2026                                           !
 !                                                                      !
 !  Rain fall rate.                                                     !
 !                                                                      !
