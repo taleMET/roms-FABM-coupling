@@ -808,6 +808,7 @@
 !
       CALL ana_spinning (ng, tile, iNLM)
 # endif
+
 !!!Inserted PWA 19/10/2021
 # ifdef TS_ISOURCE
 !
@@ -859,116 +860,6 @@
      &                     update)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
-
-!!PWA Inserted 14/04/2017: Calculate extra forcings for use in FABM models
-!We put them at the end of the forcings/sources so that other updated forcings/sources can be used
-!(non-FABM ROMS forcings cannot depend on FABM forcings)
-# ifdef RFABM
-      !
-      !-----------------------------------------------------------------------
-      !  Set ROMS-derived FABM forcings
-      !-----------------------------------------------------------------------
-      ! Note: The NetCDF output for srflxWm2 should be IDENTICAL to the output for srflx
-      !       because srflx is converted to W/m2 within wrt_his.F
-      !       Recall, srflxWm2 is computed because it is needed internally by FABM.
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          FORCES(ng)%Swind(i,j) = SQRT(                                 &
-     &      FORCES(ng)%Uwind(i,j)*FORCES(ng)%Uwind(i,j) +               &
-     &      FORCES(ng)%Vwind(i,j)*FORCES(ng)%Vwind(i,j))
-        END DO
-      END DO
-
-      DO j=Jstrm1,Jendp1
-        DO i=Istrm1,Iendp1
-          FORCES(ng)%bstrPa(i,j) = OCEAN(ng)%rhof(i,j,1)*0.5_r8*SQRT(   &
-     &      (FORCES(ng)%bustr(i,j)+FORCES(ng)%bustr(i+1,j))*            &
-     &      (FORCES(ng)%bustr(i,j)+FORCES(ng)%bustr(i+1,j)) +           &
-     &      (FORCES(ng)%bvstr(i,j)+FORCES(ng)%bvstr(i,j+1))*            &
-     &      (FORCES(ng)%bvstr(i,j)+FORCES(ng)%bvstr(i,j+1)))
-          !Bottom stress in Pa given by (full density at bottom)*(scalar kinematic stress)
-          !Note: Use of OCEAN at this point (start of time step) will violate
-          !      operator splitting since biology is called later in the time step (see main3d.F).
-          !Note: Here we follow the calculation for tau_w implemented in sed_fluxes.F, using
-          !      end points (Jstrm1,Jendp1,Istrm1,Iendp1).
-        END DO
-      END DO
-
-!!!Inserted PWA 13/12/2020
-#  ifdef FABM_TSS
-      !
-      !-----------------------------------------------------------------------
-      !  Set Total Suspended Sediment.
-      !-----------------------------------------------------------------------
-      !
-      CALL set_3dfld_tile (ng, tile, iNLM, idtss,                       &
-     &                     LBi, UBi, LBj, UBj, 1, N(ng),                &
-     &                     FORCES(ng)%tssG,                             &
-     &                     FORCES(ng)%tss,                              &
-     &                     update)
-      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-#  endif
-!!!End insert PWA 13/12/2020
-
-#  ifdef FABM_PCO2ATM
-      !
-      !-----------------------------------------------------------------------
-      !  Set surface dry molar fraction atmospheric xCO2 (ppm).
-      !-----------------------------------------------------------------------
-      !
-      CALL set_2dfld_tile (ng, tile, iNLM, idxCO2atm,                   &
-     &                     LBi, UBi, LBj, UBj,                          &
-     &                     FORCES(ng)%xCO2atmG,                         &
-     &                     FORCES(ng)%xCO2atm,                          &
-     &                     update)
-      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      !
-      !-----------------------------------------------------------------------
-      ! Calculate partial pressure pCO2 (uatm), correcting for water vapor
-      !-----------------------------------------------------------------------
-      !
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          TK1 = OCEAN(ng)%t(i,j,N(ng),nstp(ng),1) + 273.15_r8
-          S1 = MAX(0.0_r8, OCEAN(ng)%t(i,j,N(ng),nstp(ng),2))
-
-          FORCES(ng)%pCO2atm(i,j) = FORCES(ng)%xCO2atm(i,j)*            & !Note units (ppm = 1e-6)
-     &      (FORCES(ng)%Pair(i,j)/1013.25_r8 -                          & !Convert mb to atm
-     &      exp(24.4543_r8 - (6745.09_r8/TK1) -                         & !Seawater vapor pressure (atm)
-     &      4.8489_r8*log(TK1/100_r8) - 0.000544_r8*S1))                  !(Weiss and Price, 1980, Mar Chem 8: 347-359)
-        END DO
-      END DO
-#  endif
-
-#  ifdef FABM_N3ATMDEPO
-      !
-      !-----------------------------------------------------------------------
-      !  Set atmospheric deposition of oxidized nitrogen (mmol/m2/s).
-      !-----------------------------------------------------------------------
-      !
-      CALL set_2dfld_tile (ng, tile, iNLM, idN3atmd,                    &
-     &                     LBi, UBi, LBj, UBj,                          &
-     &                     FORCES(ng)%N3atmdG,                          &
-     &                     FORCES(ng)%N3atmd,                           &
-     &                     update)
-      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-#  endif
-
-#  ifdef FABM_N4ATMDEPO
-      !
-      !-----------------------------------------------------------------------
-      !  Set atmospheric deposition of reduced nitrogen (mmol/m2/s).
-      !-----------------------------------------------------------------------
-      !
-      CALL set_2dfld_tile (ng, tile, iNLM, idN4atmd,                    &
-     &                     LBi, UBi, LBj, UBj,                          &
-     &                     FORCES(ng)%N4atmdG,                          &
-     &                     FORCES(ng)%N4atmd,                           &
-     &                     update)
-      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-#  endif
-# endif
-!!!End PWA insertion 14/04/2017
 
 #if defined FOUR_DVAR   && \
     defined BULK_FLUXES && defined PRIOR_BULK_FLUXES
@@ -1043,6 +934,113 @@
 # endif
       END IF
 #endif
+
+!!PWA Inserted 21/01/2026
+# ifdef RFABM
+      !
+      !-----------------------------------------------------------------------
+      !  Set ROMS-derived FABM forcings
+      !-----------------------------------------------------------------------
+      ! Note: The NetCDF output for srflxWm2 should be IDENTICAL to the output for srflx
+      !       because srflx is converted to W/m2 within wrt_his.F
+      !       Recall, srflxWm2 is computed because it is needed internally by FABM.
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+          FORCES(ng)%Swind(i,j) = SQRT(                                 &
+     &      FORCES(ng)%Uwind(i,j)*FORCES(ng)%Uwind(i,j) +               &
+     &      FORCES(ng)%Vwind(i,j)*FORCES(ng)%Vwind(i,j))
+        END DO
+      END DO
+
+      DO j=Jstrm1,Jendp1
+        DO i=Istrm1,Iendp1
+          FORCES(ng)%bstrPa(i,j) = OCEAN(ng)%rhof(i,j,1)*0.5_r8*SQRT(   &
+     &      (FORCES(ng)%bustr(i,j)+FORCES(ng)%bustr(i+1,j))*            &
+     &      (FORCES(ng)%bustr(i,j)+FORCES(ng)%bustr(i+1,j)) +           &
+     &      (FORCES(ng)%bvstr(i,j)+FORCES(ng)%bvstr(i,j+1))*            &
+     &      (FORCES(ng)%bvstr(i,j)+FORCES(ng)%bvstr(i,j+1)))
+          !Bottom stress in Pa given by (full density at bottom)*(scalar kinematic stress)
+          !Note: Use of OCEAN at this point (start of time step) will violate
+          !      operator splitting since biology is called later in the time step (see main3d.F).
+          !Note: Here we follow the calculation for tau_w implemented in sed_fluxes.F, using
+          !      end points (Jstrm1,Jendp1,Istrm1,Iendp1).
+        END DO
+      END DO
+
+#  ifdef FABM_TSS
+      !
+      !-----------------------------------------------------------------------
+      !  Set Total Suspended Sediment.
+      !-----------------------------------------------------------------------
+      !
+      CALL set_3dfld_tile (ng, tile, iNLM, idtss,                       &
+     &                     LBi, UBi, LBj, UBj, 1, N(ng),                &
+     &                     FORCES(ng)%tssG,                             &
+     &                     FORCES(ng)%tss,                              &
+     &                     update)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
+
+#  ifdef FABM_PCO2ATM
+      !
+      !-----------------------------------------------------------------------
+      !  Set surface dry molar fraction atmospheric xCO2 (ppm).
+      !-----------------------------------------------------------------------
+      !
+      CALL set_2dfld_tile (ng, tile, iNLM, idxCO2atm,                   &
+     &                     LBi, UBi, LBj, UBj,                          &
+     &                     FORCES(ng)%xCO2atmG,                         &
+     &                     FORCES(ng)%xCO2atm,                          &
+     &                     update)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      !
+      !-----------------------------------------------------------------------
+      ! Calculate partial pressure pCO2 (uatm), correcting for water vapor
+      !-----------------------------------------------------------------------
+      !
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+          TK1 = OCEAN(ng)%t(i,j,N(ng),nstp(ng),1) + 273.15_r8
+          S1 = MAX(0.0_r8, OCEAN(ng)%t(i,j,N(ng),nstp(ng),2))
+
+          FORCES(ng)%pCO2atm(i,j) = FORCES(ng)%xCO2atm(i,j)*            & !Note units (ppm = 1e-6)
+     &      (FORCES(ng)%Pair(i,j)/1013.25_r8 -                          & !Convert mb to atm
+     &      exp(24.4543_r8 - (6745.09_r8/TK1) -                         & !Seawater vapor pressure (atm)
+     &      4.8489_r8*log(TK1/100_r8) - 0.000544_r8*S1))                  !(Weiss and Price, 1980, Mar Chem 8: 347-359)
+        END DO
+      END DO
+#  endif
+
+#  ifdef FABM_N3ATMDEPO
+      !
+      !-----------------------------------------------------------------------
+      !  Set atmospheric deposition of oxidized nitrogen (mmol/m2/s).
+      !-----------------------------------------------------------------------
+      !
+      CALL set_2dfld_tile (ng, tile, iNLM, idN3atmd,                    &
+     &                     LBi, UBi, LBj, UBj,                          &
+     &                     FORCES(ng)%N3atmdG,                          &
+     &                     FORCES(ng)%N3atmd,                           &
+     &                     update)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
+
+#  ifdef FABM_N4ATMDEPO
+      !
+      !-----------------------------------------------------------------------
+      !  Set atmospheric deposition of reduced nitrogen (mmol/m2/s).
+      !-----------------------------------------------------------------------
+      !
+      CALL set_2dfld_tile (ng, tile, iNLM, idN4atmd,                    &
+     &                     LBi, UBi, LBj, UBj,                          &
+     &                     FORCES(ng)%N4atmdG,                          &
+     &                     FORCES(ng)%N4atmd,                           &
+     &                     update)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
+# endif
+!!!End PWA insertion 21/01/2026
+
 !
 !=======================================================================
 !  Set open boundary conditions fields.
