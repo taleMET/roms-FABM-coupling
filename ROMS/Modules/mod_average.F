@@ -54,14 +54,6 @@
 !  avguWave   Kirby and Chen velocity in the XI-direction.             !
 !  avgvWave   Kirby and Chen velocity in the ETA- direction.           !
 #  endif
-!!!Inserted PWA 03/06/2022
-#  if defined CALC_TDR || defined CALC_TSR
-!  avgtdr     Turbulent energy dissipation rate (m2/s3).               !
-#  endif
-#  if defined CALC_TSR
-!  avgtsr     Turbulent shear rate (1/s).                              !
-#  endif
-!!!End insert PWA 03/06/2022
 # endif
 # if defined FORWARD_WRITE && defined SOLVE3D
 !                                                                      !
@@ -122,12 +114,6 @@
 !  avgUU      Quadratic term <u*u> for 3D momentum at U-points.        !
 !  avgVV      Quadratic term <v*v> for 3D momentum at V-points.        !
 !  avgUV      Quadratic term <u*v> for 3D momentum at RHO-points.      !
-!!!Inserted PWA 22/10/2018
-!  avgSUV     Horizontal current speed <sqrt(u*u+v*v)> at RHO-points   !
-!!!End insert PWA 22/10/2018
-!!!Inserted PWA 11/09/2020
-!  avgbstrPa  Scalar bottom stress at RHO-points (N/m2)                !
-!!!End insert PWA 11/09/2020
 !  avgHuon    U-momentum flux, Hz*u/pn (m3/s).                         !
 !  avgHvom    V-momentum flux, Hz*v/pm (m3/s).                         !
 !  avgTT      Quadratic term <t*t> for tracers.                        !
@@ -145,6 +131,37 @@
 !  avgrvor2d  2D, vertically integrated, relative vorticity.           !
 !  avgpvor3d  3D potential vorticity.                                  !
 !  rvorvor2d  3D relative vorticity.                                   !
+!                                                                      !
+!!!Inserted PWA 21/01/2026
+# if defined RFABM
+#  ifdef SHORTWAVE
+!  avgsrfWm2  Shortwave radiation flux (W/m2).                         !
+#  endif
+#  ifdef FABM_PCO2ATM
+!  avgxCO2atm Mole fraction of atmospheric CO2 (ppm).                  !
+!  avgpCO2atm Partial pressure of atmospheric CO2 (uatm).              !
+#  endif
+#  ifdef FABM_N3ATMDEPO
+!  avgN3atmd  Atmospheric deposition of oxidized nitrogen (mmolN/m2/s) !
+#  endif
+#  ifdef FABM_N4ATMDEPO
+!  avgN4atmd  Atmospheric deposition of reduced nitrogen (mmolN/m2/s)  !
+#  endif
+!  avgstate_sf  Surface-attached variables                             !
+!  avgstate_bt  Bottom-attached variables                              !
+# endif
+!  avgSUV     Horizontal current speed at RHO-points (m/s)             !
+!  avgbstrPa  Scalar bottom stress at RHO-points (N/m2)                !
+!  avgtss     Total suspended sediment (kg/m3)                         !
+#  if defined CALC_TDR || defined CALC_TSR
+!  avgtdr     Turbulent energy dissipation rate (m2/s3).               !
+#  endif
+#  if defined CALC_TSR
+!  avgmu      Dynamic viscosity (kg/m/s)                               !
+!  avgnu      Kinematic viscosity (m2/s)                               !
+!  avgtsr     Turbulent shear rate (1/s).                              !
+#  endif
+!!!End insert PWA 21/01/2026
 !                                                                      !
 !=======================================================================
 !
@@ -196,41 +213,7 @@
 #  ifdef LMD_BKPP
           real(r8), pointer :: avghbbl(:,:)
 #  endif
-!!!Inserted PWA 03/06/2022
-#  if defined MY25_MIXING || defined GLS_MIXING
-#   if defined CALC_TDR || defined CALC_TSR
-          real(r8), pointer :: avgtdr(:,:,:)
-#   endif
-#   ifdef CALC_TSR
-          real(r8), pointer :: avgtsr(:,:,:)
-#   endif
-#  endif
-!!!End insert PWA 03/06/2022
 # endif
-
-!!!PWA Inserted 21/04/2017
-# if defined RFABM
-#  ifdef SHORTWAVE
-          real(r8), pointer :: avgsrfWm2(:,:)
-#  endif
-#  ifdef FABM_PCO2ATM
-          real(r8), pointer :: avgxCO2atm(:,:)
-          real(r8), pointer :: avgpCO2atm(:,:)
-#  endif
-#  ifdef FABM_N3ATMDEPO
-          real(r8), pointer :: avgN3atmd(:,:)
-#  endif
-#  ifdef FABM_N4ATMDEPO
-          real(r8), pointer :: avgN4atmd(:,:)
-#  endif
-          real(r8), pointer :: avgstate_sf(:,:,:)
-          real(r8), pointer :: avgstate_bt(:,:,:)
-# endif
-!!!End PWA insert 21/04/2017
-
-!!!Inserted PWA 13/12/2020
-          real(r8), pointer :: avgtss(:,:,:)
-!!!End insert PWA 13/12/2020
 
 # if defined FORWARD_WRITE && defined SOLVE3D
 !
@@ -373,8 +356,6 @@
           real(r8), pointer :: avgUU(:,:,:)
           real(r8), pointer :: avgUV(:,:,:)
           real(r8), pointer :: avgVV(:,:,:)
-          real(r8), pointer :: avgSUV(:,:,:) !!!Inserted PWA 22/10/2018
-          real(r8), pointer :: avgbstrPa(:,:) !!!Inserted PWA 11/09/2020
 
           real(r8), pointer :: avgHuon(:,:,:)
           real(r8), pointer :: avgHvom(:,:,:)
@@ -395,6 +376,41 @@
           real(r8), pointer :: avgpvor3d(:,:,:)
           real(r8), pointer :: avgrvor3d(:,:,:)
 # endif
+
+!!!PWA Inserted 21/01/2026
+# if defined RFABM
+#  ifdef SHORTWAVE
+          real(r8), pointer :: avgsrfWm2(:,:)
+#  endif
+#  ifdef FABM_PCO2ATM
+          real(r8), pointer :: avgxCO2atm(:,:)
+          real(r8), pointer :: avgpCO2atm(:,:)
+#  endif
+#  ifdef FABM_N3ATMDEPO
+          real(r8), pointer :: avgN3atmd(:,:)
+#  endif
+#  ifdef FABM_N4ATMDEPO
+          real(r8), pointer :: avgN4atmd(:,:)
+#  endif
+          real(r8), pointer :: avgstate_sf(:,:,:)
+          real(r8), pointer :: avgstate_bt(:,:,:)
+# endif
+# ifdef SOLVE3D
+          real(r8), pointer :: avgSUV(:,:,:)
+          real(r8), pointer :: avgbstrPa(:,:)
+# endif
+          real(r8), pointer :: avgtss(:,:,:)
+# if defined MY25_MIXING || defined GLS_MIXING
+#  if defined CALC_TDR || defined CALC_TSR
+          real(r8), pointer :: avgtdr(:,:,:)
+#  endif
+#  ifdef CALC_TSR
+          real(r8), pointer :: avgmu(:,:,:)
+          real(r8), pointer :: avgnu(:,:,:)
+          real(r8), pointer :: avgtsr(:,:,:)
+#  endif
+# endif
+!!!End insert PWA 21/01/2026
 
         END TYPE T_AVERAGE
 !
@@ -523,22 +539,6 @@
         Dmem(ng)=Dmem(ng)+size2d
       END IF
 #  endif
-!!!Inserted PWA 03/06/2022
-#  if defined MY25_MIXING || defined GLS_MIXING
-#   if defined CALC_TDR || defined CALC_TSR
-      IF (Aout(idMtdr,ng)) THEN
-        allocate ( AVERAGE(ng) % avgtdr(LBi:UBi,LBj:UBj,N(ng)) )
-        Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
-      END IF
-#   endif
-#   ifdef CALC_TSR
-      IF (Aout(idMtsr,ng)) THEN
-        allocate ( AVERAGE(ng) % avgtsr(LBi:UBi,LBj:UBj,N(ng)) )
-        Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
-      END IF
-#   endif
-#  endif
-!!!End insert PWA 03/06/2022
 # endif
 
 !!!PWA Inserted 22/07/2019
@@ -580,14 +580,41 @@
         Dmem(ng)=Dmem(ng)+REAL(NBAT,r8)*size2d
       END IF
 # endif
-!!!End PWA insert 22/07/2019
-
-!!!Inserted PWA 13/12/2020
+      IF (Aout(idSUV,ng)) THEN
+        allocate ( AVERAGE(ng) % avgSUV(LBi:UBi,LBj:UBj,N(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
+      END IF
+      IF (Aout(idbstrPa,ng)) THEN
+        allocate ( AVERAGE(ng) % avgbstrPa(LBi:UBi,LBj:UBj) )
+        Dmem(ng)=Dmem(ng)+size2d
+      END IF
       IF (Aout(idtss,ng)) THEN
         allocate (AVERAGE(ng)%avgtss(LBi:UBi,LBj:UBj,N(ng)))
         Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
       END IF
-!!!End insert PWA 13/12/2020
+#  if defined MY25_MIXING || defined GLS_MIXING
+#   if defined CALC_TDR || defined CALC_TSR
+      IF (Aout(idMtdr,ng)) THEN
+        allocate ( AVERAGE(ng) % avgtdr(LBi:UBi,LBj:UBj,N(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
+      END IF
+#   endif
+#   ifdef CALC_TSR
+      IF (Aout(idMmu,ng)) THEN
+        allocate ( AVERAGE(ng) % avgmu(LBi:UBi,LBj:UBj,N(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
+      END IF
+      IF (Aout(idMnu,ng)) THEN
+        allocate ( AVERAGE(ng) % avgnu(LBi:UBi,LBj:UBj,N(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
+      END IF
+      IF (Aout(idMtsr,ng)) THEN
+        allocate ( AVERAGE(ng) % avgtsr(LBi:UBi,LBj:UBj,N(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
+      END IF
+#   endif
+#  endif
+!!!End insert PWA 21/01/2026
 
 # if defined FORWARD_WRITE && defined SOLVE3D
 !
@@ -956,19 +983,6 @@
         allocate ( AVERAGE(ng) % avgUV(LBi:UBi,LBj:UBj,N(ng)) )
         Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
       END IF
-
-!!!Inserted PWA 22/07/2019
-      IF (Aout(idSUV,ng)) THEN
-        allocate ( AVERAGE(ng) % avgSUV(LBi:UBi,LBj:UBj,N(ng)) )
-        Dmem(ng)=Dmem(ng)+REAL(N(ng),r8)*size2d
-      END IF
-!!!End insert PWA 22/07/2019
-!!!Inserted PWA 11/09/2020
-      IF (Aout(idbstrPa,ng)) THEN
-        allocate ( AVERAGE(ng) % avgbstrPa(LBi:UBi,LBj:UBj) )
-        Dmem(ng)=Dmem(ng)+size2d
-      END IF
-!!!End insert PWA 11/09/2020
 
       IF (Aout(idHUav,ng)) THEN
         allocate ( AVERAGE(ng) % avgHuon(LBi:UBi,LBj:UBj,N(ng)) )
@@ -1878,112 +1892,7 @@
         END DO
       END IF
 #  endif
-
-!!!Inserted PWA 03/06/2022
-#  if defined MY25_MIXING || defined GLS_MIXING
-#   if defined CALC_TDR || defined CALC_TSR
-      IF (Aout(idMtdr,ng)) THEN
-        DO k=1,N(ng)
-          DO j=Jmin,Jmax
-            DO i=Imin,Imax
-              AVERAGE(ng) % avgtdr(i,j,k) = IniVal
-            END DO
-          END DO
-        END DO
-      END IF
-#   endif
-#   ifdef CALC_TSR
-      IF (Aout(idMtsr,ng)) THEN
-        DO k=1,N(ng)
-          DO j=Jmin,Jmax
-            DO i=Imin,Imax
-              AVERAGE(ng) % avgtsr(i,j,k) = IniVal
-            END DO
-          END DO
-        END DO
-      END IF
-#   endif
-#  endif
-!!!End insert PWA 03/06/2022
 # endif
-
-!!!PWA Inserted 21/04/2017
-# if defined RFABM
-#  ifdef SHORTWAVE
-      IF (Aout(idSradWm2,ng)) THEN
-        DO j=Jmin,Jmax
-          DO i=Imin,Imax
-            AVERAGE(ng) % avgsrfWm2(i,j) = IniVal
-          END DO
-        END DO
-      END IF
-#  endif
-#  ifdef FABM_PCO2ATM
-      IF (Aout(idxCO2atm,ng)) THEN
-        DO j=Jmin,Jmax
-          DO i=Imin,Imax
-            AVERAGE(ng) % avgxCO2atm(i,j) = IniVal
-          END DO
-        END DO
-      END IF
-      IF (Aout(idpCO2atm,ng)) THEN
-        DO j=Jmin,Jmax
-          DO i=Imin,Imax
-            AVERAGE(ng) % avgpCO2atm(i,j) = IniVal
-          END DO
-        END DO
-      END IF
-#  endif
-#  ifdef FABM_N3ATMDEPO
-      IF (Aout(idN3atmd,ng)) THEN
-        DO j=Jmin,Jmax
-          DO i=Imin,Imax
-            AVERAGE(ng) % avgN3atmd(i,j) = IniVal
-          END DO
-        END DO
-      END IF
-#  endif
-#  ifdef FABM_N4ATMDEPO
-      IF (Aout(idN4atmd,ng)) THEN
-        DO j=Jmin,Jmax
-          DO i=Imin,Imax
-            AVERAGE(ng) % avgN4atmd(i,j) = IniVal
-          END DO
-        END DO
-      END IF
-#  endif
-      IF (ANY(Aout(idSAvar(:),ng))) THEN
-        DO itrc=1,NSAT
-          DO j=Jmin,Jmax
-            DO i=Imin,Imax
-              AVERAGE(ng) % avgstate_sf(i,j,itrc) = IniVal
-            END DO
-          END DO
-        END DO
-      END IF
-      IF (ANY(Aout(idBAvar(:),ng))) THEN
-        DO itrc=1,NBAT
-          DO j=Jmin,Jmax
-            DO i=Imin,Imax
-              AVERAGE(ng) % avgstate_bt(i,j,itrc) = IniVal
-            END DO
-          END DO
-        END DO
-      END IF
-# endif
-!!!End PWA insert 21/04/2017
-
-!!!Inserted PWA 13/12/2020
-      IF (Aout(idtss,ng)) THEN
-        DO k=1,N(ng)
-          DO j=Jmin,Jmax
-            DO i=Imin,Imax
-              AVERAGE(ng) % avgtss(i,j,k) = IniVal
-            END DO
-          END DO
-        END DO
-      END IF
-!!!End insert PWA 13/12/2020
 
 # if defined FORWARD_WRITE && defined SOLVE3D
 !
@@ -2601,27 +2510,6 @@
         END DO
       END IF
 
-!!!Inserted PWA 22/10/2018
-      IF (Aout(idSUV,ng)) THEN
-        DO k=1,N(ng)
-          DO j=Jmin,Jmax
-            DO i=Imin,Imax
-              AVERAGE(ng) % avgSUV(i,j,k) = IniVal
-            END DO
-          END DO
-        END DO
-      END IF
-!!!End insert PWA 22/10/2018
-!!!Inserted PWA 11/09/2020
-      IF (Aout(idbstrPa,ng)) THEN
-        DO j=Jmin,Jmax
-          DO i=Imin,Imax
-            AVERAGE(ng) % avgbstrPa(i,j) = IniVal
-          END DO
-        END DO
-      END IF
-!!!End insert PWA 11/09/2020
-
       IF (Aout(idHUav,ng)) THEN
         DO k=1,N(ng)
           DO j=Jmin,Jmax
@@ -2736,6 +2624,139 @@
         END DO
       END IF
 # endif
+
+!!!PWA Inserted 21/01/2026
+# if defined RFABM
+#  ifdef SHORTWAVE
+      IF (Aout(idSradWm2,ng)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            AVERAGE(ng) % avgsrfWm2(i,j) = IniVal
+          END DO
+        END DO
+      END IF
+#  endif
+#  ifdef FABM_PCO2ATM
+      IF (Aout(idxCO2atm,ng)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            AVERAGE(ng) % avgxCO2atm(i,j) = IniVal
+          END DO
+        END DO
+      END IF
+      IF (Aout(idpCO2atm,ng)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            AVERAGE(ng) % avgpCO2atm(i,j) = IniVal
+          END DO
+        END DO
+      END IF
+#  endif
+#  ifdef FABM_N3ATMDEPO
+      IF (Aout(idN3atmd,ng)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            AVERAGE(ng) % avgN3atmd(i,j) = IniVal
+          END DO
+        END DO
+      END IF
+#  endif
+#  ifdef FABM_N4ATMDEPO
+      IF (Aout(idN4atmd,ng)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            AVERAGE(ng) % avgN4atmd(i,j) = IniVal
+          END DO
+        END DO
+      END IF
+#  endif
+      IF (ANY(Aout(idSAvar(:),ng))) THEN
+        DO itrc=1,NSAT
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              AVERAGE(ng) % avgstate_sf(i,j,itrc) = IniVal
+            END DO
+          END DO
+        END DO
+      END IF
+      IF (ANY(Aout(idBAvar(:),ng))) THEN
+        DO itrc=1,NBAT
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              AVERAGE(ng) % avgstate_bt(i,j,itrc) = IniVal
+            END DO
+          END DO
+        END DO
+      END IF
+# endif
+      IF (Aout(idSUV,ng)) THEN
+        DO k=1,N(ng)
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              AVERAGE(ng) % avgSUV(i,j,k) = IniVal
+            END DO
+          END DO
+        END DO
+      END IF
+      IF (Aout(idbstrPa,ng)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            AVERAGE(ng) % avgbstrPa(i,j) = IniVal
+          END DO
+        END DO
+      END IF
+      IF (Aout(idtss,ng)) THEN
+        DO k=1,N(ng)
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              AVERAGE(ng) % avgtss(i,j,k) = IniVal
+            END DO
+          END DO
+        END DO
+      END IF
+# if defined MY25_MIXING || defined GLS_MIXING
+#  if defined CALC_TDR || defined CALC_TSR
+      IF (Aout(idMtdr,ng)) THEN
+        DO k=1,N(ng)
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              AVERAGE(ng) % avgtdr(i,j,k) = IniVal
+            END DO
+          END DO
+        END DO
+      END IF
+#  endif
+#  ifdef CALC_TSR
+      IF (Aout(idMmu,ng)) THEN
+        DO k=1,N(ng)
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              AVERAGE(ng) % avgmu(i,j,k) = IniVal
+            END DO
+          END DO
+        END DO
+      END IF
+      IF (Aout(idMnu,ng)) THEN
+        DO k=1,N(ng)
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              AVERAGE(ng) % avgnu(i,j,k) = IniVal
+            END DO
+          END DO
+        END DO
+      END IF
+      IF (Aout(idMtsr,ng)) THEN
+        DO k=1,N(ng)
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              AVERAGE(ng) % avgtsr(i,j,k) = IniVal
+            END DO
+          END DO
+        END DO
+      END IF
+#  endif
+# endif
+!!!End insert PWA 21/01/2026
 
       RETURN
       END SUBROUTINE initialize_average
