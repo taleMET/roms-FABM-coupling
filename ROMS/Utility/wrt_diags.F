@@ -436,6 +436,62 @@
           END IF
         END IF
       END DO
+!!!PWA inserted 21/01/2026
+#  elif defined RFABM
+      scale=1.0_dp
+!
+!  Write out 2D biological diagnostic fields.
+!
+      DO ivar=1,NDbio2d
+        ifield=iDbio2(ivar)
+        IF (Dout(ifield,ng)) THEN
+          gtype=gfactor*r2dvar
+          status=nf_fwrite2d(ng, iNLM, DIA(ng)%ncid, ifield,            &
+     &                       DIA(ng)%Vid(ifield),                       &
+     &                       DIA(ng)%Rindex, gtype,                     &
+     &                       LBi, UBi, LBj, UBj, scale,                 &
+#   ifdef MASKING
+     &                       GRID(ng) % rmask,                          &
+#   endif
+     &                       DIAGS(ng) % DiaBio2d(:,:,ivar),            &
+     &                       SetFillVal = .TRUE.) !Note: we don't avoid using fill value for FABM diagnostics
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            IF (Master) THEN
+              WRITE (stdout,20) TRIM(Vname(1,ifield)), DIA(ng)%Rindex
+            END IF
+            exit_flag=3
+            ioerror=status
+            RETURN
+          END IF
+        END IF
+      END DO
+!
+!  Write out 3D biological diagnostic fields.
+!
+      DO ivar=1,NDbio3d
+        ifield=iDbio3(ivar)
+        IF (Dout(ifield,ng)) THEN
+          gtype=gfactor*r3dvar
+          status=nf_fwrite3d(ng, iNLM, DIA(ng)%ncid, ifield,            &
+     &                       DIA(ng)%Vid(ifield),                       &
+     &                       DIA(ng)%Rindex, gtype,                     &
+     &                       LBi, UBi, LBj, UBj, 1, N(ng), scale,       &
+#   ifdef MASKING
+     &                       GRID(ng) % rmask,                          &
+#   endif
+     &                       DIAGS(ng) % DiaBio3d(:,:,:,ivar),          &
+     &                       SetFillVal = .TRUE.) !Note: we don't avoid using fill value for FABM diagnostics
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            IF (Master) THEN
+              WRITE (stdout,20) TRIM(Vname(1,ifield)), DIA(ng)%Rindex
+            END IF
+            exit_flag=3
+            ioerror=status
+            RETURN
+          END IF
+        END IF
+      END DO
+!!!End modified PWA 21/01/2026
 #  endif
 # endif
 
