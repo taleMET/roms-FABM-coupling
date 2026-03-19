@@ -847,6 +847,17 @@
      &                      LtracerSrc(:,ng), (/1/), (/NT(ng)/),        &
      &                      ncid = ncid)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!!!Inserted PWA 21/01/2026
+# ifdef TS_ISOURCE
+!
+!  Logical switches to activate tracer internal point Sources/Sinks.
+!
+      CALL netcdf_put_lvar (ng, model, ncname, 'LtracerISrc',           &
+     &                      LtracerISrc(:,ng), (/1/), (/NT(ng)/),       &
+     &                      ncid = ncid)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
+!!!End insert PWA 21/01/2026
 #endif
 !
 !  Logical switches to process climatology fields.
