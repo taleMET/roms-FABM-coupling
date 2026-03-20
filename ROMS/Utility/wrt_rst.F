@@ -1192,6 +1192,79 @@
         END IF
 # endif
 #endif
+
+!!!PWA Inserted 21/01/2026
+#if defined RFABM
+!
+!  Write out surface/bottom attached FABM variables.
+!
+      DO itrc=1,NSAT
+        scale=1.0_dp
+        gtype=gfactor*r2dvar
+# ifdef PERFECT_RESTART
+        status=nf_fwrite3d(ng, model, RST(ng)%ncid, idSAvar(itrc),      &
+     &                     RST(ng)%Vid(idSAvar(itrc)),                  &
+     &                     RST(ng)%Rindex, gtype,                       &
+     &                     LBi, UBi, LBj, UBj, 1, 2, scale,             &
+#  ifdef MASKING
+     &                     GRID(ng) % rmask,                            &
+#  endif
+     &                     OCEAN(ng) % state_sf(:,:,:,itrc))
+# else
+        status=nf_fwrite2d(ng, model, RST(ng)%ncid, idSAvar(itrc),      &
+     &                     RST(ng)%Vid(idSAvar(itrc)),                  &
+     &                     RST(ng)%Rindex, gtype,                       &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+#  ifdef MASKING
+     &                     GRID(ng) % rmask,                            &
+#  endif
+     &                     OCEAN(ng) % state_sf(:,:,NOUT,itrc))
+# endif
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idSAvar(itrc))),             &
+     &                        RST(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END DO
+      DO itrc=1,NBAT
+        scale=1.0_dp
+        gtype=gfactor*r2dvar
+# ifdef PERFECT_RESTART
+        status=nf_fwrite3d(ng, model, RST(ng)%ncid, idBAvar(itrc),      &
+     &                     RST(ng)%Vid(idBAvar(itrc)),                  &
+     &                     RST(ng)%Rindex, gtype,                       &
+     &                     LBi, UBi, LBj, UBj, 1, 2, scale,             &
+#  ifdef MASKING
+     &                     GRID(ng) % rmask,                            &
+#  endif
+     &                     OCEAN(ng) % state_bt(:,:,:,itrc))
+# else
+        status=nf_fwrite2d(ng, model, RST(ng)%ncid, idBAvar(itrc),      &
+     &                     RST(ng)%Vid(idBAvar(itrc)),                  &
+     &                     RST(ng)%Rindex, gtype,                       &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+#  ifdef MASKING
+     &                     GRID(ng) % rmask,                            &
+#  endif
+     &                     OCEAN(ng) % state_bt(:,:,NOUT,itrc))
+# endif
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idBAvar(itrc))),             &
+     &                        RST(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END DO
+#endif
+!!!End insert PWA 21/01/2026
+
 #ifdef ICE_MODEL
 !
 !-----------------------------------------------------------------------
@@ -2540,6 +2613,101 @@
         END IF
 #  endif
 # endif
+
+!!!PWA Inserted 21/01/2026
+#if defined RFABM
+!
+!  Write out surface/bottom attached FABM variables.
+!
+      DO itrc=1,NSAT
+        scale=1.0_dp
+# ifdef PERFECT_RESTART
+        IF (RST(ng)%pioVar(idSAvar(itrc))%dkind.eq.PIO_double) THEN
+          ioDesc => ioDesc_dp_r3dvar(ng)
+        ELSE
+          ioDesc => ioDesc_sp_r3dvar(ng)
+        END IF
+        status=nf_fwrite3d(ng, model, RST(ng)%pioFile, idSAvar(itrc),   &
+     &                     RST(ng)%pioVar(idSAvar(itrc)),               &
+     &                     RST(ng)%Rindex,                              &
+     &                     ioDesc,                                      &
+     &                     LBi, UBi, LBj, UBj, 1, 2, scale,             &
+#  ifdef MASKING
+     &                     GRID(ng) % rmask,                            &
+#  endif
+     &                     OCEAN(ng) % state_sf(:,:,:,itrc))
+# else
+        IF (RST(ng)%pioVar(idSAvar(itrc))%dkind.eq.PIO_double) THEN
+          ioDesc => ioDesc_dp_r2dvar(ng)
+        ELSE
+          ioDesc => ioDesc_sp_r2dvar(ng)
+        END IF
+        status=nf_fwrite2d(ng, model, RST(ng)%pioFile, idSAvar(itrc),   &
+     &                     RST(ng)%pioVar(idSAvar(itrc)),               &
+     &                     RST(ng)%Rindex,                              &
+     &                     ioDesc,                                      &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+#  ifdef MASKING
+     &                     GRID(ng) % rmask,                            &
+#  endif
+     &                     OCEAN(ng) % state_sf(:,:,NOUT,itrc))
+# endif
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idSAvar(itrc))),             &
+     &                        RST(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END DO
+      DO itrc=1,NBAT
+        scale=1.0_dp
+# ifdef PERFECT_RESTART
+        IF (RST(ng)%pioVar(idBAvar(itrc))%dkind.eq.PIO_double) THEN
+          ioDesc => ioDesc_dp_r3dvar(ng)
+        ELSE
+          ioDesc => ioDesc_sp_r3dvar(ng)
+        END IF
+        status=nf_fwrite3d(ng, model, RST(ng)%pioFile, idBAvar(itrc),   &
+     &                     RST(ng)%pioVar(idBAvar(itrc)),               &
+     &                     RST(ng)%Rindex,                              &
+     &                     ioDesc,                                      &
+     &                     LBi, UBi, LBj, UBj, 1, 2, scale,             &
+#  ifdef MASKING
+     &                     GRID(ng) % rmask,                            &
+#  endif
+     &                     OCEAN(ng) % state_bt(:,:,:,itrc))
+# else
+        IF (RST(ng)%pioVar(idBAvar(itrc))%dkind.eq.PIO_double) THEN
+          ioDesc => ioDesc_dp_r2dvar(ng)
+        ELSE
+          ioDesc => ioDesc_sp_r2dvar(ng)
+        END IF
+        status=nf_fwrite2d(ng, model, RST(ng)%pioFile, idBAvar(itrc),   &
+     &                     RST(ng)%pioVar(idBAvar(itrc)),               &
+     &                     RST(ng)%Rindex,                              &
+     &                     ioDesc,                                      &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+#  ifdef MASKING
+     &                     GRID(ng) % rmask,                            &
+#  endif
+     &                     OCEAN(ng) % state_bt(:,:,NOUT,itrc))
+# endif
+        IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idBAvar(itrc))),             &
+     &                        RST(ng)%Rindex
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END DO
+#endif
+!!!End insert PWA 21/01/2026
+
 # ifdef ICE_MODEL
 !
 !-----------------------------------------------------------------------
