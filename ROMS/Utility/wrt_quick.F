@@ -1972,7 +1972,7 @@
         IF (Qout(idSAvar(itrc),ng)) THEN
           scale=1.0_dp
           gtype=gfactor*r2dvar
-          status=nf_fwrite2d(ng, iNLM, QCK(ng)%ncid, idSAvar(itrc),     &
+          status=nf_fwrite2d(ng, model, QCK(ng)%ncid, idSAvar(itrc),    &
      &                       QCK(ng)%Vid(idSAvar(itrc)),                &
      &                       QCK(ng)%Rindex, gtype,                     &
      &                       LBi, UBi, LBj, UBj, scale,                 &
@@ -1995,7 +1995,7 @@
         IF (Qout(idBAvar(itrc),ng)) THEN
           scale=1.0_dp
           gtype=gfactor*r2dvar
-          status=nf_fwrite2d(ng, iNLM, QCK(ng)%ncid, idBAvar(itrc),     &
+          status=nf_fwrite2d(ng, model, QCK(ng)%ncid, idBAvar(itrc),    &
      &                       QCK(ng)%Vid(idBAvar(itrc)),                &
      &                       QCK(ng)%Rindex, gtype,                     &
      &                       LBi, UBi, LBj, UBj, scale,                 &
