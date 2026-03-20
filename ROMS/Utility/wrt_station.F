@@ -145,13 +145,14 @@
 
       real(r8), dimension(Nstation(ng)) :: Xpos, Ypos, Zpos, psta
 # ifdef SOLVE3D
+      real(r8), dimension(Nstation(ng)) :: psta2, psta3, psta4 !!!Inserted PWA 11/09/2020
 #  ifdef SEDIMENT
       real(r8), dimension(Nstation(ng)*Nbed) :: XposB, YposB, ZposB
       real(r8), dimension(Nstation(ng)*Nbed) :: bsta
 #  endif
       real(r8), dimension(Nstation(ng)*(N(ng))) :: XposR, YposR, ZposR
       real(r8), dimension(Nstation(ng)*(N(ng)+1)) :: XposW, YposW, ZposW
-      real(r8), dimension(Nstation(ng)*(N(ng)+1)) :: rsta
+      real(r8), dimension(Nstation(ng)*(N(ng)+1)) :: rsta, rsta2, rsta3 !!!PWA added rsta2,3 11/09/2020
 # endif
 
       real(r8), allocatable :: Ur2d(:,:)
@@ -985,6 +986,295 @@
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END IF
 # endif
+
+!!!Inserted PWA 21/01/2026
+# ifdef RFABM
+#  ifdef SHORTWAVE
+!
+!  Write out shortwave radiation flux in [W/m2].
+!
+      IF (Sout(idSradWm2,ng)) THEN
+        scale=1.0_dp
+        CALL extract_sta2d (ng, model, Cgrid, idSradWm2, r2dvar,        &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, FORCES(ng)%srflxWm2,                 &
+     &                      Nstation(ng), Xpos, Ypos, psta)
+        CALL netcdf_put_fvar (ng, model, STA(ng)%name,                  &
+     &                        TRIM(Vname(1,idSradWm2)), psta,           &
+     &                        (/1,STA(ng)%Rindex/), (/Nstation(ng),1/), &
+     &                        ncid = STA(ng)%ncid,                      &
+     &                        varid = STA(ng)%Vid(idSradWm2))
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
+#  endif
+#  ifdef FABM_PCO2ATM
+!
+!  Write out atmospheric xCO2 [ppm]
+!
+      IF (Sout(idxCO2atm,ng)) THEN
+        scale=1.0_dp
+        CALL extract_sta2d (ng, model, Cgrid, idxCO2atm, r2dvar,        &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, FORCES(ng)%xCO2atm,                  &
+     &                      Nstation(ng), Xpos, Ypos, psta)
+        CALL netcdf_put_fvar (ng, model, STA(ng)%name,                  &
+     &                        TRIM(Vname(1,idxCO2atm)), psta,           &
+     &                        (/1,STA(ng)%Rindex/), (/Nstation(ng),1/), &
+     &                        ncid = STA(ng)%ncid,                      &
+     &                        varid = STA(ng)%Vid(idxCO2atm))
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
+!
+!  Write out atmospheric pCO2 [uatm]
+!
+      IF (Sout(idpCO2atm,ng)) THEN
+        scale=1.0_dp
+        CALL extract_sta2d (ng, model, Cgrid, idpCO2atm, r2dvar,        &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, FORCES(ng)%pCO2atm,                  &
+     &                      Nstation(ng), Xpos, Ypos, psta)
+        CALL netcdf_put_fvar (ng, model, STA(ng)%name,                  &
+     &                        TRIM(Vname(1,idpCO2atm)), psta,           &
+     &                        (/1,STA(ng)%Rindex/), (/Nstation(ng),1/), &
+     &                        ncid = STA(ng)%ncid,                      &
+     &                        varid = STA(ng)%Vid(idpCO2atm))
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
+#  endif
+#  ifdef FABM_N3ATMDEPO
+!
+!  Write out atmospheric deposition of oxidized nitrogen [mmol/m2/s]
+!
+      IF (Sout(idN3atmd,ng)) THEN
+        scale=1.0_dp
+        CALL extract_sta2d (ng, model, Cgrid, idN3atmd, r2dvar,         &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, FORCES(ng)%N3atmd,                   &
+     &                      Nstation(ng), Xpos, Ypos, psta)
+        CALL netcdf_put_fvar (ng, model, STA(ng)%name,                  &
+     &                        TRIM(Vname(1,idN3atmd)), psta,            &
+     &                        (/1,STA(ng)%Rindex/), (/Nstation(ng),1/), &
+     &                        ncid = STA(ng)%ncid,                      &
+     &                        varid = STA(ng)%Vid(idN3atmd))
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
+#  endif
+#  ifdef FABM_N4ATMDEPO
+!
+!  Write out atmospheric deposition of reduced nitrogen [mmol/m2/s]
+!
+      IF (Sout(idN4atmd,ng)) THEN
+        scale=1.0_dp
+        CALL extract_sta2d (ng, model, Cgrid, idN4atmd, r2dvar,         &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, FORCES(ng)%N4atmd,                   &
+     &                      Nstation(ng), Xpos, Ypos, psta)
+        CALL netcdf_put_fvar (ng, model, STA(ng)%name,                  &
+     &                        TRIM(Vname(1,idN4atmd)), psta,            &
+     &                        (/1,STA(ng)%Rindex/), (/Nstation(ng),1/), &
+     &                        ncid = STA(ng)%ncid,                      &
+     &                        varid = STA(ng)%Vid(idN4atmd))
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
+#  endif
+!
+!  Write out surface/bottom attached FABM variables.
+!
+      DO i=1,NSAT
+        IF (Sout(idSAvar(i),ng)) THEN
+          scale=1.0_dp
+          CALL extract_sta2d (ng, model, Cgrid, idSAvar(i), r2dvar,     &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        scale, OCEAN(ng)%state_sf(:,:,NOUT,i),    &
+     &                        Nstation(ng), Xpos, Ypos, psta)
+          CALL netcdf_put_fvar (ng, model, STA(ng)%name,                &
+     &                          TRIM(Vname(1,idSAvar(i))), psta,        &
+     &                          (/1,STA(ng)%Rindex/),                   &
+     &                          (/Nstation(ng),1/),                     &
+     &                          ncid = STA(ng)%ncid,                    &
+     &                          varid = STA(ng)%Vid(idSAvar(i)))
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+      END DO
+      DO i=1,NBAT
+        IF (Sout(idBAvar(i),ng)) THEN
+          scale=1.0_dp
+          CALL extract_sta2d (ng, model, Cgrid, idBAvar(i), r2dvar,     &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        scale, OCEAN(ng)%state_bt(:,:,NOUT,i),    &
+     &                        Nstation(ng), Xpos, Ypos, psta)
+          CALL netcdf_put_fvar (ng, model, STA(ng)%name,                &
+     &                          TRIM(Vname(1,idBAvar(i))), psta,        &
+     &                          (/1,STA(ng)%Rindex/),                   &
+     &                          (/Nstation(ng),1/),                     &
+     &                          ncid = STA(ng)%ncid,                    &
+     &                          varid = STA(ng)%Vid(idBAvar(i)))
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+      END DO
+# endif
+# ifdef SOLVE3D
+!
+!  Write out horizontal current speed.
+!
+      IF (Sout(idSUV,ng)) THEN
+        scale=1.0_dp
+        CALL extract_sta3d (ng, model, Cgrid, idUvel, u3dvar,           &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
+     &                      scale, OCEAN(ng)%u(:,:,:,NOUT),             &
+     &                      NposR, XposR, YposR, ZposR, rsta)
+        CALL extract_sta3d (ng, model, Cgrid, idVvel, v3dvar,           &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
+     &                      scale, OCEAN(ng)%v(:,:,:,NOUT),             &
+     &                      NposR, XposR, YposR, ZposR, rsta2)
+        rsta3 = SQRT(rsta*rsta + rsta2*rsta2)
+
+        CALL netcdf_put_fvar (ng, model, STA(ng)%name,                  &
+     &                        TRIM(Vname(1,idSUV)), rsta3,              &
+     &                        (/1,1,STA(ng)%Rindex/),                   &
+     &                        (/N(ng),Nstation(ng),1/),                 &
+     &                        ncid = STA(ng)%ncid,                      &
+     &                        varid = STA(ng)%Vid(idSUV))
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
+!
+!  Write out scalar bottom stress.
+!
+      IF (Sout(idbstrPa,ng)) THEN
+        scale=1.0_dp
+        CALL extract_sta2d (ng, model, Cgrid, idUbms, u2dvar,           &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, FORCES(ng)%bustr,                    &
+     &                      Nstation(ng), Xpos, Ypos, psta)
+        CALL extract_sta2d (ng, model, Cgrid, idVbms, v2dvar,           &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, FORCES(ng)%bvstr,                    &
+     &                      Nstation(ng), Xpos, Ypos, psta2)
+        CALL extract_sta2d (ng, model, Cgrid, idDano, r2dvar,           &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, OCEAN(ng)%rho(:,:,1),                &
+     &                      Nstation(ng), Xpos, Ypos, psta3)
+        psta4 = (1000.0_r8+psta3) * SQRT(psta*psta + psta2*psta2)
+       
+        CALL netcdf_put_fvar (ng, model, STA(ng)%name,                  &
+     &                        TRIM(Vname(1,idbstrPa)), psta4,           &
+     &                        (/1,STA(ng)%Rindex/), (/Nstation(ng),1/), &
+     &                        ncid = STA(ng)%ncid,                      &
+     &                        varid = STA(ng)%Vid(idbstrPa))
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
+#  if defined FABM_TSS || defined FABM_TSS_ONLINE || defined SEDIMENT
+!
+!  Write out total suspended sediment.
+!
+      IF (Sout(idtss,ng)) THEN
+        scale=1.0_dp
+#   if defined FABM_TSS || defined FABM_TSS_ONLINE
+        CALL extract_sta3d (ng, model, Cgrid, idtss, r3dvar,            &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
+     &                      scale, FORCES(ng)%tss,                      &
+     &                      NposR, XposR, YposR, ZposR, rsta2)
+#   elif defined SEDIMENT 
+        DO k=1,Nstation(ng)*(N(ng)+1)
+          rsta2(k) = 0.0_r8
+        END DO
+        DO i=1,NST
+          ifield=idTvar(idsed(i))
+          CALL extract_sta3d (ng, model, Cgrid, ifield, r3dvar,         &
+     &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
+     &                        scale, OCEAN(ng)%t(:,:,:,NOUT,idsed(i)),  &
+     &                        NposR, XposR, YposR, ZposR, rsta)
+          DO k=1,Nstation(ng)*(N(ng)+1)
+            rsta2(k) = rsta2(k) + rsta(k)
+          END DO
+        END DO
+#   endif
+
+        CALL netcdf_put_fvar (ng, model, STA(ng)%name,                  &
+     &                        TRIM(Vname(1,idtss)), rsta2,              &
+     &                        (/1,1,STA(ng)%Rindex/),                   &
+     &                        (/N(ng),Nstation(ng),1/),                 &
+     &                        ncid = STA(ng)%ncid,                      &
+     &                        varid = STA(ng)%Vid(idtss))
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
+#  endif
+#  if defined MY25_MIXING || defined GLS_MIXING
+#   if defined CALC_TDR || defined CALC_TSR
+!
+!  Write out turbulent energy dissipation rate.
+!
+      IF (Sout(idMtdr,ng)) THEN
+        scale=1.0_dp
+        CALL extract_sta3d (ng, iNLM, Cgrid, idMtdr, r3dvar,            &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
+     &                      scale, MIXING(ng)%tdr,                      &
+     &                      NposR, XposR, YposR, ZposR, rsta)
+        CALL netcdf_put_fvar (ng, iNLM, STA(ng)%name,                   &
+     &                        TRIM(Vname(1,idMtdr)), rsta,              &
+     &                        (/1,1,STA(ng)%Rindex/),                   &
+     &                        (/N(ng),Nstation(ng),1/),                 &
+     &                        ncid = STA(ng)%ncid,                      &
+     &                        varid = STA(ng)%Vid(idMtdr))
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
+#   endif
+#   ifdef CALC_TSR
+!
+!  Write out dynamic viscosity.
+!
+      IF (Sout(idMmu,ng)) THEN
+        scale=1.0_dp
+        CALL extract_sta3d (ng, iNLM, Cgrid, idMmu, r3dvar,             &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
+     &                      scale, MIXING(ng)%mu,                       &
+     &                      NposR, XposR, YposR, ZposR, rsta)
+        CALL netcdf_put_fvar (ng, iNLM, STA(ng)%name,                   &
+     &                        TRIM(Vname(1,idMmu)), rsta,               &
+     &                        (/1,1,STA(ng)%Rindex/),                   &
+     &                        (/N(ng),Nstation(ng),1/),                 &
+     &                        ncid = STA(ng)%ncid,                      &
+     &                        varid = STA(ng)%Vid(idMmu))
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
+!
+!  Write out kinematic viscosity.
+!
+      IF (Sout(idMnu,ng)) THEN
+        scale=1.0_dp
+        CALL extract_sta3d (ng, iNLM, Cgrid, idMnu, r3dvar,             &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
+     &                      scale, MIXING(ng)%nu,                       &
+     &                      NposR, XposR, YposR, ZposR, rsta)
+        CALL netcdf_put_fvar (ng, iNLM, STA(ng)%name,                   &
+     &                        TRIM(Vname(1,idMnu)), rsta,               &
+     &                        (/1,1,STA(ng)%Rindex/),                   &
+     &                        (/N(ng),Nstation(ng),1/),                 &
+     &                        ncid = STA(ng)%ncid,                      &
+     &                        varid = STA(ng)%Vid(idMnu))
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
+!
+!  Write out turbulent shear rate.
+!
+      IF (Sout(idMtsr,ng)) THEN
+        scale=1.0_dp
+        CALL extract_sta3d (ng, iNLM, Cgrid, idMtsr, r3dvar,            &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
+     &                      scale, MIXING(ng)%tsr,                      &
+     &                      NposR, XposR, YposR, ZposR, rsta)
+        CALL netcdf_put_fvar (ng, iNLM, STA(ng)%name,                   &
+     &                        TRIM(Vname(1,idMtsr)), rsta,              &
+     &                        (/1,1,STA(ng)%Rindex/),                   &
+     &                        (/N(ng),Nstation(ng),1/),                 &
+     &                        ncid = STA(ng)%ncid,                      &
+     &                        varid = STA(ng)%Vid(idMtsr))
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
+#   endif
+#  endif
+# endif
+!!!End insert PWA 21/01/2026
 
 # if defined BBL_MODEL || defined WAVES_OUTPUT
 !
@@ -1939,6 +2229,301 @@
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END IF
 #  endif
+
+!!!Inserted PWA 21/01/2026
+# ifdef RFABM
+#  ifdef SHORTWAVE
+!
+!  Write out shortwave radiation flux in [W/m2].
+!
+      IF (Sout(idSradWm2,ng)) THEN
+        scale=1.0_dp
+        CALL extract_sta2d (ng, model, Cgrid, idSradWm2, r2dvar,        &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, FORCES(ng)%srflxWm2,                 &
+     &                      Nstation(ng), Xpos, Ypos, psta)
+        CALL pio_netcdf_put_fvar (ng, model, STA(ng)%name,              &
+     &                            TRIM(Vname(1,idSradWm2)), psta,       &
+     &                            (/1,STA(ng)%Rindex/),                 &
+     &                            (/Nstation(ng),1/),                   &
+     &                            pioFile = STA(ng)%pioFile,            &
+     &                            pioVar = STA(ng)%pioVar(idSradWm2)%vd)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
+#  endif
+#  ifdef FABM_PCO2ATM
+!
+!  Write out atmospheric xCO2 [ppm]
+!
+      IF (Sout(idxCO2atm,ng)) THEN
+        scale=1.0_dp
+        CALL extract_sta2d (ng, model, Cgrid, idxCO2atm, r2dvar,        &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, FORCES(ng)%xCO2atm,                  &
+     &                      Nstation(ng), Xpos, Ypos, psta)
+        CALL pio_netcdf_put_fvar (ng, model, STA(ng)%name,              &
+     &                            TRIM(Vname(1,idxCO2atm)), psta,       &
+     &                            (/1,STA(ng)%Rindex/),                 &
+     &                            (/Nstation(ng),1/),                   &
+     &                            pioFile = STA(ng)%pioFile,            &
+     &                            pioVar = STA(ng)%pioVar(idxCO2atm)%vd)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
+!
+!  Write out atmospheric pCO2 [uatm]
+!
+      IF (Sout(idpCO2atm,ng)) THEN
+        scale=1.0_dp
+        CALL extract_sta2d (ng, model, Cgrid, idpCO2atm, r2dvar,        &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, FORCES(ng)%pCO2atm,                  &
+     &                      Nstation(ng), Xpos, Ypos, psta)
+        CALL pio_netcdf_put_fvar (ng, model, STA(ng)%name,              &
+     &                            TRIM(Vname(1,idpCO2atm)), psta,       &
+     &                            (/1,STA(ng)%Rindex/),                 &
+     &                            (/Nstation(ng),1/),                   &
+     &                            pioFile = STA(ng)%pioFile,            &
+     &                            pioVar = STA(ng)%pioVar(idpCO2atm)%vd)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
+#  endif
+#  ifdef FABM_N3ATMDEPO
+!
+!  Write out atmospheric deposition of oxidized nitrogen [mmol/m2/s]
+!
+      IF (Sout(idN3atmd,ng)) THEN
+        scale=1.0_dp
+        CALL extract_sta2d (ng, model, Cgrid, idN3atmd, r2dvar,         &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, FORCES(ng)%N3atmd,                   &
+     &                      Nstation(ng), Xpos, Ypos, psta)
+        CALL pio_netcdf_put_fvar (ng, model, STA(ng)%name,              &
+     &                            TRIM(Vname(1,idN3atmd)), psta,        &
+     &                            (/1,STA(ng)%Rindex/),                 &
+     &                            (/Nstation(ng),1/),                   &
+     &                            pioFile = STA(ng)%pioFile,            &
+     &                            pioVar = STA(ng)%pioVar(idN3atmd)%vd)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
+#  endif
+#  ifdef FABM_N4ATMDEPO
+!
+!  Write out atmospheric deposition of reduced nitrogen [mmol/m2/s]
+!
+      IF (Sout(idN4atmd,ng)) THEN
+        scale=1.0_dp
+        CALL extract_sta2d (ng, model, Cgrid, idN4atmd, r2dvar,         &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, FORCES(ng)%N4atmd,                   &
+     &                      Nstation(ng), Xpos, Ypos, psta)
+        CALL pio_netcdf_put_fvar (ng, model, STA(ng)%name,              &
+     &                            TRIM(Vname(1,idN4atmd)), psta,        &
+     &                            (/1,STA(ng)%Rindex/),                 &
+     &                            (/Nstation(ng),1/),                   &
+     &                            pioFile = STA(ng)%pioFile,            &
+     &                            pioVar = STA(ng)%pioVar(idN4atmd)%vd)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
+#  endif
+!
+!  Write out surface/bottom attached FABM variables.
+!
+      DO i=1,NSAT
+        IF (Sout(idSAvar(i),ng)) THEN
+          scale=1.0_dp
+          CALL extract_sta2d (ng, model, Cgrid, idSAvar(i), r2dvar,     &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        scale, OCEAN(ng)%state_sf(:,:,NOUT,i),    &
+     &                        Nstation(ng), Xpos, Ypos, psta)
+          CALL pio_netcdf_put_fvar (ng, model, STA(ng)%name,            &
+     &                            TRIM(Vname(1,idSAvar(i))), psta,      &
+     &                            (/1,STA(ng)%Rindex/),                 &
+     &                            (/Nstation(ng),1/),                   &
+     &                            pioFile = STA(ng)%pioFile,            &
+     &                           pioVar = STA(ng)%pioVar(idSAvar(i))%vd)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+      END DO
+      DO i=1,NBAT
+        IF (Sout(idBAvar(i),ng)) THEN
+          scale=1.0_dp
+          CALL extract_sta2d (ng, model, Cgrid, idBAvar(i), r2dvar,     &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        scale, OCEAN(ng)%state_bt(:,:,NOUT,i),    &
+     &                        Nstation(ng), Xpos, Ypos, psta)
+          CALL pio_netcdf_put_fvar (ng, model, STA(ng)%name,            &
+     &                            TRIM(Vname(1,idBAvar(i))), psta,      &
+     &                            (/1,STA(ng)%Rindex/),                 &
+     &                            (/Nstation(ng),1/),                   &
+     &                            pioFile = STA(ng)%pioFile,            &
+     &                           pioVar = STA(ng)%pioVar(idBAvar(i))%vd)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+      END DO
+# endif
+# ifdef SOLVE3D
+!
+!  Write out horizontal current speed.
+!
+      IF (Sout(idSUV,ng)) THEN
+        scale=1.0_dp
+        CALL extract_sta3d (ng, model, Cgrid, idUvel, u3dvar,           &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
+     &                      scale, OCEAN(ng)%u(:,:,:,NOUT),             &
+     &                      NposR, XposR, YposR, ZposR, rsta)
+        CALL extract_sta3d (ng, model, Cgrid, idVvel, v3dvar,           &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
+     &                      scale, OCEAN(ng)%v(:,:,:,NOUT),             &
+     &                      NposR, XposR, YposR, ZposR, rsta2)
+        rsta3 = SQRT(rsta*rsta + rsta2*rsta2)
+
+        CALL pio_netcdf_put_fvar (ng, model, STA(ng)%name,              &
+     &                            TRIM(Vname(1,idSUV)), rsta3,          &
+     &                            (/1,1,STA(ng)%Rindex/),               &
+     &                            (/N(ng),Nstation(ng),1/),             &
+     &                            pioFile = STA(ng)%pioFile,            &
+     &                            pioVar = STA(ng)%pioVar(idSUV)%vd)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
+!
+!  Write out scalar bottom stress.
+!
+      IF (Sout(idbstrPa,ng)) THEN
+        scale=1.0_dp
+        CALL extract_sta2d (ng, model, Cgrid, idUbms, u2dvar,           &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, FORCES(ng)%bustr,                    &
+     &                      Nstation(ng), Xpos, Ypos, psta)
+        CALL extract_sta2d (ng, model, Cgrid, idVbms, v2dvar,           &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, FORCES(ng)%bvstr,                    &
+     &                      Nstation(ng), Xpos, Ypos, psta2)
+        CALL extract_sta2d (ng, model, Cgrid, idDano, r2dvar,           &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, OCEAN(ng)%rho(:,:,1),                &
+     &                      Nstation(ng), Xpos, Ypos, psta3)
+        psta4 = (1000.0_r8+psta3) * SQRT(psta*psta + psta2*psta2)
+
+        CALL pio_netcdf_put_fvar (ng, model, STA(ng)%name,              &
+     &                            TRIM(Vname(1,idbstrPa)), psta4,       &
+     &                            (/1,STA(ng)%Rindex/),                 &
+     &                            (/Nstation(ng),1/),                   &
+     &                            pioFile = STA(ng)%pioFile,            &
+     &                            pioVar = STA(ng)%pioVar(idbstrPa)%vd)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
+#  if defined FABM_TSS || defined FABM_TSS_ONLINE || defined SEDIMENT
+!
+!  Write out total suspended sediment.
+!
+      IF (Sout(idtss,ng)) THEN
+        scale=1.0_dp
+#   if defined FABM_TSS || defined FABM_TSS_ONLINE
+        CALL extract_sta3d (ng, model, Cgrid, idtss, r3dvar,            &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
+     &                      scale, FORCES(ng)%tss,                      &
+     &                      NposR, XposR, YposR, ZposR, rsta2)
+#   elif defined SEDIMENT 
+        DO k=1,Nstation(ng)*(N(ng)+1)
+          rsta2(k) = 0.0_r8
+        END DO
+        DO i=1,NST
+          ifield=idTvar(idsed(i))
+          CALL extract_sta3d (ng, model, Cgrid, ifield, r3dvar,         &
+     &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
+     &                        scale, OCEAN(ng)%t(:,:,:,NOUT,idsed(i)),  &
+     &                        NposR, XposR, YposR, ZposR, rsta)
+          DO k=1,Nstation(ng)*(N(ng)+1)
+            rsta2(k) = rsta2(k) + rsta(k)
+          END DO
+        END DO
+#   endif
+
+        CALL pio_netcdf_put_fvar (ng, model, STA(ng)%name,              &
+     &                            TRIM(Vname(1,idtss)), rsta2,          &
+     &                            (/1,1,STA(ng)%Rindex/),               &
+     &                            (/N(ng),Nstation(ng),1/),             &
+     &                            pioFile = STA(ng)%pioFile,            &
+     &                            pioVar = STA(ng)%pioVar(idtss)%vd)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
+#  endif
+#  if defined MY25_MIXING || defined GLS_MIXING
+#   if defined CALC_TDR || defined CALC_TSR
+!
+!  Write out turbulent energy dissipation rate.
+!
+      IF (Sout(idMtdr,ng)) THEN
+        scale=1.0_dp
+        CALL extract_sta3d (ng, iNLM, Cgrid, idMtdr, r3dvar,            &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
+     &                      scale, MIXING(ng)%tdr,                      &
+     &                      NposR, XposR, YposR, ZposR, rsta)
+        CALL pio_netcdf_put_fvar (ng, model, STA(ng)%name,              &
+     &                            TRIM(Vname(1,idMtdr)), rsta,          &
+     &                            (/1,1,STA(ng)%Rindex/),               &
+     &                            (/N(ng),Nstation(ng),1/),             &
+     &                            pioFile = STA(ng)%pioFile,            &
+     &                            pioVar = STA(ng)%pioVar(idMtdr)%vd)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
+#   endif
+#   ifdef CALC_TSR
+!
+!  Write out dynamic viscosity.
+!
+      IF (Sout(idMmu,ng)) THEN
+        scale=1.0_dp
+        CALL extract_sta3d (ng, iNLM, Cgrid, idMmu, r3dvar,             &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
+     &                      scale, MIXING(ng)%mu,                       &
+     &                      NposR, XposR, YposR, ZposR, rsta)
+        CALL pio_netcdf_put_fvar (ng, model, STA(ng)%name,              &
+     &                            TRIM(Vname(1,idMmu)), rsta,           &
+     &                            (/1,1,STA(ng)%Rindex/),               &
+     &                            (/N(ng),Nstation(ng),1/),             &
+     &                            pioFile = STA(ng)%pioFile,            &
+     &                            pioVar = STA(ng)%pioVar(idMmu)%vd)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
+!
+!  Write out kinematic viscosity.
+!
+      IF (Sout(idMnu,ng)) THEN
+        scale=1.0_dp
+        CALL extract_sta3d (ng, iNLM, Cgrid, idMnu, r3dvar,             &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
+     &                      scale, MIXING(ng)%nu,                       &
+     &                      NposR, XposR, YposR, ZposR, rsta)
+        CALL pio_netcdf_put_fvar (ng, model, STA(ng)%name,              &
+     &                            TRIM(Vname(1,idMnu)), rsta,           &
+     &                            (/1,1,STA(ng)%Rindex/),               &
+     &                            (/N(ng),Nstation(ng),1/),             &
+     &                            pioFile = STA(ng)%pioFile,            &
+     &                            pioVar = STA(ng)%pioVar(idMnu)%vd)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
+!
+!  Write out turbulent shear rate.
+!
+      IF (Sout(idMtsr,ng)) THEN
+        scale=1.0_dp
+        CALL extract_sta3d (ng, iNLM, Cgrid, idMtsr, r3dvar,            &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
+     &                      scale, MIXING(ng)%tsr,                      &
+     &                      NposR, XposR, YposR, ZposR, rsta)
+        CALL pio_netcdf_put_fvar (ng, model, STA(ng)%name,              &
+     &                            TRIM(Vname(1,idMtsr)), rsta,          &
+     &                            (/1,1,STA(ng)%Rindex/),               &
+     &                            (/N(ng),Nstation(ng),1/),             &
+     &                            pioFile = STA(ng)%pioFile,            &
+     &                            pioVar = STA(ng)%pioVar(idMtsr)%vd)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
+#   endif
+#  endif
+# endif
+!!!End insert PWA 21/01/2026
 
 #  if defined BBL_MODEL || defined WAVES_OUTPUT
 !
