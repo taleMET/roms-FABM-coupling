@@ -4597,7 +4597,7 @@
      &                      igrid, Ngrids, nSSFfiles, NSSFcount,        &
      &                      max_Ffiles, inp_lib, SSF)
 #ifdef TS_ISOURCE
-            CASE ('NSSFFILES')
+            CASE ('NISSFFILES')
               Npts=load_i(Nval, Rval, Ngrids, nISSFfiles)
               DO ng=1,Ngrids
                 IF (nISSFfiles(ng).le.0) THEN

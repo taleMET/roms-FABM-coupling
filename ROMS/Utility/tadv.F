@@ -90,7 +90,7 @@
       character (len=  70) :: line
 
 !!!Modified PWA 30/01/2021
-      #if defined RFABM
+#if defined RFABM
       character (len=5632) :: tadv_att ! May need more length to allow for ERSEM-type models
 #else
       character (len=2816) :: tadv_att
