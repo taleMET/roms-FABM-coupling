@@ -1731,6 +1731,7 @@
           END DO
         END IF
 
+# ifdef SEDIMENT 
         IF (Aout(idtss,ng)) THEN
           DO k=1,N(ng)
             DO j=JstrR,JendR
@@ -1756,6 +1757,7 @@
             END DO
           END DO
         END IF
+# endif
 
 # if defined MY25_MIXING || defined GLS_MIXING
 #  if defined CALC_TDR || defined CALC_TSR
