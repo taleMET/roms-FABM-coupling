@@ -142,7 +142,7 @@
 !
       real(r8) :: Aval(6)
 !
-      character (len=11 )    :: bryatt, clmatt, frcatt
+      character (len=11 )    :: ssfatt, bryatt, clmatt, frcatt !!!Modified PWA 21/01/2026, added ssfatt
       character (len=50 )    :: tiling
       character (len=80 )    :: type
 #ifdef FOUR_DVAR
@@ -743,13 +743,19 @@
 #ifndef ANA_PSOURCE
         IF (exit_flag.eq.NoError) THEN
           IF (LuvSrc(ng).or.LwSrc(ng).or.(ANY(LtracerSrc(:,ng)))) THEN
-            status=nf90_put_att(ncid, nf90_global, 'river_file',        &
-     &                          TRIM(SSF(ng)%name))
-            IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-              IF (Master) WRITE (stdout,20) 'river_file', TRIM(ncname)
-              exit_flag=3
-              ioerror=status
-            END IF
+            DO i=1,nSSFfiles(ng)
+              CALL join_string (SSF(i,ng)%files, SSF(i,ng)%Nfiles,      &
+       &                        string, lstr)
+              WRITE (ssfatt,30) 'ssf_file_', i
+              status=nf90_put_att(ncid, nf90_global, ssfatt,            &
+       &                          string(1:lstr))
+              IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+                IF (Master) WRITE (stdout,20) TRIM(ssfatt), TRIM(ncname)
+                exit_flag=3
+                ioerror=status
+                EXIT
+              END IF
+            END DO
           END IF
         END IF
 #endif
@@ -3786,7 +3792,7 @@
 !
       real(r8) :: Aval(6)
 !
-      character (len=11 )    :: bryatt, clmatt, frcatt
+      character (len=11 )    :: ssfatt, bryatt, clmatt, frcatt !!!Modified PWA 21/01/2026, added ssfatt
       character (len=50 )    :: tiling
       character (len=80 )    :: type
 # ifdef FOUR_DVAR
@@ -4392,13 +4398,19 @@
 # ifndef ANA_PSOURCE
       IF (exit_flag.eq.NoError) THEN
         IF (LuvSrc(ng).or.LwSrc(ng).or.(ANY(LtracerSrc(:,ng)))) THEN
-          status=PIO_put_att(pioFile, PIO_global, 'river_file',         &
-     &                       TRIM(SSF(ng)%name))
-          IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
-            IF (Master) WRITE (stdout,20) 'river_file', TRIM(ncname)
-            exit_flag=3
-            ioerror=status
-          END IF
+          DO i=1,nSSFfiles(ng)
+            CALL join_string (SSF(i,ng)%files, SSF(i,ng)%Nfiles,        &
+     &                        string, lstr)
+            WRITE (ssfatt,30) 'ssf_file_', i
+            status=PIO_put_att(pioFile, PIO_global, ssfatt,             &
+     &                       string(1:lstr))
+            IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
+              IF (Master) WRITE (stdout,20) TRIM(ssfatt), TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+              EXIT
+            END IF
+          END DO
         END IF
       END IF
 # endif
