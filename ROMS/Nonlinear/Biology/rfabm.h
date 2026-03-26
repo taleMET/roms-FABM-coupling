@@ -1,19 +1,29 @@
-      SUBROUTINE biology (ng,tile)
+      MODULE biology_mod
 !
-!svn $Id: npzd_Franks.h 995 2020-01-10 04:01:28Z arango $
-!************************************************** Hernan G. Arango ***
-!  Copyright (c) 2002-2020 The ROMS/TOMS Group         Phil Wallhead   !
-!                                                   Andre Staalstrom   !
+!git $Id$
+!================================================== Hernan G. Arango ===
+!  Copyright (c) 2002-2025 The ROMS Group             Craig V. Lewis   !
 !    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
-!***********************************************************************
+!    See License_ROMS.md                                               !
+!=======================================================================
 !  This routine computes the  biological sources and sinks for the     !
 !  any model in the FABM family. Then, it adds those terms to the      !
 !  global biological fields.                                           !
 !  The code below is adapted from npzd_Franks.h + diagnostics code     !
 !  from fennel.h                                                       !
+!=======================================================================
+!
+      implicit none
+!
+      PRIVATE
+      PUBLIC  :: biology
+!
+      CONTAINS
+!
 !***********************************************************************
-
+      SUBROUTINE biology (ng,tile)
+!***********************************************************************
+!
       USE mod_param     !PWA: Provides access to BOUNDS and FMODEL
 #ifdef DIAGNOSTICS_BIO
       USE mod_diags
@@ -37,6 +47,9 @@
 !
 !  Local variable declarations.
 !
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__
+!
 #include "tile.h"
       IF (nFABM(ng).gt.0) THEN !NOTE: This means that (FABM biology + sinking) can be switched off by setting nFABM=0.
       IF (MOD(iic(ng)-ntstart(ng),nFABM(ng)).eq.0) THEN
@@ -50,11 +63,11 @@
       IF (Lbiofile(iNLM).and.(tile.eq.0)) THEN
 #endif
         Lbiofile(iNLM)=.FALSE.
-        BIONAME(iNLM)=__FILE__
+        BIONAME(iNLM)=MyFile
       END IF
 !
 #ifdef PROFILE
-      CALL wclock_on (ng, iNLM, 15, __LINE__, __FILE__)
+      CALL wclock_on (ng, iNLM, 15, __LINE__, MyFile)
 #endif
       CALL biology_tile (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj, N(ng), NT(ng),             &
@@ -79,7 +92,7 @@
      &                   OCEAN(ng) % t)
 
 #ifdef PROFILE
-      CALL wclock_off (ng, iNLM, 15, __LINE__, __FILE__)
+      CALL wclock_off (ng, iNLM, 15, __LINE__, MyFile)
 #endif
       END IF
       END IF
@@ -192,6 +205,7 @@
       real(r8), dimension(IminS:ImaxS,NBT) :: flux_bt         !FABM bottom fluxes (units [Matter/m2/s])
       real(r8), dimension(IminS:ImaxS,NBAT) :: sms_bt         !FABM bottom-attached SMS terms (units [Matter/m2/s])
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: FC
+
       real(r8), dimension(IminS:ImaxS,N(ng)) :: Hz_inv
       real(r8), dimension(IminS:ImaxS,N(ng)) :: Hz_inv2
       real(r8), dimension(IminS:ImaxS,N(ng)) :: Hz_inv3
@@ -871,8 +885,8 @@
               cff = state1(i,j,k,itrc) - state_old(i,k,itrc)
 #ifdef MASKING
               cff = cff*rmask_full(i,j)
-!It seems safer to ensure that no cells are not updated when dry.
-!(rmask_full = rmask_wet*rmask, where rmask is the imposed time-independent mask (0=dry, 1=wet))
+!Note: If WET_DRY, rmask_full = rmask_wet*rmask is updated at each time step (see Nonlinear/wetdry.F).
+!      If not WET_DRY, rmask_full = rmask from initialisation (see Utility/set_masks.F).
 #endif
               t(i,j,k,nnew,ibio)=t(i,j,k,nnew,ibio)+cff*Hz(i,j,k)
             END DO
@@ -933,3 +947,5 @@
 #endif
       RETURN
       END SUBROUTINE biology_tile
+
+      END MODULE biology_mod
