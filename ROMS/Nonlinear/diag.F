@@ -253,7 +253,7 @@
 # if defined SOLVE3D && defined BIOLOGY
       Nreduce = 5 + 2*NBT
 # endif
-      IF (.not. allocated(rbuffer))    allocate (rbuffer(Nreduce))
+      IF (.not. allocated(rbuffer))   allocate (rbuffer(Nreduce))
       IF (.not. allocated(op_handle)) allocate (op_handle(Nreduce))
       IF (.not. allocated(C_handle))  allocate (C_handle(Nreduce))
 #endif
@@ -549,6 +549,31 @@
           avgke=avgke/volume
           avgpe=avgpe/volume
           avgkp=avgke+avgpe
+
+!!!Inserted PWA 22/07/2019
+#ifdef NESTING
+ 10         FORMAT (/,1x,a,1x,a,2x,a,3x,a,4x,a,4x,a,2x,a)
+#else
+ 10         FORMAT (/,1x,a,1x,a,2x,a,3x,a,4x,a,4x,a)
+#endif
+ 20         FORMAT (21x,a,7x,a,12x,a,10x,a,7x,a,/)
+ 25         FORMAT (22x,a,8x,a,9x,a,9x,a,9x,a)
+ 26         FORMAT (22x,a,8x,a,9x,a,9x,a,9x,a,/)
+
+#ifdef NESTING
+ 30         FORMAT (i10,1x,a,4(1pe14.6),2x,i2.2)
+#else
+ 30         FORMAT (i10,1x,a,4(1pe14.6))
+#endif
+ 40         FORMAT ('(',i2.2,'x,',a,',i',i1,'.',i1,',',                 &
+     &                            a,',i',i1,'.',i1,',',                 &
+#ifdef SOLVE3D
+     &                            a,',i',i1,'.',i1,',',                 &
+#endif
+     &                            a,',t35,4(1pe13.6,1x))')
+ 50         FORMAT (t21,5(1pe13.6,1x))
+!!!End insert PWA 22/07/2019
+
 !
 ! Report global run diagnotics values for the nonlinear kernel.
 !
@@ -577,18 +602,7 @@
               WRITE (stdout,26) 'minT1', 'minT2', 'minT3',              &
      &                          'minT4', 'minTn'
 #  endif
-#ifdef NESTING
- 10           FORMAT (/,1x,a,1x,a,2x,a,3x,a,4x,a,4x,a,2x,a)
-#else
- 10           FORMAT (/,1x,a,1x,a,2x,a,3x,a,4x,a,4x,a)
-#endif
- 20           FORMAT (21x,a,7x,a,12x,a,10x,a,7x,a,/)
-!!!Inserted PWA 21/01/2026
-#ifdef RFABM
- 25           FORMAT (22x,a,8x,a,9x,a,9x,a,9x,a)
- 26           FORMAT (22x,a,8x,a,9x,a,9x,a,9x,a,/)
-#endif
-!!!End insert PWA 21/01/2026
+!!!End insert PWA 19/06/2014
             END IF
           END IF
 !
@@ -624,22 +638,6 @@
      &                          maxspeed(ng)
 #endif
             FLUSH (stdout)
-#ifdef NESTING
- 30         FORMAT (i10,1x,a,4(1pe14.6),2x,i2.2)
-#else
- 30         FORMAT (i10,1x,a,4(1pe14.6))
-#endif
- 40         FORMAT ('(',i2.2,'x,',a,',i',i1,'.',i1,',',                 &
-     &                            a,',i',i1,'.',i1,',',                 &
-#ifdef SOLVE3D
-     &                            a,',i',i1,'.',i1,',',                 &
-#endif
-     &                            a,',t35,4(1pe13.6,1x))')
-!!!Inserted PWA 21/01/2026
-#ifdef RFABM
- 50         FORMAT (t21,5(1pe13.6,1x))
-#endif
-!!!End insert PWA 21/01/2026
           END IF
 !
 !  If blowing-up, set exit_flag to stop computations.
@@ -712,6 +710,7 @@
 !  salinity.  This is a good way to screen for very bad values which
 !  indicates that the model is blowing-up.
 !
+
 !!!Modified PWA 22/07/2019
 !          IF (maxrho(ng).gt.max_rho) THEN
 !            exit_flag=1
