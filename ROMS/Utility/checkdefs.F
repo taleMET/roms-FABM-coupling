@@ -721,18 +721,6 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+11)=' DEBUGFABM,'
 # endif
-# ifdef FABM_ADYTRACER
-      IF (Master) WRITE (stdout,20) 'FABM_ADYTRACER',                   &
-     &   'Use ROMS to advect and diffusive an attenuation tracer.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+16)=' FABM_ADYTRACER,'
-# endif
-# ifdef FABM_ASILT
-      IF (Master) WRITE (stdout,20) 'FABM_ASILT',                       &
-     &   'Use ROMS to provide silt aborption for FABM model.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+12)=' FABM_ASILT,'
-# endif
 # ifdef FABM_CHECK_STATE
       IF (Master) WRITE (stdout,20) 'FABM_CHECK_STATE',                 &
      &   'Use FABM to check (and repair) biological state.'
@@ -3038,6 +3026,7 @@
       Coptions(is:is+16)=' !SO_SEMI_WHITE,'
 # endif
 #endif
+
 !!!Inserted PWA 18/02/2020
 !!!SPECIFIC_HUMIDITY is used in e.g. bulk_flux.F
 #if defined SPECIFIC_HUMIDITY
@@ -3434,6 +3423,15 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+10)=' TS_FIXED,'
 #endif
+!!!Inserted PWA 07/02/2020
+#ifdef TS_ISOURCE
+!
+      IF (Master) WRITE (stdout,20) 'TS_ISOURCE',                       &
+     &   'Tracer internal sources activated'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+12)=' TS_ISOURCE,'
+#endif
+!!!End insert PWA 07/02/2020
 #if defined TS_SMAGORINSKY && (defined TS_DIF2 || defined TS_DIF4)
 !
       IF (Master) WRITE (stdout,20) 'TS_SMAGORINSKY',                   &
@@ -4124,6 +4122,7 @@
         exit_flag=5
       END IF
 #endif
+
 !!!PWA Inserted 23/11/2018
 #if defined ANA_SRFLUX && defined DIURNAL_SRFLUX
 !
@@ -4140,6 +4139,7 @@
       END IF
 #endif
 !!!End insert PWA 23/11/2018
+
 #if defined TIDE_GENERATING_FORCES && \
    (defined ANA_GRID               && !defined SPHERICAL)
 !
