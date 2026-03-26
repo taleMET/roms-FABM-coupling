@@ -106,7 +106,7 @@
 !
       IF (LuvSrc(ng).or.LwSrc(ng)) THEN
 !!!Modified PWA 21/01/2026 to allow multifile SSF input
-        CALL get_2dfld (ng, iNLM, idRtra, SSFncid(idRtra,ng),           &
+        CALL get_ngfld (ng, iNLM, idRtra, SSFncid(idRtra,ng),           &
 # if defined PIO_LIB && defined DISTRIBUTE
      &                  SSFpioFile(idRtra,ng),                          &
 # endif
